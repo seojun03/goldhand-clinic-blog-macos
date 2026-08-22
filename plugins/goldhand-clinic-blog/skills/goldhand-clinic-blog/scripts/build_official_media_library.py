@@ -269,10 +269,16 @@ def main() -> int:
         assets.sort(key=lambda item: (item["postOrder"], item["imageOrder"]))
         review_data = json.loads(args.review_overrides.read_text(encoding="utf-8")) if args.review_overrides.exists() else {}
         approved = review_data.get("approved", {}) if isinstance(review_data, dict) else {}
+        approved_closing_trust = review_data.get("approvedClosingTrust", {}) if isinstance(review_data, dict) else {}
         denied = review_data.get("denied", {}) if isinstance(review_data, dict) else {}
         for asset in assets:
             review_key = f"{asset['sourceLogNo']}:{asset['imageOrder']}"
             review = approved.get(review_key) if isinstance(approved, dict) else None
+            closing_trust_review = (
+                approved_closing_trust.get(review_key)
+                if isinstance(approved_closing_trust, dict)
+                else None
+            )
             denial = denied.get(review_key) if isinstance(denied, dict) else None
             manual_person_safe = bool(
                 isinstance(review, dict)
@@ -288,6 +294,69 @@ def main() -> int:
             asset["personInteraction"] = bool(review.get("personInteraction")) if isinstance(review, dict) else False
             asset["directorVisible"] = bool(review.get("directorVisible")) if isinstance(review, dict) else False
             asset["trustPriority"] = int(review.get("trustPriority", 0)) if isinstance(review, dict) else 0
+            closing_trust_safe = bool(
+                isinstance(closing_trust_review, dict)
+                and closing_trust_review.get("safetyApproved") is True
+                and (
+                    closing_trust_review.get("directorVisible") is True
+                    or closing_trust_review.get("documentVisible") is True
+                )
+                and str(closing_trust_review.get("sceneType", "")) in {
+                    "director-agreement-pose",
+                    "director-community-pose",
+                    "credential-detail",
+                }
+                and bool([
+                    term
+                    for term in closing_trust_review.get("placementTerms", [])
+                    if str(term).strip()
+                ])
+                and bool(str(closing_trust_review.get("approvedAlt", "")).strip())
+                and bool(str(closing_trust_review.get("contextText", "")).strip())
+            )
+            asset["closingTrustReviewed"] = isinstance(closing_trust_review, dict)
+            asset["closingTrustEligible"] = closing_trust_safe
+            asset["closingTrustRequiresReview"] = not closing_trust_safe
+            asset["closingTrustSceneType"] = (
+                str(closing_trust_review.get("sceneType", ""))
+                if isinstance(closing_trust_review, dict)
+                else ""
+            )
+            asset["closingTrustDirectorVisible"] = (
+                bool(closing_trust_review.get("directorVisible"))
+                if isinstance(closing_trust_review, dict)
+                else False
+            )
+            asset["closingTrustDocumentVisible"] = (
+                bool(closing_trust_review.get("documentVisible"))
+                if isinstance(closing_trust_review, dict)
+                else False
+            )
+            asset["closingTrustPriority"] = (
+                int(closing_trust_review.get("closingTrustPriority", 0))
+                if isinstance(closing_trust_review, dict)
+                else 0
+            )
+            asset["closingTrustPlacementTerms"] = (
+                [str(term).strip() for term in closing_trust_review.get("placementTerms", []) if str(term).strip()]
+                if isinstance(closing_trust_review, dict)
+                else []
+            )
+            asset["closingTrustApprovedAlt"] = (
+                str(closing_trust_review.get("approvedAlt", "")).strip()
+                if isinstance(closing_trust_review, dict)
+                else ""
+            )
+            asset["closingTrustContextText"] = (
+                str(closing_trust_review.get("contextText", "")).strip()
+                if isinstance(closing_trust_review, dict)
+                else ""
+            )
+            asset["closingTrustSafetyNote"] = (
+                str(closing_trust_review.get("safetyNote", "")).strip()
+                if isinstance(closing_trust_review, dict)
+                else ""
+            )
             if denial:
                 asset["safeAuto"] = False
                 asset["requiresReview"] = False
@@ -309,7 +378,7 @@ def main() -> int:
         ]
         fully_bundled = bool(assets) and len(bundled_assets) == len(assets)
         payload = {
-            "schemaVersion": 2 if fully_bundled else 1,
+            "schemaVersion": 3 if fully_bundled else 1,
             "generatedAt": datetime.now(SEOUL).isoformat(timespec="seconds"),
             "sourceBlog": "https://blog.naver.com/goldhand7582_",
             "inventoryPosts": requested_posts,
@@ -317,9 +386,11 @@ def main() -> int:
             "failedPosts": failures,
             "assetCount": len(assets),
             "safeAutoCount": sum(asset["safeAuto"] for asset in assets),
+            "closingTrustCount": sum(bool(asset["closingTrustEligible"]) for asset in assets),
             "policy": (
                 "All indexed official-blog image binaries are bundled in the plugin; only visually approved "
-                "director-patient safeAuto assets may be selected automatically"
+                "director-patient safeAuto assets may be selected as clinical photos, and separately reviewed "
+                "director-or-credential assets may be selected as one closing trust photo"
                 if fully_bundled
                 else "Metadata inventory; run sync_official_media_assets.py before packaging or use"
             ),
@@ -334,7 +405,7 @@ def main() -> int:
     except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
         print(f"미디어 라이브러리 생성 실패: {exc}", file=sys.stderr)
         return 1
-    print(json.dumps({key: payload[key] for key in ("inventoryPosts", "fetchedPosts", "assetCount", "safeAutoCount", "failedPosts")}, ensure_ascii=False, indent=2))
+    print(json.dumps({key: payload[key] for key in ("inventoryPosts", "fetchedPosts", "assetCount", "safeAutoCount", "closingTrustCount", "failedPosts")}, ensure_ascii=False, indent=2))
     return 1 if failures else 0
 
 

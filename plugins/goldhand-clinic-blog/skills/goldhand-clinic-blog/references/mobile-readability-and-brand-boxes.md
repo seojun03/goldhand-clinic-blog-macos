@@ -82,7 +82,7 @@
 ### 2. 금손한의원 소개 — 정보 본문 직전 고정 표
 
 - `credential` 표는 모든 글에서 정확히 한 번 사용한다.
-- 독자 고민과 고정 인사는 편집 마스터가 정한 순서로 모두 끝내고, `solution-preview` 전체가 끝난 직후에 배치한다.
+- 독자 고민과 고정 인사는 편집 마스터가 정한 순서로 모두 끝내고, `solution-preview` 전체가 끝난 뒤에 배치한다. `before-credential` 실제 사진 1장 구성에서만 표 바로 위 사진을 허용한다.
 - `credential` 다음의 첫 콘텐츠 컴포넌트는 첫 정보 본문의 `divider` 또는 `section-heading`이어야 한다. 구분선과 소제목을 함께 쓰면 `credential`은 첫 구분선 바로 앞에 둔다.
 - `solution-preview`와 `credential` 사이, `credential`과 첫 정보 본문 사이에 이미지·일반 본문·`article-summary`·다른 표를 끼우지 않는다. 시각 간격만 만드는 `data-preview-gap="true"`는 콘텐츠로 보지 않는다.
 - 이 위치는 주제·편집 마스터·이미지 유무와 관계없이 모든 자동모드·정밀작성모드 글에 동일하게 적용한다.

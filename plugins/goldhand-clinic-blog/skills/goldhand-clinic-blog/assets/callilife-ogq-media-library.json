@@ -92,6 +92,26 @@
       "safeAuto": true,
       "referenceLocalPath": null,
       "generatedLocalPath": null
+    },
+    {
+      "id": "OGQ-CALLILIFE-5D7FA4BF0CBBB",
+      "artworkId": "5d7fa4bf0cbbb",
+      "title": "우울한 여성 일러스트",
+      "detailUrl": "https://ogqmarket.naver.com/artworks/stockImage/detail?artworkId=5d7fa4bf0cbbb",
+      "topics": [
+        "기분 저하",
+        "우울감",
+        "여성"
+      ],
+      "verifiedOn": "2026-08-22",
+      "ownershipBasis": "user-confirmed-2026-08-21",
+      "useMode": "gpt-image-high-fidelity-reference",
+      "subjectFocus": "person",
+      "variationMode": "person-identity-subtle-variation",
+      "contentPreservation": "medical-information-layout",
+      "safeAuto": true,
+      "referenceLocalPath": null,
+      "generatedLocalPath": null
     }
   ]
 }

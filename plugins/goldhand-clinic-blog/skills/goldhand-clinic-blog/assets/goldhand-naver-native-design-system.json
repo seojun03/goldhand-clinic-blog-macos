@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 10,
+  "schemaVersion": 12,
   "id": "goldhand-naver-native-v4",
   "name": "금손한의원 네이버 스마트에디터 중앙 정렬·노란 강조·순정 표 시스템",
   "editorEvidence": {
@@ -111,9 +111,10 @@
       "appliesToEveryArticle": true,
       "questionAndGreetingOrderControlledByEditorialMaster": true,
       "requiredAfterAllIntroRoles": ["reader-question", "greeting-authority", "solution-preview"],
-      "requiredDirectlyAfterCompletedRole": "solution-preview",
+      "requiredAfterCompletedRole": "solution-preview",
       "requiredImmediatelyBeforeFirstInformationBodyRole": ["divider", "section-heading"],
-      "allowedInterveningContentRoles": [],
+      "allowedInterveningContentRoles": ["evidence-media:before-credential"],
+      "maximumBeforeCredentialRealPhotos": 1,
       "allowedInterveningNonContentMarker": "data-preview-gap=true"
     }
   },
@@ -303,8 +304,13 @@
   "generatedReferenceMedia": {
     "provider": "gpt-image",
     "creator": "callilife",
-    "minimumCount": 1,
-    "maximumCount": 3,
+    "minimumCount": 3,
+    "maximumCount": 4,
+    "requiredImageZone": "early-explanatory-body",
+    "placementStart": "after-credential-table",
+    "placementEnd": "before-third-body-section-heading-or-neutral-close-if-fewer-sections",
+    "maximumBodySectionsFromStart": 2,
+    "minimumCountInFirstSection": 1,
     "ownerAuthorization": "user-confirmed",
     "contentPreservation": "medical-information-layout",
     "allowedVariationModes": [
@@ -319,8 +325,8 @@
     "creatorLibrary": "assets/callilife-ogq-media-library.json"
   },
   "realGoldhandMedia": {
-    "minimumCount": 6,
-    "maximumCount": 12,
+    "minimumCount": 1,
+    "maximumCount": 2,
     "sources": [
       "goldhand-bundled-official-library"
     ],
@@ -328,11 +334,11 @@
     "registry": "assets/media-library.json",
     "requiresBundledFileHashMatch": true,
     "userDesktopDependencyAllowed": false,
-    "recentArticleWindow": 3,
+    "recentArticleWindow": 1,
     "selectionOrder": [
-      "fresh-director-patient-treatment",
-      "fresh-director-patient-examination-or-consultation",
-      "recent-director-patient-fallback-to-minimum-only"
+      "before-credential-context-match-not-used-by-immediately-previous-article",
+      "closing-trust-approved-clinical-scene-not-used-by-immediately-previous-article",
+      "closing-trust-approved-clinical-scene-reused-only-when-fresh-below-target"
     ],
     "personInteractionRequired": true,
     "directorVisibleRequired": true,
@@ -345,10 +351,61 @@
       "empty-clinic-space"
     ],
     "visibleCaptionAllowed": false,
-    "recentReuseAllowedOnlyBelowMinimum": true,
-    "requiredFigurePlacement": "after-related-paragraph",
+    "allowedLayouts": {
+      "before-credential": 1,
+      "closing-trust": 2
+    },
+    "explanatoryBodyPlacementAllowed": false,
+    "olderArticleReuseAllowed": true,
+    "immediatelyPreviousArticleReuseAllowed": false,
+    "recentReuseAllowedWhenFreshBelowTarget": false,
+    "recentReuseMaximumPerArticle": 0,
+    "placementTermsRequired": true,
+    "contextMatchRequiredByLayout": {
+      "before-credential": true,
+      "closing-trust": false
+    },
+    "closingTrustRecentReuseAllowedWhenFreshBelowTarget": true,
+    "closingTrustRecentReuseMaximumPerArticle": 2,
+    "approvedAltRequired": true,
+    "requiredFigurePlacementByLayout": {
+      "before-credential": "after-related-paragraph",
+      "closing-trust": "closing-clinical-gallery"
+    },
     "requiredAlignment": "center",
     "requiresVisualPrivacyReview": true
+  },
+  "closingCredentialTrustMedia": {
+    "exactCount": 1,
+    "separateFromClinicalMedia": true,
+    "countsTowardRealGoldhandMedia": false,
+    "sources": [
+      "goldhand-bundled-official-library"
+    ],
+    "bundledDirectory": "assets/official-media",
+    "registry": "assets/media-library.json",
+    "requiresBundledFileHashMatch": true,
+    "eligibleField": "closingTrustEligible",
+    "reviewedField": "closingTrustReviewed",
+    "allowedSceneTypes": [
+      "director-agreement-pose",
+      "director-community-pose",
+      "credential-detail"
+    ],
+    "directorOrDocumentVisibleRequired": true,
+    "requiredMarker": "data-trust-photo=true",
+    "requiredSlot": "closing-credential-trust",
+    "requiredContextRole": "credential-trust-context",
+    "contextTextRequired": true,
+    "approvedAltRequired": true,
+    "visibleCaptionAllowed": false,
+    "placementStart": "after-neutral-close",
+    "placementEnd": "before-clinic-hours-heading",
+    "mustBeLastImageBeforeClinicHours": true,
+    "recentArticleWindow": 1,
+    "olderArticleReuseAllowed": true,
+    "immediatelyPreviousArticleReuseAllowed": false,
+    "recentReuseMaximumPerArticle": 0
   },
   "copyPolicy": {
     "stripArticleWrapper": true,
@@ -422,5 +479,5 @@
   "forbiddenMarkupAttributes": [
     "data-goldhand-box"
   ],
-  "policy": "선택한 한 레퍼런스는 주제·정보 전개뿐 아니라 제목 심리·도입 설득·전환·미세 표현 기능·마무리 감정을 결정하고, 완성 문장과 업체 사실은 금손 내용으로 재구성한다. 제목 장치는 선택 프로필을 따르며 숫자 답을 약속했을 때만 실제 답 개수와 맞춘다. solution-preview에는 선택된 도입 장치, 보이는 주제별 보상, 첫 노란 하이라이트를 둔다. 분 단위 장치를 선택한 경우에만 실제 분량에 맞는 1~5분 숫자를 사용한다. 완성 산문과 SEO가 끝나면 writing-voice 최종 재청취를 실행한다. 이 검수는 전체 글을 말하는 속도로 다시 듣고 generic한 연결·평평한 리듬·독자 초점 이탈·근거 없는 윤색만 국소 수정하며, 사실·순서·의료 경계·확신 강도·레퍼런스 장치·키워드 약속·고정 HTML 구성은 바꾸지 않는다. 수정이 필요 없으면 억지로 고치지 않는다. 인용구·소제목·본문·표를 포함한 모든 글은 중앙 정렬한다. 핵심 결론은 노란 하이라이트 3개, 행동 기준은 밑줄 2~3개, 중단·검사·주의 같은 안전 경계는 빨간 글씨 1~2개로 구분하며 합계 6~8개만 사용한다. 같은 문구에 효과를 겹치지 않는다. 시각 자료는 사용자 소유 callilife OGQ 작품 1~3개를 레퍼런스로 만든 GPT Image와 실제 금손한의원 사진 6~12장을 함께 쓴다. 실제 사진은 플러그인 assets/official-media에 내장된 공식 블로그 사진 중 파일·SHA256·시각 검수 승인이 일치하고 원장이 환자를 치료·진찰·상담·설명하는 사람 대 사람 장면만 사용한다. 로고·건물·제품·약·장비·빈 공간은 수량이 부족해도 실제 글 사진으로 사용하지 않으며, 새 승인 사진이 6장 미만일 때만 최근 3개 글의 같은 사람 중심 사진을 최소 수량까지 재사용한다. 사용자 바탕화면의 사진 폴더는 사용하지 않는다. 실제 사진과 GPT Image 아래에는 장면 이름·출처·AI 생성 여부를 포함한 보이는 캡션을 만들지 않는다. 로컬 GPT Image 생성본만 사용하고 OGQ 미리보기는 완성 글에 넣지 않는다. 고정 표의 모든 셀에는 1px 회색 구분선을 둔다. clinic-hours는 24:38:38 열 폭과 금손 골드 제목 행을, clinic-info는 100% 폭 적층 행과 금손 골드 제목띠를 고정하며 두 표 모두 가로·세로 중앙 정렬한다. 가치입증은 골드 제목 행과 고정된 짧은 경력·강점 6행으로 구성한 1열 다행 표를 모든 글에서 동일하게 사용하고, 질문·인사·완성된 solution-preview 뒤이자 첫 정보 본문 divider 또는 section-heading 바로 앞에 고정한다. 표 밖 CSS 카드와 1행 1열 가짜 표는 금지한다. 모든 글은 clinic-info 운영정보 표에서 끝낸다. 운영정보 뒤에는 <함께 보면 좋은 글> 문구, 최신 블로그 글 링크, 네이버 지도 또는 해당 자리표시자를 넣지 않으며, 제목·본문·이미지·표·강조·복사 기능 등 나머지 출력은 그대로 유지한다."
+  "policy": "선택한 한 레퍼런스의 제목 심리·도입 설득·정보 순서·마무리 감정만 배우고 완성 문장과 업체 사실은 금손 내용으로 새로 쓴다. 첫 보이는 문장은 서로 다른 생활 장면을 묻는 질문 2~3개이며 그 뒤에만 고정 인사를 쓴다. 질문 묶음은 writing-voice 최종 재청취에서 함께 듣고 증상명 때문에 ...나요 틀의 반복, 쉼표로 증상을 쌓은 요약 질문, 같은 리듬을 차단한다. solution-preview에는 선택된 도입 장치와 보이는 주제별 보상을 둔다. 모든 글은 중앙 정렬하고 하이라이트 3개, 밑줄 2~3개, 안전 경계 빨간 글씨 1~2개를 사용한다. 사용자 소유 callilife 작품을 레퍼런스로 만든 GPT Image 3~4장은 원장 소개표 뒤 첫 두 개 설명 섹션 안에 배치하고, 최소 1장은 첫 설명 섹션에 두며, data-image-zone=early-explanatory-body로 표시한다. 실제 진료 사진은 해결 방향 예고 뒤 원장 소개표 바로 위 before-credential 1장 또는 neutral-close 뒤 closing-trust 2장 중 한 구성만 사용하고 설명 본문 중간에 분산하지 않는다. before-credential 사진만 승인 핵심어와 본문 맥락을 맞춘다. closing-trust 두 장은 글의 질환·부위와 맞지 않아도 되며 시각 검수된 실제 치료·진찰·상담·검사 장면이면 사용한다. 이 두 장은 직전 글 미사용 사진을 먼저 고르고 부족할 때만 직전 글의 승인 사진을 재사용해 사진을 빼지 않는다. 여기에 협약·수료증·기부·봉사 장면처럼 시각 검수를 마친 마무리 신뢰 사진 1장을 별도로 더하며, 진료 사진 수량에 포함하지 않고 진료시간 안내 전 마지막 이미지로 둔다. 마무리 신뢰 사진은 승인 문맥·alt와 바로 앞 문단이 같은 장면을 가리키며 직전 글 사진을 재사용하지 않는다. 진료 사진 자리에 로고·건물·제품·약·장비·빈 공간은 사용하지 않으며 모든 이미지의 보이는 캡션을 금지한다. 가치입증은 고정 6행 표로 유지하고, 모든 글은 clinic-info 운영정보 표에서 끝낸다."
 }

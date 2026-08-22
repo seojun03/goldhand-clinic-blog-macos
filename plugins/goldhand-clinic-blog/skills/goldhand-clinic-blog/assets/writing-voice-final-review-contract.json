@@ -6,6 +6,7 @@
   "purpose": "완성된 글 전체를 말하는 속도로 다시 듣고, 내용과 구조를 바꾸지 않은 채 금손한의원 박준희 원장의 구체적인 어휘·확신의 강도·리듬·독자에게 머무는 시선을 보존한다.",
   "requiredReviewChecks": [
     "wholeDraftReadAtSpeakingSpeed",
+    "openingHookSetReheardTogether",
     "genericConnectiveTissueReviewed",
     "flattenedRhythmReviewed",
     "attentionAllocationReviewed",

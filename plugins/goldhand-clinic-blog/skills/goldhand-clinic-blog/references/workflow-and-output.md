@@ -2,7 +2,7 @@
 
 ## 자동모드 상태 흐름
 
-`모드 확인 → 메인키워드 → 최근 3개 주제·실제 사진 이력 읽기 → 검토 완료 위석 정보글 11편 중 겹치지 않는 한 편 선택 → 문장형 원문을 숨기고 orderedContentAtoms 고정 → 금손 사실 대응 → natural-speech-rewrite-protocol 읽기 → SEO·HTML 없는 생활어 초안 → 별도 진료실 발화 편집 → 내용 원자 전수 대응 → 내용 순서·말투·문장 중복 독립 검수 → 부분 수정 → SEO 2~3회 → writing-voice 최종 전체 재청취 → 수정 전후·표현의 일·구조와 사실 보존 검증 → 모바일 시각 분할 → 질문·인사·해결 방향 예고 직후 credential 고정 → GPT Image 1~3장 생성 → 원장-환자 치료·상담·검사 사진 6~12장 선택 → 관련 문단에 이미지 분산 → 네이버 순정 구분선·필요한 표·운영정보에서 종료 → HTML → 한 번 복붙 → 실검증 → 발행 게이트 → 사진 ID·해시 포함 이력 기록`
+`모드 확인 → 메인키워드 → 최근 3개 주제·직전 1개 글의 진료 사진·마무리 신뢰 사진 이력 읽기 → 검토 완료 위석 정보글 11편 중 겹치지 않는 한 편 선택 → 문장형 원문을 숨기고 orderedContentAtoms 고정 → 금손 사실 대응 → natural-speech-rewrite-protocol 읽기 → SEO·HTML 없는 생활어 초안 → 별도 진료실 발화 편집 → 내용 원자 전수 대응 → 내용 순서·말투·문장 중복 독립 검수 → 부분 수정 → SEO 2~3회 → writing-voice 최종 전체 재청취 → 수정 전후·표현의 일·구조와 사실 보존 검증 → 모바일 시각 분할 → 진료 사진 before-credential 1장 또는 closing-trust 2장 배치 → credential 고정 → GPT Image 3~4장 생성·설명 본문 배치 → 마무리 신뢰 사진 1장을 진료시간 전 마지막 이미지로 별도 배치 → 네이버 순정 구분선·필요한 표·운영정보에서 종료 → HTML → 한 번 복붙 → 실검증 → 발행 게이트 → 두 사진 풀의 ID·해시를 따로 이력 기록`
 
 메인키워드 하나 외에는 사전 질문하지 않는다. 확인된 사실이 없어 제목의 답을 만들 수 없을 때만 누락값 하나를 묻는다.
 
@@ -72,10 +72,12 @@
 - writtenAt
 - realMediaIds
 - realMediaHashes
+- trustMediaIds
+- trustMediaHashes
 
-본문, 환자 정보, 이미지 바이너리, 외부 조사 본문은 저장하지 않는다. 실제 사진은 중복 방지용 ID와 파일 해시만 저장한다. 가장 최근 3개만 유지한다.
+본문, 환자 정보, 이미지 바이너리, 외부 조사 본문은 저장하지 않는다. 진료 사진과 마무리 신뢰 사진은 중복 방지용 ID와 파일 해시만 각자 저장한다. 가장 최근 3개만 유지한다.
 
-새 이력은 스키마 4로 저장하며, 예전 스키마 1·2·3 이력은 제목·주제·키워드에서 의미 서명을 추론해 읽는다. 사진 이력이 없는 예전 항목은 빈 목록으로 취급한다. 이력은 같은 허용 레퍼런스와 제목 장치의 반복도 줄이지만, 최근 3개 핵심 주제와 실제 사진 중복을 먼저 피한다.
+새 이력은 스키마 5로 저장하며, 예전 스키마 1·2·3·4 이력은 제목·주제·키워드에서 의미 서명을 추론해 읽는다. 해당 사진 이력이 없는 예전 항목은 빈 목록으로 취급한다. 주제·레퍼런스·제목 장치 중복은 최근 3개를 본다. `before-credential` 진료 사진과 별도 마무리 신뢰 사진은 바로 직전 완료 글 1편과 겹치지 않게 하며, `closing-trust` 진료 사진은 직전 글 미사용 사진을 우선하되 두 장이 안 되면 승인 사진을 재사용한다.
 
 ## 독립 검수 입력
 
@@ -218,19 +220,19 @@
 1. `select_wipark_content_reference.py` 결과를 최근 3개 중복과 내용 순서에 쓴다. 선택된 `masterId` 한 편과 `voiceProfileId=goldhand-official-voice-v1`을 다시 확인한다.
 2. 검수 완료 본문을 `<article data-goldhand-type="정보전달형" data-editorial-mode="reference-reasoning-goldhand-adaptation" data-editorial-master-id="WP..." data-content-reference-source="..." data-editorial-reference-source="..." data-editorial-source-role="editorial-reasoning-content-flow-and-expression-principles" data-reference-writing-profile="INFO..." data-reference-writing-intelligence="goldhand-reference-writing-intelligence-v1" data-title-mechanism="..." data-closing-mechanism="..." data-goldhand-voice-profile="goldhand-official-voice-v1" data-writing-voice-review="writing-voice-final-rehear-v1" data-writing-voice-status="pass" data-goldhand-design-system="goldhand-naver-native-v4">` 하나로 만든다.
 3. 제목은 article 안에 넣지 않는다. `h1`, 고정 영문 브랜드 띠, 고정 doctor-note 카드를 만들지 않는다.
-4. 독자 고민 2~3개는 style 없는 `<blockquote data-reference-role="reader-question" data-question-source="representative-reader-concern" data-naver-native-component="quotation">`로 만든다. 독자 고민과 고정 인사가 모두 끝난 뒤 해결 방향 예고를 무배경 산문 블록 `data-reference-role="solution-preview"`로 완성한다.
-5. `solution-preview` 전체가 끝난 직후 `credential`을 정확히 한 번 둔다. 후보를 고르지 않고 `assets/goldhand-value-proof-library.json`의 고정 6행을 같은 순서로 넣는다. 다음 첫 콘텐츠 컴포넌트는 첫 정보 본문의 `divider` 또는 `section-heading`이어야 하며, 이미지·일반 본문·`article-summary`·다른 표를 사이에 끼우지 않는다. 시각 간격용 `data-preview-gap="true"`는 허용한다.
+4. 독자 고민 질문 2~3개는 첫 보이는 문장으로 연속 배치하고 style 없는 `<blockquote data-reference-role="reader-question" data-question-source="representative-reader-concern" data-naver-native-component="quotation">`로 만든다. 그 뒤에만 고정 인사를 정확히 한 번 둔다. 인사를 질문 앞이나 질문 사이에 두지 않는다. 독자 고민과 고정 인사가 모두 끝난 뒤 해결 방향 예고를 무배경 산문 블록 `data-reference-role="solution-preview"`로 완성한다.
+5. `solution-preview` 전체가 끝난 뒤 `credential`을 정확히 한 번 둔다. 후보를 고르지 않고 `assets/goldhand-value-proof-library.json`의 고정 6행을 같은 순서로 넣는다. `before-credential` 배치를 선택했을 때만 둘 사이에 실제 사진 1장을 허용한다. credential 다음 첫 콘텐츠 컴포넌트는 첫 정보 본문의 `divider` 또는 `section-heading`이어야 하며, 이미지·일반 본문·`article-summary`·다른 표를 사이에 끼우지 않는다. 시각 간격용 `data-preview-gap="true"`는 허용한다.
 6. 첫 정보 소제목은 `data-naver-native-component="subheading"`, 그 앞 구분선은 `data-naver-native-component="divider"`를 쓴다. 구분선과 소제목을 함께 쓰면 `credential`을 첫 구분선 바로 앞에 둔다. CSS 카드와 1행×1열 가짜 표를 만들지 않는다.
 7. 실제 행·열 정보에는 `data-naver-native-component="table" data-native-table-preset="naver-table1-default"`를 둔다. `credential`·`clinic-hours`·`clinic-info`는 각각 정확히 한 번 사용하고 `article-summary`는 실제 비교 정보가 있을 때만 한 번 사용한다. 모든 셀에 회색 구분선과 가로·세로 중앙 정렬을 적용한다.
 8. 모든 글은 중앙 정렬하고, 노란 하이라이트 정확히 3개·밑줄 2~3개·안전 경계용 빨간 글씨 1~2개를 합계 6~8개 적용한다.
 9. 일반 문단은 `data-mobile-group="true"`와 `<br>`로 2~3줄을 만들고, 직후 `<p data-preview-gap="true">&#8288;</p>`를 둔다.
-10. `sync_official_media_assets.py --verify-only`로 `assets/media-library.json`의 113개 레코드와 `assets/official-media`의 내장 파일·SHA256이 모두 일치하는지 확인한다. 새 공식 글을 인덱싱해 사진을 추가한 경우에만 동기화 모드로 번들을 갱신한 뒤 플러그인을 재배포한다.
-11. `recommend_media.py --count 6`으로 내장 승인본을 고른다. 최근 3개 이력의 `realMediaIds`·`realMediaHashes`는 먼저 제외한다. `personInteraction: true`, `directorVisible: true`, `sceneType: director-patient-*`인 원장-환자 치료·진찰·상담·검사 장면만 선택한다. 금손 로고·간판·건물·약·환제·탕약·장비·제품·빈 공간은 수량이 부족해도 사용하지 않는다. 새 승인 사진이 6장 미만일 때만 최근 승인 사진을 최소 6장까지 재사용하고, 그래도 6장이 안 되면 발행하지 않는다.
-12. 실제 사진은 선택과 무결성 검사에는 플러그인 내장 파일을 사용하고, 네이버 HTML에는 같은 레코드의 **금손한의원 원본** HTTPS URL을 `src`와 `data-reference-source-url`에 함께 넣는다. `data-real-photo="true" data-media-origin="goldhand-bundled-official-library" data-goldhand-media="GH..." data-media-sha256="..."`를 표시한다. 사용자 로컬 사진 경로나 레퍼런스 원문 사진은 넣지 않는다.
-13. GPT Image와 실제 사진 모두 `<figure data-image-placement="after-related-paragraph" data-image-anchor="핵심어1|핵심어2">`로 만든다. figure 바로 앞에는 anchor 가운데 하나를 실제로 포함한 `data-mobile-group="true"` 문단만 두고, 허용되는 사이는 `data-preview-gap="true"` 한 개뿐이다. 모든 이미지에서 `<figcaption>`과 이미지 아래 설명·출처 문단을 만들지 않는다. 이미지를 연속 배치하거나 글 끝에 몰아넣지 않는다.
+10. `sync_official_media_assets.py --verify-only`로 `assets/media-library.json`의 113개 레코드와 `assets/official-media`의 내장 파일·SHA256이 모두 일치하고, 진료 사진 6장과 마무리 신뢰 사진 7장이 검수 풀에 잡히는지 확인한다. 새 공식 글을 인덱싱해 사진을 추가한 경우에만 동기화 모드로 번들을 갱신한 뒤 플러그인을 재배포한다.
+11. 진료 사진 배치를 원장 소개표 직전 1장(`before-credential`) 또는 글마무리 2장(`closing-trust`) 중 하나로 고르고 `recommend_media.py --placement-mode 선택모드`로 내장 승인본을 고른다. `before-credential`은 바로 직전 완료 글과 겹치지 않고 이번 글의 승인 `placementTerms`와 맞는 한 장만 쓴다. `closing-trust`는 주제·질환·부위·본문 문맥을 비교하지 않고 `personInteraction: true`, `directorVisible: true`, `sceneType: director-patient-*`, 정확한 `approvedAlt`가 있는 치료·진찰·상담·검사 사진 두 장을 쓴다. 직전 글 미사용 사진을 우선하고 부족하면 직전 글 승인 사진을 재사용한다. 전체 승인 진료 사진 풀 자체가 두 장 미만일 때만 발행을 멈춘다.
+12. 진료 사진과 별도로 `recommend_closing_trust_media.py --json`으로 `closingTrustEligible: true`인 원장·협약·수료증·기부·봉사 사진 1장을 고른다. 바로 직전 완료 글의 `trustMediaIds`·`trustMediaHashes`는 제외한다. `closingTrustContextText`와 같은 `credential-trust-context` 문단 뒤에 `data-trust-photo="true" data-trust-photo-slot="closing-credential-trust"`로 넣고, 진료시간 안내 전 마지막 이미지로 둔다. 이 1장은 진료 사진 수량을 채우지 않는다.
+13. 모든 공식 사진은 선택과 무결성 검사에는 플러그인 내장 파일을 사용하고, 네이버 HTML에는 같은 레코드의 **금손한의원 원본** HTTPS URL을 `src`와 `data-reference-source-url`에 함께 넣는다. 진료 사진은 `data-real-photo`, 마무리 신뢰 사진은 `data-trust-photo`로 분리하고 정확한 origin·ID·SHA256을 표시한다. `before-credential` figure에만 `data-image-placement="after-related-paragraph"`와 승인 anchor를 두고 `placementTerms`·`approvedAlt`를 맞춘다. `closing-trust` 두 figure는 anchor 없이 `data-image-placement="closing-clinical-gallery"`와 정확한 `approvedAlt`를 쓴다. 마무리 신뢰 사진은 `closingTrustPlacementTerms`·`closingTrustApprovedAlt`·`closingTrustContextText`와 정확히 맞아야 한다. GPT Image 3~4장은 첫 두 개 설명 섹션에만 둔다. 모든 이미지에서 `<figcaption>`과 이미지 아래 설명·출처 문단을 만들지 않는다.
 14. 고정 문의·운영정보는 중앙 정렬한 `진료시간 안내` 제목, `data-native-table-purpose="clinic-hours"`인 3열 표, `data-goldhand-role="contact" data-reference-role="contact" data-native-table-purpose="clinic-info"`인 1열 다행 표 순서로 마지막 본문 정보에 한 번만 둔다. `clinic-hours`는 제목 행과 월·수·금·화·목·토·일의 세 행만 두고 공휴일·설·추석 행은 만들지 않는다. `clinic-info`는 금손한의원 제목 행과 위치·찾아오는 길·전화 세 행만 두며 카카오톡·네이버 예약은 만들지 않는다. `clinic-hours` 열 폭은 `24% / 38% / 38%`, `clinic-info` 셀 폭은 `100%`로 고정하고 모든 셀에 `height:64px;line-height:1.8;word-break:keep-all`을 적용한다. 진료시간 표 첫 행과 위치정보 표 제목 행은 금손 골드 배경과 흰 글자로 표현한다.
 15. 빌더가 `clinic-info` 운영정보 표에서 article을 끝내는지 확인한다. 운영정보 뒤에는 `<함께 보면 좋은 글>`, 최신 블로그 글 링크·카드, 네이버 지도·장소 컴포넌트, 자리표시자를 넣지 않는다. 이전 버전 HTML에 하단 묶음이 있으면 그 묶음만 제거한다.
-16. HTML 전 완성 산문은 `validate_final_voice_review.py`와 `validate_natural_speech_suite.py --expected-count 1`을 통과시키고, 여러 후보를 생성했다면 같은 suite에 누적해 8어절 교차 복제까지 확인한다. 그 뒤 `validate_article.py --editorial-close`, `validate_reference_reconstruction.py --editorial-close`, `validate_copy_overlap.py`, `validate_goldhand_voice.py`를 모두 통과시킨다. article의 writing-voice 계약 ID와 pass 상태를 다시 확인하고 실제 사진 6~12장과 GPT Image 1~3장을 서로 별도로 센다.
+16. HTML 전 완성 산문은 `validate_final_voice_review.py`와 `validate_natural_speech_suite.py --expected-count 1`을 통과시키고, 여러 후보를 생성했다면 같은 suite에 누적해 8어절 교차 복제까지 확인한다. 그 뒤 `validate_article.py --editorial-close`, `validate_reference_reconstruction.py --editorial-close`, `validate_copy_overlap.py`, `validate_goldhand_voice.py`를 모두 통과시킨다. article의 writing-voice 계약 ID와 pass 상태를 다시 확인하고 진료 사진 1장 또는 2장, 별도 마무리 신뢰 사진 1장, GPT Image 3~4장, 각 이미지 구간, 안전·무결성·수량, 별도 신뢰 사진의 직전 글 중복 0장을 검사한다. `closing-trust` 진료 사진의 직전 글 재사용 수는 허용된 회전 정보로 따로 기록한다.
 17. `build_naver_copy_page.py`를 실행하고 `validate_html.py`를 통과시킨다. 빌더는 모든 로컬 이미지에 콘텐츠 해시 파일명을 부여해 금손 전용 HTTPS 호스트에 게시한다. 출력 HTML의 이미지 수가 원고와 같고 모든 `src`가 공개 HTTPS인지 확인한다. `data:image/...;base64`, `file:`, 절대 로컬 경로가 하나라도 남으면 실패다.
 18. 브라우저에서 복사 버튼을 실제로 한 번 누른 뒤 네이버 빈 초안에 한 번만 붙여넣는다. `text/html`·`text/plain`, 입력 버퍼, 내부 검수용 `data-*` 제거, 본문 이미지 수 유지, `relatedLinks=0`·`maps=0`·`nativeModules=0`·`inputBuffer=true`·`requiresNativeFinisher=false`, 580px·375px 줄바꿈을 확인한다. 글이 운영정보 표에서 끝나고 다른 본문 출력이 그대로인지 확인한다. 브라우저 제어가 없으면 정적 검증까지만 했다고 정확히 알린다.
 

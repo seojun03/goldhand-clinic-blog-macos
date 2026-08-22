@@ -69,6 +69,8 @@ OPTIONAL_LIST_FIELDS = (
     "coverageQuestions",
     "realMediaIds",
     "realMediaHashes",
+    "trustMediaIds",
+    "trustMediaHashes",
 )
 
 
@@ -153,7 +155,7 @@ def record(state: dict[str, object], entry: dict[str, object]) -> dict[str, obje
         != identity
     ]
     current.insert(0, normalized_entry)
-    return {"schemaVersion": 4, "maxEntries": 3, "entries": current[:3]}
+    return {"schemaVersion": 5, "maxEntries": 3, "entries": current[:3]}
 
 
 def parse_args() -> argparse.Namespace:
@@ -199,6 +201,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reservation-dir", type=Path)
     parser.add_argument("--real-media-id", action="append", dest="real_media_ids", default=[])
     parser.add_argument("--real-media-hash", action="append", dest="real_media_hashes", default=[])
+    parser.add_argument("--trust-media-id", action="append", dest="trust_media_ids", default=[])
+    parser.add_argument("--trust-media-hash", action="append", dest="trust_media_hashes", default=[])
     return parser.parse_args()
 
 
@@ -310,6 +314,8 @@ def main() -> int:
         "closingMechanismId": args.closing_mechanism_id,
         "realMediaIds": args.real_media_ids,
         "realMediaHashes": args.real_media_hashes,
+        "trustMediaIds": args.trust_media_ids,
+        "trustMediaHashes": args.trust_media_hashes,
     }
     for field, value in optional_values.items():
         add_optional(entry, field, value)

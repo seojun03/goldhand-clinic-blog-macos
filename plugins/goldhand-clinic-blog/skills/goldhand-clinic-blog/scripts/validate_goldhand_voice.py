@@ -82,6 +82,25 @@ def validate(fragment: str, profile: dict[str, object]) -> dict[str, object]:
     greeting = str(required.get("exactGreeting", ""))
     if greeting and text.count(greeting) != 1:
         error("greeting-count", f"고정 인사는 정확히 한 번이어야 합니다. 현재 {text.count(greeting)}회입니다.")
+    prose_lines = [
+        cleaned
+        for line in text.splitlines()
+        if (cleaned := re.sub(r"\s+", " ", re.sub(r"[\u200b\u200c\u200d\u2060\ufeff]", "", line)).strip())
+    ]
+    greeting_indexes = [index for index, line in enumerate(prose_lines) if line == greeting]
+    if greeting and len(greeting_indexes) == 1:
+        greeting_index = greeting_indexes[0]
+        opening_hooks = prose_lines[:greeting_index]
+        if greeting_index not in {2, 3} or not all(line.endswith("?") for line in opening_hooks):
+            error(
+                "opening-hook-greeting-order",
+                "글은 서로 다른 생활 장면을 묻는 질문 2~3개로 시작하고, 그 다음에 고정 인사를 써야 합니다.",
+            )
+        if sum("때문에" in line for line in opening_hooks) > 1:
+            error(
+                "parallel-because-hook-template",
+                "도입 질문마다 증상명만 바꿔 ‘… 때문에 …나요?’ 틀을 반복하지 마세요.",
+            )
 
     for value in forbidden.get("emoticons", []):
         if value and str(value) in text:
@@ -244,6 +263,10 @@ def validate(fragment: str, profile: dict[str, object]) -> dict[str, object]:
                         "treatment-catalogue",
                         "priority-transition-overuse",
                         "binary-contrast-overuse",
+                        "opening-hook-greeting-order",
+                        "parallel-because-hook-template",
+                        "abstract-symptom-ranking-transition",
+                        "stacked-symptom-summary-question",
                     }
                 ]
             ),

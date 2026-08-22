@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import html
 import json
+import os
 import re
 import sys
 import unicodedata
@@ -89,7 +90,24 @@ SOLUTION_PREVIEW_CUE = re.compile(r"(?:오늘은|이\s*글에서는|이\s*글에
 SOLUTION_PAYOFF_CUE = re.compile(r"(?:구분|기준|판단|확인|이해|순서|놓치|살펴)")
 READING_COMMITMENT_TEXT = re.compile(r"(?:읽|집중|살펴)", re.S)
 HOOK_TOKEN_STOP = {"광주", "한의원", "금손한의원", "어떻게", "무엇", "정말", "경우", "있을까요", "할까요"}
+STACKED_ABSTRACT_HOOK = re.compile(r"(?:피로|기분|불편|증상).{0,28}(?:이어지|겹치|반복되)나요\?")
 FORBIDDEN_REAL_PHOTO_DESCRIPTOR = re.compile(r"(?:로고|logo|건물\s*외관|건물\s*외부|환제|제품\s*포장|장비|원내\s*공간)", re.I)
+REAL_PHOTO_SLOTS = {"before-credential", "closing-trust"}
+TRUST_PHOTO_SLOT = "closing-credential-trust"
+ALLOWED_CLOSING_TRUST_SCENES = {
+    "director-agreement-pose",
+    "director-community-pose",
+    "credential-detail",
+}
+
+
+def default_state_path() -> Path:
+    override = os.environ.get("GOLDHAND_STATE_FILE", "").strip()
+    if override:
+        return Path(override).expanduser().resolve()
+    codex_home = os.environ.get("CODEX_HOME", "").strip()
+    root = Path(codex_home).expanduser().resolve() if codex_home else Path.home() / ".codex"
+    return root / "state" / "goldhand-clinic-blog" / "recent-articles.json"
 
 
 def normalize(value: str) -> str:
@@ -391,6 +409,86 @@ def reference_role_matches(article: str, roles: tuple[str, ...]) -> list[re.Matc
     return list(pattern.finditer(article))
 
 
+def explanatory_heading_candidates(article: str) -> list[re.Match[str]]:
+    """Find body headings even when one or both contract markers were removed."""
+    patterns = (
+        re.compile(
+            r"<(?P<tag>[a-z][\w:-]*)\b"
+            r"(?=[^>]*(?:\bdata-reference-role\s*=\s*['\"]section-heading['\"]"
+            r"|\bdata-naver-native-component\s*=\s*['\"]subheading['\"]))"
+            r"[^>]*>.*?</(?P=tag)>",
+            re.I | re.S,
+        ),
+        re.compile(r"<(?P<tag>h[1-6])\b[^>]*>.*?</(?P=tag)>", re.I | re.S),
+    )
+    matches_by_span: dict[tuple[int, int], re.Match[str]] = {}
+    for pattern in patterns:
+        for match in pattern.finditer(article):
+            matches_by_span[(match.start(), match.end())] = match
+    return [matches_by_span[span] for span in sorted(matches_by_span)]
+
+
+def has_explanatory_heading_contract(match: re.Match[str]) -> bool:
+    opening = re.match(r"<[a-z][\w:-]*\b[^>]*>", match.group(0), flags=re.I | re.S)
+    opening_tag = opening.group(0) if opening else ""
+    return (
+        attr_values(opening_tag, "data-reference-role") == ["section-heading"]
+        and attr_values(opening_tag, "data-naver-native-component") == ["subheading"]
+    )
+
+
+def divider_following_element(
+    article: str,
+    divider: re.Match[str],
+    region_end: int,
+) -> re.Match[str] | None:
+    """Return the first substantive element after a body divider."""
+    skippable = re.compile(
+        r"(?:\s+|<!--.*?-->|</?(?:section|div)\b[^>]*>"
+        r"|<p\b(?=[^>]*\bdata-preview-gap\s*=\s*['\"]true['\"])[^>]*>.*?</p>)*",
+        re.I | re.S,
+    )
+    prefix = skippable.match(article, divider.end(), region_end)
+    start = prefix.end() if prefix else divider.end()
+    element = re.compile(
+        r"<(?P<tag>[a-z][\w:-]*)\b[^>]*>.*?</(?P=tag)>",
+        re.I | re.S,
+    )
+    return element.match(article, start, region_end)
+
+
+def visual_paragraph_heading_candidates(article: str) -> list[re.Match[str]]:
+    """Find markerless p elements that still use the contract's heading typography."""
+    candidates = list(
+        re.finditer(
+            r"<p\b[^>]*>.*?</p>",
+            article,
+            flags=re.I | re.S,
+        )
+    )
+    result: list[re.Match[str]] = []
+    for match in candidates:
+        opening = re.match(r"<p\b[^>]*>", match.group(0), flags=re.I | re.S)
+        style_values = attr_values(opening.group(0) if opening else "", "style")
+        style = style_values[0].lower() if len(style_values) == 1 else ""
+        size_values = [
+            float(value)
+            for value in re.findall(r"font-size\s*:\s*(\d+(?:\.\d+)?)px\b", style)
+        ]
+        weight_values = [
+            float(value)
+            for value in re.findall(r"font-weight\s*:\s*(\d+(?:\.\d+)?)\b", style)
+        ]
+        large_text = any(value >= 18.0 for value in size_values)
+        heading_weight = bool(
+            any(value >= 600.0 for value in weight_values)
+            or re.search(r"font-weight\s*:\s*(?:bold|bolder)\b", style)
+        )
+        if large_text and heading_weight:
+            result.append(match)
+    return result
+
+
 def credential_table_matches(article: str) -> list[re.Match[str]]:
     pattern = re.compile(
         r"<table\b(?=[^>]*\bdata-native-table-purpose\s*=\s*['\"]credential['\"])[^>]*>.*?</table>",
@@ -420,6 +518,21 @@ def contains_only_preview_gaps(fragment: str) -> bool:
     return not remainder.strip()
 
 
+def contains_only_preview_gaps_and_before_credential_photo(fragment: str) -> bool:
+    """Allow one marked trust photo between the solution preview and credential table."""
+    figures = list(
+        re.finditer(
+            r"<figure\b(?=[^>]*\bdata-real-photo\s*=\s*['\"]true['\"])(?=[^>]*\bdata-real-photo-slot\s*=\s*['\"]before-credential['\"])[^>]*>.*?</figure>",
+            fragment,
+            flags=re.I | re.S,
+        )
+    )
+    if len(figures) != 1:
+        return False
+    remainder = fragment[:figures[0].start()] + fragment[figures[0].end():]
+    return contains_only_preview_gaps(remainder)
+
+
 def credential_placement_issues(article: str) -> list[dict[str, str]]:
     """Return the standalone credential placement gate for builders and validators."""
 
@@ -445,12 +558,17 @@ def credential_placement_issues(article: str) -> list[dict[str, str]]:
                 "credential-before-solution-preview",
                 "금손한의원 소개 credential 표는 도입과 해결 방향 예고가 모두 끝난 뒤에 배치해야 합니다.",
             )
-        elif not contains_only_preview_gaps(article[solution_match.end():credential_match.start()]):
+        elif not (
+            contains_only_preview_gaps(article[solution_match.end():credential_match.start()])
+            or contains_only_preview_gaps_and_before_credential_photo(
+                article[solution_match.end():credential_match.start()]
+            )
+        ):
             add(
                 issues,
                 "error",
                 "credential-not-immediately-after-solution-preview",
-                "해결 방향 예고와 금손한의원 소개 credential 표 사이에는 빈 preview-gap 외의 본문·이미지·표를 둘 수 없습니다.",
+                "해결 방향 예고와 금손한의원 소개 credential 표 사이에는 빈 preview-gap 또는 before-credential 실제 사진 1장만 둘 수 있습니다.",
             )
 
     late_intro_roles = [
@@ -600,6 +718,52 @@ def load_media_library(path: Path) -> dict[str, dict[str, object]]:
     }
 
 
+def previous_completed_entry(
+    state: dict[str, object], *, current_title: str = ""
+) -> dict[str, object] | None:
+    entries = state.get("entries", []) if isinstance(state, dict) else []
+    for entry in entries if isinstance(entries, list) else []:
+        if not isinstance(entry, dict):
+            continue
+        if current_title and str(entry.get("title", "")).strip() == current_title.strip():
+            continue
+        return entry
+    return None
+
+
+def recent_media_policy(
+    state: dict[str, object], *, current_title: str = ""
+) -> tuple[set[str], set[str], list[set[str]], list[set[str]]]:
+    ids: set[str] = set()
+    hashes: set[str] = set()
+    id_sets: list[set[str]] = []
+    hash_sets: list[set[str]] = []
+    entry = previous_completed_entry(state, current_title=current_title)
+    for entry in [entry] if entry is not None else []:
+        entry_ids = {str(value).strip() for value in entry.get("realMediaIds", []) if str(value).strip()}
+        entry_hashes = {str(value).strip() for value in entry.get("realMediaHashes", []) if str(value).strip()}
+        ids.update(entry_ids)
+        hashes.update(entry_hashes)
+        if entry_ids:
+            id_sets.append(entry_ids)
+        if entry_hashes:
+            hash_sets.append(entry_hashes)
+    return ids, hashes, id_sets, hash_sets
+
+
+def recent_trust_media_policy(
+    state: dict[str, object], *, current_title: str = ""
+) -> tuple[set[str], set[str]]:
+    """Return only the immediately previous article's separate trust media."""
+
+    entry = previous_completed_entry(state, current_title=current_title)
+    if entry is None:
+        return set(), set()
+    ids = {str(value).strip() for value in entry.get("trustMediaIds", []) if str(value).strip()}
+    hashes = {str(value).strip() for value in entry.get("trustMediaHashes", []) if str(value).strip()}
+    return ids, hashes
+
+
 def file_sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -636,6 +800,9 @@ def real_figure_checks(
     figure_match: re.Match[str] | None,
     image_index: int,
     issues: list[dict[str, object]],
+    *,
+    asset: dict[str, object] | None = None,
+    image_tag: str = "",
 ) -> None:
     if figure_match is None:
         add(issues, "error", "real-photo-figure-missing", f"실제 사진 {image_index}가 figure 안에 있지 않습니다.")
@@ -643,32 +810,437 @@ def real_figure_checks(
     figure = figure_match.group(0)
     opening_match = re.match(r"<figure\b[^>]*>", figure, flags=re.I | re.S)
     opening = opening_match.group(0) if opening_match else ""
+    slot_values = attr_values(opening, "data-real-photo-slot")
+    slot = slot_values[0] if len(slot_values) == 1 else ""
     if attr_values(opening, "data-real-photo") != ["true"]:
         add(issues, "error", "real-photo-figure-marker-missing", f"실제 사진 {image_index} figure에 data-real-photo=true가 필요합니다.")
-    if attr_values(opening, "data-image-placement") != ["after-related-paragraph"]:
-        add(issues, "error", "real-photo-placement-marker", f"실제 사진 {image_index}는 관련 문단 바로 뒤에 배치합니다.")
+    if slot not in REAL_PHOTO_SLOTS:
+        add(
+            issues,
+            "error",
+            "real-photo-slot-invalid",
+            f"실제 사진 {image_index}는 before-credential 또는 closing-trust 슬롯이어야 합니다.",
+        )
+    closing_gallery = slot == "closing-trust"
+    expected_placement = "closing-clinical-gallery" if closing_gallery else "after-related-paragraph"
+    if attr_values(opening, "data-image-placement") != [expected_placement]:
+        detail = (
+            f"실제 사진 {image_index}는 글마무리 실제 진료 사진 구간에 배치합니다."
+            if closing_gallery
+            else f"실제 사진 {image_index}는 관련 문단 바로 뒤에 배치합니다."
+        )
+        add(issues, "error", "real-photo-placement-marker", detail)
     if not re.search(r"\btext-align\s*:\s*center", opening, flags=re.I):
         add(issues, "error", "real-photo-not-centered", f"실제 사진 {image_index} figure가 중앙 정렬이 아닙니다.")
     anchors_values = attr_values(opening, "data-image-anchor")
     anchors = [item.strip() for item in anchors_values[0].split("|") if item.strip()] if len(anchors_values) == 1 else []
-    if not anchors:
+    previous_text = ""
+    if not closing_gallery and not anchors:
         add(issues, "error", "real-photo-anchor-missing", f"실제 사진 {image_index}에 관련 문단 핵심어가 없습니다.")
-    else:
+    elif not closing_gallery:
         prefix = article[:figure_match.start()]
+        while True:
+            before = prefix
+            prefix = re.sub(
+                r"\s*<p\b(?=[^>]*\bdata-preview-gap\s*=\s*['\"]true['\"])[^>]*>(?:(?!</p>).)*</p>\s*$",
+                "",
+                prefix,
+                flags=re.I | re.S,
+            )
+            prefix = re.sub(r"\s*</(?:section|div)>\s*$", "", prefix, flags=re.I | re.S)
+            if prefix == before:
+                break
+        prior = list(re.finditer(r"<p\b(?P<attrs>[^>]*)>(?P<body>.*?)</p>", prefix, flags=re.I | re.S))
+        previous = prior[-1] if prior and not prefix[prior[-1].end():].strip() else None
+        if previous is None or not re.search(r"\bdata-mobile-group\s*=\s*['\"]true['\"]", previous.group("attrs"), flags=re.I):
+            add(issues, "error", "real-photo-related-paragraph-missing", f"실제 사진 {image_index} 바로 앞에 관련 모바일 문단이 없습니다.")
+        else:
+            previous_text = visible_text(previous.group("body"))
+            if not any(compact(anchor) in compact(previous_text) for anchor in anchors):
+                add(issues, "error", "real-photo-anchor-mismatch", f"실제 사진 {image_index}의 핵심어가 바로 앞 문단에 없습니다.")
+
+    if asset is not None:
+        placement_terms = [str(value).strip() for value in asset.get("placementTerms", []) if str(value).strip()]
+        approved_alt = str(asset.get("approvedAlt", "")).strip()
+        if not approved_alt or (not closing_gallery and not placement_terms):
+            add(
+                issues,
+                "error",
+                "real-photo-context-metadata-missing",
+                (
+                    f"실제 사진 {image_index} 자산에 approvedAlt가 필요합니다."
+                    if closing_gallery
+                    else f"실제 사진 {image_index} 자산에 승인 placementTerms와 approvedAlt가 필요합니다."
+                ),
+            )
+        elif not closing_gallery:
+            approved_anchors = [
+                anchor
+                for anchor in anchors
+                if any(compact(anchor) == compact(term) for term in placement_terms)
+            ]
+            if not approved_anchors:
+                add(
+                    issues,
+                    "error",
+                    "real-photo-anchor-not-approved",
+                    f"실제 사진 {image_index}의 anchor는 사진 장면을 특정하는 승인 핵심어여야 합니다.",
+                )
+            elif not any(compact(anchor) in compact(previous_text) for anchor in approved_anchors):
+                add(
+                    issues,
+                    "error",
+                    "real-photo-context-mismatch",
+                    f"실제 사진 {image_index}의 바로 앞 문단이 승인 장면({', '.join(approved_anchors)})을 실제로 설명하지 않습니다.",
+                )
+        if approved_alt:
+            alt_values = attr_values(image_tag, "alt")
+            if alt_values != [approved_alt]:
+                add(
+                    issues,
+                    "error",
+                    "real-photo-alt-mismatch",
+                    f"실제 사진 {image_index}의 alt는 승인 장면 설명과 정확히 같아야 합니다.",
+                )
+    if re.search(r"<figcaption\b", figure, flags=re.I):
+        add(issues, "error", "visible-image-caption-forbidden", f"실제 사진 {image_index} 아래에 보이는 캡션을 쓰면 안 됩니다.")
+
+
+def trust_figure_checks(
+    article: str,
+    figure_match: re.Match[str] | None,
+    image_index: int,
+    issues: list[dict[str, object]],
+    *,
+    asset: dict[str, object] | None = None,
+    image_tag: str = "",
+) -> None:
+    """Validate the separate closing credential/director trust photo."""
+
+    if figure_match is None:
+        add(issues, "error", "trust-photo-figure-missing", f"마무리 신뢰 사진 {image_index}가 figure 안에 있지 않습니다.")
+        return
+    figure = figure_match.group(0)
+    opening_match = re.match(r"<figure\b[^>]*>", figure, flags=re.I | re.S)
+    opening = opening_match.group(0) if opening_match else ""
+    if attr_values(opening, "data-trust-photo") != ["true"]:
+        add(issues, "error", "trust-photo-figure-marker-missing", f"마무리 신뢰 사진 {image_index} figure에 data-trust-photo=true가 필요합니다.")
+    if attr_values(opening, "data-trust-photo-slot") != [TRUST_PHOTO_SLOT]:
+        add(issues, "error", "trust-photo-slot-invalid", f"마무리 신뢰 사진 {image_index}는 {TRUST_PHOTO_SLOT} 슬롯이어야 합니다.")
+    if attr_values(opening, "data-image-placement") != ["after-related-paragraph"]:
+        add(issues, "error", "trust-photo-placement-marker", f"마무리 신뢰 사진 {image_index}는 관련 신뢰 문단 바로 뒤에 배치합니다.")
+    if not re.search(r"\btext-align\s*:\s*center", opening, flags=re.I):
+        add(issues, "error", "trust-photo-not-centered", f"마무리 신뢰 사진 {image_index} figure가 중앙 정렬이 아닙니다.")
+
+    anchor_values = attr_values(opening, "data-image-anchor")
+    anchors = [item.strip() for item in anchor_values[0].split("|") if item.strip()] if len(anchor_values) == 1 else []
+    if not anchors:
+        add(issues, "error", "trust-photo-anchor-missing", f"마무리 신뢰 사진 {image_index}에 장면 핵심어가 없습니다.")
+
+    prefix = article[:figure_match.start()]
+    while True:
+        before = prefix
         prefix = re.sub(
             r"\s*<p\b(?=[^>]*\bdata-preview-gap\s*=\s*['\"]true['\"])[^>]*>(?:(?!</p>).)*</p>\s*$",
             "",
             prefix,
             flags=re.I | re.S,
         )
-        prior = list(re.finditer(r"<p\b(?P<attrs>[^>]*)>(?P<body>.*?)</p>", prefix, flags=re.I | re.S))
-        previous = prior[-1] if prior and not prefix[prior[-1].end():].strip() else None
-        if previous is None or not re.search(r"\bdata-mobile-group\s*=\s*['\"]true['\"]", previous.group("attrs"), flags=re.I):
-            add(issues, "error", "real-photo-related-paragraph-missing", f"실제 사진 {image_index} 바로 앞에 관련 모바일 문단이 없습니다.")
-        elif not any(compact(anchor) in compact(visible_text(previous.group("body"))) for anchor in anchors):
-            add(issues, "error", "real-photo-anchor-mismatch", f"실제 사진 {image_index}의 핵심어가 바로 앞 문단에 없습니다.")
+        prefix = re.sub(r"\s*</(?:section|div)>\s*$", "", prefix, flags=re.I | re.S)
+        if prefix == before:
+            break
+    prior = list(re.finditer(r"<p\b(?P<attrs>[^>]*)>(?P<body>.*?)</p>", prefix, flags=re.I | re.S))
+    previous = prior[-1] if prior and not prefix[prior[-1].end():].strip() else None
+    previous_text = ""
+    if previous is None:
+        add(issues, "error", "trust-photo-context-missing", f"마무리 신뢰 사진 {image_index} 바로 앞에 신뢰 맥락 문단이 없습니다.")
+    else:
+        attrs = previous.group("attrs")
+        previous_text = visible_text(previous.group("body"))
+        if not re.search(r"\bdata-reference-role\s*=\s*['\"]credential-trust-context['\"]", attrs, flags=re.I):
+            add(issues, "error", "trust-photo-context-role-missing", f"마무리 신뢰 사진 {image_index} 앞 문단의 역할 표시가 없습니다.")
+        if not re.search(r"\bdata-goldhand-role\s*=\s*['\"]proof['\"]", attrs, flags=re.I):
+            add(issues, "error", "trust-photo-context-proof-missing", f"마무리 신뢰 사진 {image_index} 앞 문단은 proof로 표시해야 합니다.")
+        if not re.search(r"\bdata-mobile-group\s*=\s*['\"]true['\"]", attrs, flags=re.I):
+            add(issues, "error", "trust-photo-context-mobile-group", f"마무리 신뢰 사진 {image_index} 앞 문단은 모바일 문단이어야 합니다.")
+        if anchors and not any(compact(anchor) in compact(previous_text) for anchor in anchors):
+            add(issues, "error", "trust-photo-anchor-mismatch", f"마무리 신뢰 사진 {image_index}의 핵심어가 바로 앞 신뢰 문단에 없습니다.")
+
+    if asset is not None:
+        placement_terms = [str(value).strip() for value in asset.get("closingTrustPlacementTerms", []) if str(value).strip()]
+        approved_alt = str(asset.get("closingTrustApprovedAlt", "")).strip()
+        context_text = str(asset.get("closingTrustContextText", "")).strip()
+        if not placement_terms or not approved_alt or not context_text:
+            add(issues, "error", "trust-photo-context-metadata-missing", f"마무리 신뢰 사진 {image_index} 자산의 승인 문맥·alt 메타데이터가 비어 있습니다.")
+        else:
+            if not any(any(compact(anchor) == compact(term) for term in placement_terms) for anchor in anchors):
+                add(issues, "error", "trust-photo-anchor-not-approved", f"마무리 신뢰 사진 {image_index}의 anchor가 승인 장면 핵심어와 다릅니다.")
+            if compact(previous_text) != compact(context_text):
+                add(issues, "error", "trust-photo-context-mismatch", f"마무리 신뢰 사진 {image_index} 앞 문단은 검수된 장면 설명과 정확히 같아야 합니다.")
+            if attr_values(image_tag, "alt") != [approved_alt]:
+                add(issues, "error", "trust-photo-alt-mismatch", f"마무리 신뢰 사진 {image_index}의 alt는 승인 장면 설명과 정확히 같아야 합니다.")
     if re.search(r"<figcaption\b", figure, flags=re.I):
-        add(issues, "error", "visible-image-caption-forbidden", f"실제 사진 {image_index} 아래에 보이는 캡션을 쓰면 안 됩니다.")
+        add(issues, "error", "visible-image-caption-forbidden", f"마무리 신뢰 사진 {image_index} 아래에 보이는 캡션을 쓰면 안 됩니다.")
+
+
+def trust_layout_checks(article: str, issues: list[dict[str, object]]) -> None:
+    """Keep one trust image after the close and as the final image before hours."""
+
+    figures = list(
+        re.finditer(
+            r"<figure\b(?=[^>]*\bdata-trust-photo\s*=\s*['\"]true['\"])[^>]*>.*?</figure>",
+            article,
+            flags=re.I | re.S,
+        )
+    )
+    contexts = reference_role_matches(article, ("credential-trust-context",))
+    neutral = reference_role_matches(article, ("neutral-close",))
+    clinic = reference_role_matches(article, ("clinic-hours-heading",))
+    if len(figures) != 1 or len(contexts) != 1:
+        return
+    figure = figures[0]
+    context = contexts[0]
+    if len(neutral) == 1 and len(clinic) == 1:
+        if not (neutral[0].end() <= context.start() < context.end() <= figure.start() < figure.end() <= clinic[0].start()):
+            add(issues, "error", "trust-photo-position", "마무리 신뢰 사진은 neutral-close 뒤, 진료시간 안내 앞의 마지막 이미지로 둡니다.")
+        bridge = article[context.end():figure.start()]
+        if not contains_only_preview_gaps(bridge):
+            add(issues, "error", "trust-photo-context-not-adjacent", "신뢰 맥락 문단과 마무리 신뢰 사진 사이에는 preview-gap만 둘 수 있습니다.")
+        tail = article[figure.end():clinic[0].start()]
+        tail = re.sub(r"<p\b(?=[^>]*\bdata-preview-gap\s*=\s*['\"]true['\"])[^>]*>.*?</p>", "", tail, flags=re.I | re.S)
+        tail = re.sub(r"<hr\b(?=[^>]*\bdata-naver-native-component\s*=\s*['\"]divider['\"])[^>]*>", "", tail, flags=re.I | re.S)
+        tail = re.sub(r"<!--.*?-->|</?(?:section|div)\b[^>]*>", "", tail, flags=re.I | re.S)
+        if tail.strip() or re.search(r"<img\b", article[figure.end():clinic[0].start()], flags=re.I):
+            add(issues, "error", "trust-photo-not-last-image", "마무리 신뢰 사진 뒤에는 진료시간 안내 전까지 다른 본문·표·이미지를 둘 수 없습니다.")
+
+
+def media_layout_checks(article: str, issues: list[dict[str, object]]) -> None:
+    """Enforce the two real-photo layouts and keep GPT images in the first two body sections."""
+    figure_matches = list(re.finditer(r"<figure\b[^>]*>.*?</figure>", article, flags=re.I | re.S))
+    real_figures = [
+        match
+        for match in figure_matches
+        if re.search(r"<img\b(?=[^>]*\bdata-real-photo\s*=\s*['\"]true['\"])[^>]*>", match.group(0), flags=re.I | re.S)
+    ]
+    generated_figures = [
+        match
+        for match in figure_matches
+        if re.search(r"<img\b(?=[^>]*\bdata-media-provider\s*=\s*['\"]gpt-image['\"])[^>]*>", match.group(0), flags=re.I | re.S)
+    ]
+    solution_matches = reference_role_matches(article, ("solution-preview",))
+    credential_matches = credential_table_matches(article)
+    neutral_matches = reference_role_matches(article, ("neutral-close",))
+    clinic_heading_matches = reference_role_matches(article, ("clinic-hours-heading",))
+    trust_context_matches = reference_role_matches(article, ("credential-trust-context",))
+    section_heading_matches = explanatory_heading_candidates(article)
+
+    if len(real_figures) == 1:
+        opening = re.match(r"<figure\b[^>]*>", real_figures[0].group(0), flags=re.I | re.S)
+        slot = attr_values(opening.group(0) if opening else "", "data-real-photo-slot")
+        if slot != ["before-credential"]:
+            add(
+                issues,
+                "error",
+                "real-photo-layout-invalid",
+                "실제 사진 1장 구성은 원장 소개표 바로 위 before-credential 슬롯만 허용합니다.",
+            )
+        elif len(solution_matches) == 1 and len(credential_matches) == 1:
+            figure = real_figures[0]
+            solution = solution_matches[0]
+            credential = credential_matches[0]
+            if not (solution.end() <= figure.start() < figure.end() <= credential.start()):
+                add(
+                    issues,
+                    "error",
+                    "real-photo-before-credential-position",
+                    "before-credential 실제 사진은 해결 방향 예고가 끝난 뒤 원장 소개표 바로 위에 있어야 합니다.",
+                )
+            bridge = article[solution.end():credential.start()]
+            if not contains_only_preview_gaps_and_before_credential_photo(bridge):
+                add(
+                    issues,
+                    "error",
+                    "real-photo-before-credential-not-adjacent",
+                    "해결 방향 예고와 원장 소개표 사이에는 실제 사진 1장과 preview-gap만 둘 수 있습니다.",
+                )
+    elif len(real_figures) == 2:
+        slots: list[str] = []
+        for figure in real_figures:
+            opening = re.match(r"<figure\b[^>]*>", figure.group(0), flags=re.I | re.S)
+            values = attr_values(opening.group(0) if opening else "", "data-real-photo-slot")
+            slots.append(values[0] if len(values) == 1 else "")
+        if slots != ["closing-trust", "closing-trust"]:
+            add(
+                issues,
+                "error",
+                "real-photo-layout-invalid",
+                "실제 사진 2장 구성은 글마무리 closing-trust 슬롯 두 장만 허용합니다.",
+            )
+        elif len(neutral_matches) == 1 and len(clinic_heading_matches) == 1:
+            neutral = neutral_matches[0]
+            clinic_heading = clinic_heading_matches[0]
+            clinical_tail_end = trust_context_matches[0].start() if len(trust_context_matches) == 1 else clinic_heading.start()
+            if not all(neutral.end() <= figure.start() < figure.end() <= clinical_tail_end for figure in real_figures):
+                add(
+                    issues,
+                    "error",
+                    "real-photo-closing-trust-position",
+                    "closing-trust 실제 진료 사진 두 장은 neutral-close 뒤, 별도 마무리 신뢰 사진 바로 앞에 있어야 합니다.",
+                )
+            closing_tail = article[real_figures[0].start():clinical_tail_end]
+            closing_tail = re.sub(
+                r"<figure\b(?=[^>]*\bdata-real-photo-slot\s*=\s*['\"]closing-trust['\"])[^>]*>.*?</figure>",
+                "",
+                closing_tail,
+                flags=re.I | re.S,
+            )
+            closing_tail = re.sub(
+                r"<p\b(?=[^>]*\bdata-preview-gap\s*=\s*['\"]true['\"])[^>]*>.*?</p>",
+                "",
+                closing_tail,
+                flags=re.I | re.S,
+            )
+            closing_tail = re.sub(
+                r"<hr\b(?=[^>]*\bdata-naver-native-component\s*=\s*['\"]divider['\"])[^>]*>",
+                "",
+                closing_tail,
+                flags=re.I | re.S,
+            )
+            closing_tail = re.sub(r"<!--.*?-->|</?(?:section|div)\b[^>]*>", "", closing_tail, flags=re.I | re.S)
+            if closing_tail.strip():
+                add(
+                    issues,
+                    "error",
+                    "real-photo-closing-trust-not-adjacent",
+                    "closing-trust 실제 진료 사진은 다른 본문·표 없이 별도 마무리 신뢰 구간 바로 앞에 둡니다.",
+                )
+    elif real_figures:
+        add(
+            issues,
+            "error",
+            "real-photo-layout-invalid",
+            "실제 사진은 원장 소개표 위 1장 또는 글마무리 2장 중 한 구성만 허용합니다.",
+        )
+
+    early_start: int | None = None
+    first_section_end: int | None = None
+    early_end: int | None = None
+    if len(credential_matches) == 1 and len(neutral_matches) == 1:
+        credential = credential_matches[0]
+        neutral = neutral_matches[0]
+        body_dividers = list(
+            re.finditer(
+                r"<hr\b[^>]*>",
+                article,
+                flags=re.I | re.S,
+            )
+        )
+        body_dividers = [
+            match
+            for match in body_dividers
+            if credential.end() <= match.start() < neutral.start()
+        ]
+        paired_body_headings = [
+            heading
+            for divider in body_dividers
+            if (heading := divider_following_element(article, divider, neutral.start())) is not None
+        ]
+        invalid_body_headings = [
+            match
+            for match in paired_body_headings
+            if match.group("tag").lower() not in {"h2", "p"}
+            or not has_explanatory_heading_contract(match)
+        ]
+        if len(paired_body_headings) != len(body_dividers):
+            invalid_body_headings.append(body_dividers[len(paired_body_headings)])
+        if invalid_body_headings:
+            add(
+                issues,
+                "error",
+                "section-heading-markers-invalid",
+                "각 설명 구분선 바로 뒤의 h2 또는 p 소제목에는 data-reference-role=section-heading과 data-naver-native-component=subheading을 함께 표시해야 합니다.",
+            )
+        valid_body_headings = [
+            match
+            for match in paired_body_headings
+            if match.group("tag").lower() in {"h2", "p"}
+            and has_explanatory_heading_contract(match)
+        ]
+        if not valid_body_headings:
+            add(
+                issues,
+                "error",
+                "body-section-heading-missing",
+                "원장 소개표 뒤 설명 본문에서 두 표식이 모두 있는 소제목을 최소 1개 찾아야 합니다.",
+            )
+        paired_spans = {(match.start(), match.end()) for match in paired_body_headings}
+        recognizable_body_headings = [
+            match
+            for match in section_heading_matches
+            if credential.end() <= match.start() < neutral.start()
+        ]
+        recognizable_body_headings.extend(
+            match
+            for match in visual_paragraph_heading_candidates(article)
+            if credential.end() <= match.start() < neutral.start()
+        )
+        recognizable_by_span = {
+            (match.start(), match.end()): match
+            for match in recognizable_body_headings
+        }
+        unpaired_headings = [
+            match
+            for span, match in recognizable_by_span.items()
+            if span not in paired_spans
+        ]
+        if unpaired_headings:
+            add(
+                issues,
+                "error",
+                "section-heading-divider-pair-invalid",
+                "설명 소제목은 본문 구분선 바로 뒤에 있어야 합니다.",
+            )
+        boundary_by_span = {
+            (match.start(), match.end()): match
+            for match in paired_body_headings
+        }
+        boundary_by_span.update(recognizable_by_span)
+        body_headings = [boundary_by_span[span] for span in sorted(boundary_by_span)]
+        if body_headings:
+            early_start = body_headings[0].end()
+            first_section_end = body_headings[1].start() if len(body_headings) >= 2 else neutral.start()
+            early_end = body_headings[2].start() if len(body_headings) >= 3 else neutral.start()
+
+    for index, figure in enumerate(generated_figures, start=1):
+        opening = re.match(r"<figure\b[^>]*>", figure.group(0), flags=re.I | re.S)
+        if attr_values(opening.group(0) if opening else "", "data-image-zone") != ["early-explanatory-body"]:
+            add(
+                issues,
+                "error",
+                "generated-image-zone-missing",
+                f"GPT 이미지 {index}는 data-image-zone=early-explanatory-body로 표시해야 합니다.",
+            )
+        if early_start is not None and early_end is not None and not (
+            early_start <= figure.start() < figure.end() <= early_end
+        ):
+            add(
+                issues,
+                "error",
+                "generated-image-outside-early-body",
+                f"GPT 이미지 {index}는 원장 소개표 뒤 첫 두 개 설명 섹션 안에 배치해야 합니다.",
+            )
+    if (
+        generated_figures
+        and early_start is not None
+        and first_section_end is not None
+        and not any(early_start <= figure.start() < figure.end() <= first_section_end for figure in generated_figures)
+    ):
+        add(
+            issues,
+            "error",
+            "generated-image-first-section-missing",
+            "GPT 이미지 3~4장 가운데 최소 1장은 첫 번째 설명 섹션에 있어야 합니다.",
+        )
 
 
 def generated_figure_placement_checks(
@@ -743,7 +1315,8 @@ def image_checks(
     *,
     require_generated: bool = False,
     require_real: bool = False,
-) -> dict[str, int]:
+    require_trust: bool = False,
+) -> dict[str, object]:
     image_tags = re.findall(r"<img\b[^>]*>", article, flags=re.I | re.S)
     urls: set[str] = set()
     official = 0
@@ -752,13 +1325,26 @@ def image_checks(
     real_photos = 0
     real_official = 0
     real_bundled = 0
+    trust_photos = 0
+    trust_official = 0
+    trust_bundled = 0
     real_ids: set[str] = set()
     real_hashes: set[str] = set()
+    trust_ids: set[str] = set()
+    trust_hashes: set[str] = set()
+    official_ids: set[str] = set()
     for index, tag in enumerate(image_tags, start=1):
         source = re.search(r"\bdata-reference-source-url\s*=\s*['\"](.*?)['\"]", tag, flags=re.I | re.S)
         local_path = re.search(r"\bdata-local-image\s*=\s*['\"](.*?)['\"]", tag, flags=re.I | re.S)
         provider = attr_values(tag, "data-media-provider")
         is_real = attr_values(tag, "data-real-photo") == ["true"]
+        is_trust = attr_values(tag, "data-trust-photo") == ["true"]
+        if is_real:
+            real_photos += 1
+        if is_trust:
+            trust_photos += 1
+        if is_real and is_trust:
+            add(issues, "error", "photo-role-not-exclusive", f"이미지 {index}는 실제 진료 사진과 마무리 신뢰 사진을 동시에 표시할 수 없습니다.")
         if provider == ["gpt-image"]:
             generated += 1
             reference_urls = attr_values(tag, "data-generation-reference-url")
@@ -808,6 +1394,8 @@ def image_checks(
 
             if is_real:
                 add(issues, "error", "generated-image-marked-real", f"GPT 이미지 {index}를 실제 사진으로 표시할 수 없습니다.")
+            if is_trust:
+                add(issues, "error", "generated-image-marked-trust", f"GPT 이미지 {index}를 마무리 신뢰 사진으로 표시할 수 없습니다.")
             figure_match = containing_figure(article, tag)
             figure = figure_match.group(0) if figure_match else ""
             generated_figure_placement_checks(article, figure_match, index, issues)
@@ -815,12 +1403,13 @@ def image_checks(
                 add(issues, "error", "visible-image-caption-forbidden", f"GPT 이미지 {index} 아래에 보이는 캡션을 쓰면 안 됩니다.")
         elif source:
             official += 1
-            if not is_real:
+            figure_match = containing_figure(article, tag)
+            if not is_real and not is_trust:
                 add(issues, "error", "official-real-photo-marker-missing", f"공식 사진 {index}에 data-real-photo=true가 필요합니다.")
-            else:
-                real_photos += 1
+            if is_real:
                 real_official += 1
-                real_figure_checks(article, containing_figure(article, tag), index, issues)
+            if is_trust:
+                trust_official += 1
             if attr_values(tag, "data-media-origin") != ["goldhand-bundled-official-library"]:
                 add(issues, "error", "official-photo-origin-invalid", f"공식 사진 {index}의 출처 표시가 잘못됐습니다.")
             url = html.unescape(source.group(1)).strip()
@@ -833,49 +1422,84 @@ def image_checks(
                 add(issues, "error", "referrer-policy-missing", f"공식 이미지 {index}에 no-referrer가 없습니다.")
             media_id = re.search(r"\bdata-goldhand-media\s*=\s*['\"](.*?)['\"]", tag, flags=re.I)
             if media_id:
-                if media_id.group(1) in real_ids:
-                    add(issues, "error", "duplicate-real-photo-id", f"같은 실제 사진 ID가 중복됐습니다: {media_id.group(1)}")
-                real_ids.add(media_id.group(1))
-                asset = media_library.get(media_id.group(1))
+                asset_id = media_id.group(1)
+                if asset_id in official_ids:
+                    add(issues, "error", "duplicate-official-photo-id", f"같은 공식 사진 ID가 중복됐습니다: {asset_id}")
+                official_ids.add(asset_id)
+                asset = media_library.get(asset_id)
                 bundle = bundled_asset_path(asset) if asset else None
                 expected_hash = str(asset.get("sha256", "")) if asset else ""
                 tag_hashes = attr_values(tag, "data-media-sha256")
-                descriptor = " ".join(
-                    str(asset.get(field, ""))
-                    for field in ("filename", "caption", "sceneType")
-                ) if asset else ""
-                person_scene_ok = bool(
+                common_approval = bool(
                     asset
-                    and asset.get("personInteraction") is True
-                    and asset.get("directorVisible") is True
-                    and str(asset.get("sceneType", "")).startswith("director-patient-")
-                    and FORBIDDEN_REAL_PHOTO_DESCRIPTOR.search(descriptor) is None
+                    and asset.get("url") == url
+                    and bundle is not None
+                    and bundle.is_file()
+                    and expected_hash
+                    and len(tag_hashes) == 1
+                    and tag_hashes[0] == expected_hash
+                    and file_sha256(bundle) == expected_hash
                 )
-                if asset and not person_scene_ok:
-                    add(
-                        issues,
-                        "error",
-                        "nonperson-or-logo-real-photo-forbidden",
-                        f"실제 사진 {media_id.group(1)}는 원장 치료·진찰·상담 장면이 아니거나 로고·사물·공간 사진입니다.",
+                if is_real:
+                    if asset_id in real_ids:
+                        add(issues, "error", "duplicate-real-photo-id", f"같은 실제 사진 ID가 중복됐습니다: {asset_id}")
+                    real_ids.add(asset_id)
+                    real_figure_checks(article, figure_match, index, issues, asset=asset, image_tag=tag)
+                    descriptor = " ".join(
+                        str(asset.get(field, ""))
+                        for field in ("filename", "caption", "sceneType")
+                    ) if asset else ""
+                    person_scene_ok = bool(
+                        asset
+                        and asset.get("personInteraction") is True
+                        and asset.get("directorVisible") is True
+                        and str(asset.get("sceneType", "")).startswith("director-patient-")
+                        and FORBIDDEN_REAL_PHOTO_DESCRIPTOR.search(descriptor) is None
                     )
-                if (
-                    not asset
-                    or asset.get("url") != url
-                    or asset.get("safeAuto") is not True
-                    or asset.get("requiresReview") is True
-                    or not person_scene_ok
-                    or bundle is None
-                    or not bundle.is_file()
-                    or not expected_hash
-                    or len(tag_hashes) != 1
-                    or tag_hashes[0] != expected_hash
-                    or (bundle.is_file() and file_sha256(bundle) != expected_hash)
-                ):
-                    add(issues, "error", "unapproved-official-image", f"안전 인덱스와 일치하지 않는 공식 이미지: {media_id.group(1)}")
-                else:
-                    real_bundled += 1
-                    real_hashes.add(expected_hash)
+                    if asset and not person_scene_ok:
+                        add(
+                            issues,
+                            "error",
+                            "nonperson-or-logo-real-photo-forbidden",
+                            f"실제 사진 {asset_id}는 원장 치료·진찰·상담 장면이 아니거나 로고·사물·공간 사진입니다.",
+                        )
+                    if (
+                        not common_approval
+                        or not asset
+                        or asset.get("safeAuto") is not True
+                        or asset.get("requiresReview") is True
+                        or not person_scene_ok
+                    ):
+                        add(issues, "error", "unapproved-official-image", f"안전 인덱스와 일치하지 않는 공식 이미지: {asset_id}")
+                    else:
+                        real_bundled += 1
+                        real_hashes.add(expected_hash)
+                elif is_trust:
+                    if asset_id in trust_ids:
+                        add(issues, "error", "duplicate-trust-photo-id", f"같은 마무리 신뢰 사진 ID가 중복됐습니다: {asset_id}")
+                    trust_ids.add(asset_id)
+                    trust_figure_checks(article, figure_match, index, issues, asset=asset, image_tag=tag)
+                    trust_scene_ok = bool(
+                        asset
+                        and asset.get("closingTrustEligible") is True
+                        and asset.get("closingTrustReviewed") is True
+                        and asset.get("closingTrustRequiresReview") is False
+                        and str(asset.get("closingTrustSceneType", "")) in ALLOWED_CLOSING_TRUST_SCENES
+                        and (
+                            asset.get("closingTrustDirectorVisible") is True
+                            or asset.get("closingTrustDocumentVisible") is True
+                        )
+                    )
+                    if not common_approval or not trust_scene_ok:
+                        add(issues, "error", "unapproved-closing-trust-image", f"검수된 마무리 신뢰 인덱스와 일치하지 않는 공식 이미지: {asset_id}")
+                    else:
+                        trust_bundled += 1
+                        trust_hashes.add(expected_hash)
             else:
+                if is_real:
+                    real_figure_checks(article, figure_match, index, issues, image_tag=tag)
+                if is_trust:
+                    trust_figure_checks(article, figure_match, index, issues, image_tag=tag)
                 add(issues, "error", "official-image-id-missing", f"공식 이미지 {index}에 data-goldhand-media가 없습니다.")
         elif local_path:
             local += 1
@@ -883,21 +1507,40 @@ def image_checks(
             if not path.is_absolute() or not path.is_file():
                 add(issues, "error", "local-image-missing", f"사용자 이미지 경로를 읽을 수 없습니다: {path}")
             if is_real:
-                real_photos += 1
                 real_figure_checks(article, containing_figure(article, tag), index, issues)
                 add(issues, "error", "local-real-photo-forbidden", f"실제 금손 사진 {index}는 사용자 로컬 경로가 아니라 플러그인 내장 라이브러리에서 선택해야 합니다.")
+            if is_trust:
+                trust_figure_checks(article, containing_figure(article, tag), index, issues)
+                add(issues, "error", "local-trust-photo-forbidden", f"마무리 신뢰 사진 {index}는 사용자 로컬 경로가 아니라 플러그인 내장 검수 라이브러리에서 선택해야 합니다.")
         else:
             add(issues, "error", "untracked-image", f"이미지 {index}에 공식 URL 또는 사용자 로컬 경로가 없습니다.")
-    if real_photos > 12:
-        add(issues, "error", "real-photo-count-maximum", f"실제 금손한의원 사진이 {real_photos}장입니다. 최대 12장입니다.")
-    if require_real and not 6 <= real_photos <= 12:
-        add(issues, "error", "real-photo-count", f"실제 금손한의원 사진이 {real_photos}장입니다. 6~12장이 필요합니다.")
-    if require_generated and not 1 <= generated <= 3:
-        add(issues, "error", "generated-image-count", f"callilife 레퍼런스로 만든 GPT 이미지가 {generated}장입니다. 1~3장이 필요합니다.")
+    if real_photos > 2:
+        add(issues, "error", "real-photo-count-maximum", f"실제 금손한의원 사진이 {real_photos}장입니다. 최대 2장입니다.")
+    if require_real and not 1 <= real_photos <= 2:
+        add(issues, "error", "real-photo-count", f"실제 금손한의원 사진이 {real_photos}장입니다. 1~2장이 필요합니다.")
+    if trust_photos > 1:
+        add(issues, "error", "trust-photo-count-maximum", f"마무리 신뢰 사진이 {trust_photos}장입니다. 정확히 1장만 사용합니다.")
+    if require_trust and trust_photos != 1:
+        add(issues, "error", "trust-photo-count", f"마무리 신뢰 사진이 {trust_photos}장입니다. 진료 사진과 별도로 정확히 1장이 필요합니다.")
+    if require_generated and not 3 <= generated <= 4:
+        add(issues, "error", "generated-image-count", f"callilife 레퍼런스로 만든 GPT 이미지가 {generated}장입니다. 3~4장이 필요합니다.")
+    real_photo_slots: list[str] = []
+    for figure_match in re.finditer(r"<figure\b[^>]*>.*?</figure>", article, flags=re.I | re.S):
+        figure = figure_match.group(0)
+        if not re.search(r"<img\b(?=[^>]*\bdata-real-photo\s*=\s*['\"]true['\"])[^>]*>", figure, flags=re.I | re.S):
+            continue
+        opening_match = re.match(r"<figure\b[^>]*>", figure, flags=re.I | re.S)
+        slot_values = attr_values(opening_match.group(0) if opening_match else "", "data-real-photo-slot")
+        real_photo_slots.append(slot_values[0] if len(slot_values) == 1 else "")
     return {
         "images": len(image_tags), "officialImages": official, "localImages": local,
         "generatedImages": generated, "realPhotos": real_photos,
         "realOfficialPhotos": real_official, "realBundledPhotos": real_bundled,
+        "realPhotoSlots": real_photo_slots,
+        "realMediaIds": sorted(real_ids), "realMediaHashes": sorted(real_hashes),
+        "trustPhotos": trust_photos, "trustOfficialPhotos": trust_official,
+        "trustBundledPhotos": trust_bundled,
+        "trustMediaIds": sorted(trust_ids), "trustMediaHashes": sorted(trust_hashes),
     }
 
 
@@ -912,6 +1555,10 @@ def validate_article(
     evidence: str = "",
     editorial_close: bool = False,
     writing_intelligence: dict[str, object] | None = None,
+    recent_media_ids: set[str] | None = None,
+    recent_media_hashes: set[str] | None = None,
+    recent_trust_media_ids: set[str] | None = None,
+    recent_trust_media_hashes: set[str] | None = None,
 ) -> dict[str, object]:
     issues: list[dict[str, object]] = []
     raw = normalize(raw)
@@ -984,6 +1631,37 @@ def validate_article(
                 add(issues, "error", "reader-question-length", f"독자 고민 {index}은 공백 제외 10~90자로 씁니다.")
         if not (meaningful_tokens(title) & meaningful_tokens(" ".join(hook_texts))):
             add(issues, "error", "reader-question-title-disconnect", "독자 고민이 제목의 핵심 문제와 연결되지 않습니다.")
+
+        because_hooks = [text for text in hook_texts if "때문에" in text]
+        if len(because_hooks) > 1:
+            add(
+                issues,
+                "error",
+                "reader-question-parallel-because-template",
+                "도입 질문 여러 개를 모두 ‘증상명 때문에 …나요?’ 틀로 쓰면 안 됩니다. 서로 다른 생활 장면과 문장 호흡으로 다시 쓰세요.",
+            )
+        for index, hook_text in enumerate(hook_texts, start=1):
+            if STACKED_ABSTRACT_HOOK.search(hook_text):
+                add(
+                    issues,
+                    "error",
+                    "reader-question-abstract-symptom-stack",
+                    f"독자 고민 {index}은 피로·기분 같은 증상 목록을 추상 서술어로 묶지 말고 실제 생활어로 물어야 합니다.",
+                )
+
+    intro_role_matches = reference_role_matches(article, ("reader-question", "greeting-authority"))
+    intro_roles = [
+        (attr_values(match.group(0), "data-reference-role") or [""])[0]
+        for match in intro_role_matches
+    ]
+    expected_intro_roles = ["reader-question"] * len(question_matches) + ["greeting-authority"]
+    if intro_roles != expected_intro_roles:
+        add(
+            issues,
+            "error",
+            "opening-hook-greeting-order",
+            "첫 보이는 도입은 독자 질문 2~3개가 연속으로 나온 뒤 고정 인사가 정확히 한 번 이어져야 합니다.",
+        )
 
     intro_device_id = ""
     reader_payoff = ""
@@ -1220,20 +1898,20 @@ def validate_article(
 
     if body_text.count(EXACT_GREETING) != 1:
         add(issues, "error", "greeting", f"고정 인사는 일반 본문에 정확히 한 번 있어야 합니다: {EXACT_GREETING}")
-    elif prose_paragraphs and prose_paragraphs[0] != EXACT_GREETING:
+    elif prose_paragraphs:
         greeting_index = next(index for index, paragraph in enumerate(prose_paragraphs) if EXACT_GREETING in paragraph)
         leading = prose_paragraphs[:greeting_index]
-        allowed_openings = {
-            re.sub(r"\s+", " ", visible_text(block)).strip()
-            for block in reference_role_blocks(article, ("reader-question", "quotation"))
-        }
-        greeting_starts_paragraph = prose_paragraphs[greeting_index].startswith(EXACT_GREETING)
-        if not leading or not greeting_starts_paragraph or not all(paragraph in allowed_openings for paragraph in leading):
+        expected_hooks = [re.sub(r"\s+", " ", text).strip() for text in hook_texts]
+        if (
+            greeting_index not in {2, 3}
+            or leading != expected_hooks
+            or prose_paragraphs[greeting_index] != EXACT_GREETING
+        ):
             add(
                 issues,
                 "error",
                 "greeting-position",
-                "고정 인사 앞에는 선택한 마스터가 요구하는 독자 질문·인용만 둘 수 있습니다.",
+                "글은 독자 질문 2~3개로 바로 시작하고, 그 다음 문단에 고정 인사를 단독으로 써야 합니다.",
             )
 
     clean_article_text = re.sub(r"\s+", " ", visible_text(article)).strip()
@@ -1323,13 +2001,56 @@ def validate_article(
             official_assets,
             require_generated=editorial_close,
             require_real=editorial_close,
+            require_trust=editorial_close,
         )
+        if editorial_close:
+            media_layout_checks(article, issues)
+            trust_layout_checks(article, issues)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         add(issues, "error", "image-validation-error", str(exc))
         image_metrics = {
             "images": 0, "officialImages": 0, "localImages": 0, "generatedImages": 0,
             "realPhotos": 0, "realOfficialPhotos": 0, "realBundledPhotos": 0,
+            "realPhotoSlots": [],
+            "realMediaIds": [], "realMediaHashes": [],
+            "trustPhotos": 0, "trustOfficialPhotos": 0, "trustBundledPhotos": 0,
+            "trustMediaIds": [], "trustMediaHashes": [],
         }
+
+    current_real_ids = set(str(value) for value in image_metrics.get("realMediaIds", []))
+    current_real_hashes = set(str(value) for value in image_metrics.get("realMediaHashes", []))
+    recent_media_ids = recent_media_ids or set()
+    recent_media_hashes = recent_media_hashes or set()
+    reused_recent_ids = current_real_ids & recent_media_ids
+    reused_recent_hashes = current_real_hashes & recent_media_hashes
+    reused_recent_count = max(len(reused_recent_ids), len(reused_recent_hashes))
+    closing_gallery_reuse_allowed = image_metrics.get("realPhotoSlots") == ["closing-trust", "closing-trust"]
+    if reused_recent_count and not closing_gallery_reuse_allowed:
+        add(
+            issues,
+            "error",
+            "immediately-previous-real-photo-repeat",
+            f"바로 직전 완료 글과 같은 실제 사진이 {reused_recent_count}장 있습니다. 직전 글 사진은 한 장도 다시 쓸 수 없습니다.",
+        )
+    image_metrics["immediatelyPreviousRealPhotoOverlap"] = reused_recent_count
+    image_metrics["immediatelyPreviousRealPhotoReuseLimit"] = 2 if closing_gallery_reuse_allowed else 0
+
+    current_trust_ids = set(str(value) for value in image_metrics.get("trustMediaIds", []))
+    current_trust_hashes = set(str(value) for value in image_metrics.get("trustMediaHashes", []))
+    recent_trust_media_ids = recent_trust_media_ids or set()
+    recent_trust_media_hashes = recent_trust_media_hashes or set()
+    reused_trust_ids = current_trust_ids & recent_trust_media_ids
+    reused_trust_hashes = current_trust_hashes & recent_trust_media_hashes
+    reused_trust_count = max(len(reused_trust_ids), len(reused_trust_hashes))
+    if reused_trust_count:
+        add(
+            issues,
+            "error",
+            "immediately-previous-trust-photo-repeat",
+            f"바로 직전 완료 글과 같은 마무리 신뢰 사진이 {reused_trust_count}장 있습니다. 직전 글의 신뢰 사진은 다시 쓸 수 없습니다.",
+        )
+    image_metrics["immediatelyPreviousTrustPhotoOverlap"] = reused_trust_count
+    image_metrics["immediatelyPreviousTrustPhotoReuseLimit"] = 0
 
     errors = sum(item["severity"] == "error" for item in issues)
     warnings = sum(item["severity"] == "warning" for item in issues)
@@ -1363,6 +2084,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-chars", type=int, default=1400)
     parser.add_argument("--max-chars", type=int, default=1800)
     parser.add_argument("--media-library", type=Path, default=DEFAULT_LIBRARY)
+    parser.add_argument("--state", type=Path, default=default_state_path())
     parser.add_argument("--writing-intelligence", type=Path, default=DEFAULT_WRITING_INTELLIGENCE)
     parser.add_argument("--evidence", action="append", type=Path, default=[])
     parser.add_argument(
@@ -1380,6 +2102,9 @@ def main() -> int:
         raw = args.input.read_text(encoding="utf-8")
         library = load_media_library(args.media_library)
         writing_intelligence = json.loads(args.writing_intelligence.read_text(encoding="utf-8"))
+        state = json.loads(args.state.read_text(encoding="utf-8")) if args.state.exists() else {}
+        recent_ids, recent_hashes, _, _ = recent_media_policy(state, current_title=args.title)
+        recent_trust_ids, recent_trust_hashes = recent_trust_media_policy(state, current_title=args.title)
         evidence_paths = args.evidence or [DEFAULT_EVIDENCE]
         evidence = "\n".join(path.read_text(encoding="utf-8") for path in evidence_paths if path.exists())
         result = validate_article(
@@ -1392,6 +2117,10 @@ def main() -> int:
             evidence=evidence,
             editorial_close=args.editorial_close,
             writing_intelligence=writing_intelligence,
+            recent_media_ids=recent_ids,
+            recent_media_hashes=recent_hashes,
+            recent_trust_media_ids=recent_trust_ids,
+            recent_trust_media_hashes=recent_trust_hashes,
         )
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         print(f"원고 검증 실패: {exc}", file=sys.stderr)

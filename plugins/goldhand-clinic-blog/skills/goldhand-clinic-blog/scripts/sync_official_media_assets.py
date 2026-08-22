@@ -158,6 +158,25 @@ def validate_library(payload: dict[str, Any]) -> list[str]:
             continue
         if metadata is None:
             errors.append(f"{asset_id}: 번들 파일 또는 해시가 없거나 일치하지 않습니다.")
+        if asset.get("closingTrustEligible") is True:
+            required = (
+                "closingTrustSceneType",
+                "closingTrustPlacementTerms",
+                "closingTrustApprovedAlt",
+                "closingTrustContextText",
+            )
+            missing = [field for field in required if not asset.get(field)]
+            if asset.get("closingTrustReviewed") is not True or asset.get("closingTrustRequiresReview") is not False:
+                missing.append("closingTrustReviewStatus")
+            if not (asset.get("closingTrustDirectorVisible") is True or asset.get("closingTrustDocumentVisible") is True):
+                missing.append("closingTrustVisibleSubject")
+            if missing:
+                errors.append(f"{asset_id}: 마무리 신뢰 사진 메타데이터 누락: {', '.join(missing)}")
+    expected_closing_trust = sum(
+        1 for asset in assets if isinstance(asset, dict) and asset.get("closingTrustEligible") is True
+    )
+    if int(payload.get("closingTrustCount", 0) or 0) != expected_closing_trust:
+        errors.append("closingTrustCount가 실제 승인 자산 수와 다릅니다.")
     return errors
 
 
@@ -191,7 +210,8 @@ def sync(library_path: Path, asset_dir: Path, workers: int) -> dict[str, Any]:
     payload["bundledBytes"] = sum(int(item["sizeBytes"]) for item in metadata_by_id.values())
     payload["policy"] = (
         "All indexed official-blog image binaries are bundled in the plugin; "
-        "only visually approved safeAuto assets may be selected automatically"
+        "only visually approved director-patient safeAuto assets may be selected as clinical photos, "
+        "and separately reviewed director-or-credential assets may be selected as one closing trust photo"
     )
     library_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     validation_errors = validate_library(payload)
@@ -220,6 +240,7 @@ def main() -> int:
         "bundledAssetCount": int(payload.get("bundledAssetCount", 0) or 0),
         "bundledBytes": int(payload.get("bundledBytes", 0) or 0),
         "safeAutoCount": int(payload.get("safeAutoCount", 0) or 0),
+        "closingTrustCount": int(payload.get("closingTrustCount", 0) or 0),
         "status": "verified" if args.verify_only else "synced",
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2))

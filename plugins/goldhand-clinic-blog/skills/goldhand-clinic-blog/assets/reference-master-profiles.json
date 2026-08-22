@@ -600,7 +600,7 @@
           3
         ],
         "questionPlacement": "before-greeting",
-        "openingMode": "two-quotation-components",
+        "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
         "sameReferenceForIdeaAndContentFlow": true,
@@ -1228,7 +1228,7 @@
           3
         ],
         "questionPlacement": "before-greeting",
-        "openingMode": "two-quotation-components",
+        "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
         "sameReferenceForIdeaAndContentFlow": true,
@@ -1819,7 +1819,7 @@
           3
         ],
         "questionPlacement": "before-greeting",
-        "openingMode": "lead-image-then-two-quotations",
+        "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
         "sameReferenceForIdeaAndContentFlow": true,
@@ -2557,8 +2557,8 @@
           2,
           3
         ],
-        "questionPlacement": "after-greeting",
-        "openingMode": "greeting-then-two-quotations",
+        "questionPlacement": "before-greeting",
+        "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "knowledge-gap-then-preview",
         "requiresSolutionPreviewBeforeBody": true,
         "sameReferenceForIdeaAndContentFlow": true,
@@ -3195,7 +3195,7 @@
           3
         ],
         "questionPlacement": "before-greeting",
-        "openingMode": "two-quotation-components",
+        "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "separate-preview-after-context-media",
         "requiresSolutionPreviewBeforeBody": true,
         "sameReferenceForIdeaAndContentFlow": true,
@@ -3942,8 +3942,8 @@
           2,
           3
         ],
-        "questionPlacement": "after-greeting",
-        "openingMode": "lead-image-and-greeting-then-two-quotations",
+        "questionPlacement": "before-greeting",
+        "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "knowledge-gap-then-preview",
         "requiresSolutionPreviewBeforeBody": true,
         "sameReferenceForIdeaAndContentFlow": true,
@@ -4667,8 +4667,8 @@
           2,
           3
         ],
-        "questionPlacement": "after-greeting",
-        "openingMode": "two-quoted-questions-inside-opening-text",
+        "questionPlacement": "before-greeting",
+        "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "same-opening-text",
         "requiresSolutionPreviewBeforeBody": true,
         "sameReferenceForIdeaAndContentFlow": true,
@@ -5281,7 +5281,7 @@
           3
         ],
         "questionPlacement": "before-greeting",
-        "openingMode": "two-quotation-components",
+        "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
         "sameReferenceForIdeaAndContentFlow": true,
@@ -5982,7 +5982,7 @@
           3
         ],
         "questionPlacement": "before-greeting",
-        "openingMode": "two-quotation-components",
+        "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
         "sameReferenceForIdeaAndContentFlow": true,
@@ -6692,7 +6692,7 @@
           3
         ],
         "questionPlacement": "before-greeting",
-        "openingMode": "two-quotation-components",
+        "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
         "sameReferenceForIdeaAndContentFlow": true,
@@ -7318,7 +7318,7 @@
           3
         ],
         "questionPlacement": "before-greeting",
-        "openingMode": "two-quotation-components",
+        "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
         "sameReferenceForIdeaAndContentFlow": true,

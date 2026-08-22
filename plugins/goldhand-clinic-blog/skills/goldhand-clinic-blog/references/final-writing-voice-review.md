@@ -32,12 +32,15 @@
 
 다음 지점을 표시한다.
 
+- 글 첫머리의 질문 2~3개가 인사보다 먼저 나오지 않거나, 두 질문이 모두 `증상명 때문에 …나요?`처럼 같은 문법 틀과 호흡으로 찍혀 나온 곳
+- `홍조 때문에 …나요?` 다음에 `불면 때문에 …나요?`처럼 증상 이름만 바꾼 평행 질문, 한 질문 안에서 `피로와 가라앉은 기분도 이어지나요?`처럼 증상 목록을 추상 서술어로 묶은 곳
 - 의미 없이 문단을 잇는 상투적인 연결 문장
 - 모든 문단이 같은 길이와 같은 종결로 눌린 곳
 - 구체적인 환자 장면보다 블로그다운 요약이나 교훈으로 시선이 옮겨 간 곳
 - 원장의 솔직한 확신·유보·주의가 무난한 공문체로 평평해진 곳
 - 근거 없는 비유, 여운, 권위, 친절함을 덧칠한 곳
 - 원래 살아 있던 짧은 단정, 질문, 반복, 호흡을 generic한 좋은 글로 정상화한 곳
+- `어느 불편이 하루를 가장 많이 흔드는지 알면 설명도 이어집니다`처럼 추상 명사와 작문용 서술어만으로 앞뒤를 연결해, 실제로 무엇을 묻고 무엇이 달라지는지 들리지 않는 곳
 
 문법적으로 더 매끈한 문장이 있다는 이유만으로 고치지 않는다. 현재 문장이 독자 관계, 확신의 강도, 강조점, 말의 호흡을 더 정확히 보여 준다면 그대로 둔다.
 
@@ -62,6 +65,8 @@
 
 부분 수정이 끝나면 고친 문장만 보지 말고 제목부터 다시 읽는다. 다음을 모두 확인한다.
 
+- 첫 보이는 문장은 서로 다른 생활 장면을 묻는 질문 2~3개이고, 그 다음 문단이 고정 인사인가
+- 첫 질문 묶음을 한꺼번에 소리 내어 읽었을 때 증상명만 바뀐 동일 문장 틀이나 같은 종결 호흡이 반복되지 않는가
 - 새 연결어가 앞뒤 문단의 리듬을 다시 평평하게 만들지 않았는가
 - 독자의 고민보다 작성자의 설명 기술이 더 눈에 띄지 않는가
 - 금손 특유의 구체적인 말과 솔직한 경계가 남아 있는가
@@ -84,6 +89,7 @@
     "decision": "revised",
     "reviewChecks": {
       "wholeDraftReadAtSpeakingSpeed": true,
+      "openingHookSetReheardTogether": true,
       "genericConnectiveTissueReviewed": true,
       "flattenedRhythmReviewed": true,
       "attentionAllocationReviewed": true,
@@ -114,4 +120,4 @@
 
 수정이 없다면 `beforeBody`와 `finalBody`를 같게 두고 `decision`은 `no-change-needed`, `revisions`는 빈 배열로 둔다.
 
-검수 기록은 `assets/writing-voice-final-review-contract.json`을 따르고 `scripts/validate_final_voice_review.py`로 확인한다. 통과한 글에만 `data-writing-voice-review="writing-voice-final-rehear-v1"`과 `data-writing-voice-status="pass"`를 표시한다. 이 속성은 제작 검수용이며 네이버 복사 본문에서는 제거한다.
+검수 기록은 `assets/writing-voice-final-review-contract.json`을 따르고 `scripts/validate_final_voice_review.py`로 기록의 완결성을 확인한다. 이 검사는 체크박스와 수정 이력을 검증할 뿐 산문의 자연스러움을 대신 판정하지 않는다. 같은 `speech-draft.json`을 반드시 `scripts/validate_natural_speech_suite.py`와 `scripts/validate_goldhand_voice.py`에도 통과시켜 질문 순서·질문 틀 반복·추상 연결 문장을 실제 문장 기준으로 막는다. 세 검사가 모두 통과한 글에만 `data-writing-voice-review="writing-voice-final-rehear-v1"`과 `data-writing-voice-status="pass"`를 표시한다. 이 속성은 제작 검수용이며 네이버 복사 본문에서는 제거한다.

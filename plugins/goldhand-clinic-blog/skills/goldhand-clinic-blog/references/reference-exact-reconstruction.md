@@ -89,7 +89,7 @@
 2. `reference-editorial-reasoning.md`의 판단 카드로 제목 장치의 심리, 도입 장치와 주제별 보상, 흐름 비트, 미세 표현 기능, 원문 사실 슬롯의 교체·생략, 마무리 감정을 결정한다.
 3. 질문 2~3개를 고정 인사 앞이나 뒤에 둔다.
 4. 질문과 고정 인사를 모두 마친 뒤, 첫 정보 소제목 전에 선택된 도입 장치와 보상이 보이는 `solution-preview`를 한 번 완성한다.
-5. 완성된 `solution-preview` 직후 `credential` 표를 정확히 한 번 둔다. 그 다음 첫 콘텐츠 컴포넌트는 첫 정보 본문의 `divider` 또는 `section-heading`이어야 한다. 이 고정 소개 위치는 편집 마스터의 다른 역할 순서를 바꾸지 않으며 모든 글에 우선 적용한다.
+5. 완성된 `solution-preview` 뒤 `credential` 표를 정확히 한 번 둔다. `before-credential` 실제 사진 1장 구성에서만 둘 사이에 그 사진을 허용한다. 그 다음 첫 콘텐츠 컴포넌트는 첫 정보 본문의 `divider` 또는 `section-heading`이어야 한다. 이 고정 소개 위치는 편집 마스터의 다른 역할 순서를 바꾸지 않으며 모든 글에 우선 적용한다.
 6. 각 `orderedContentAtoms[].id`와 `flowBeats[].id`에 금손 사실, 권위 자료, 환자 장면, 다음 문단으로 넘어갈 이유를 대응시킨다.
 7. `natural-speech-rewrite-protocol.md`의 분리 패스로 설득 기능을 유지한 모든 문장을 `goldhand-official-voice-v1`로 새로 쓴다. SEO까지 반영한 뒤 `final-writing-voice-review.md`의 최종 전체 재청취로 표현만 국소 수정하고 구조·사실 보존을 검증한다. 통과한 일반 본문만 의미 단위의 모바일 시각 줄 2~3개로 나눈다.
 8. 매 절마다 `원인-설명-예외-자가관리`를 기계적으로 반복하지 않는다. 선택한 원문의 진행 방식과 전환 논리를 따른다.

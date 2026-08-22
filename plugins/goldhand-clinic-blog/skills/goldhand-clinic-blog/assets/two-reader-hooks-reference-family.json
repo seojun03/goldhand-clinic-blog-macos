@@ -49,7 +49,7 @@
       "sourceTitle": "전남광주 광산구 구안와사, 25년 경력 한의사가 답하는 질문 2가지",
       "publishedAt": "2026-07-05",
       "questionPlacement": "before-greeting",
-      "openingMode": "two-quotation-components",
+      "openingMode": "two-quotation-components-then-greeting",
       "solutionPreviewMode": "greeting-and-preview",
       "broadKeywordPriority": 8,
       "userProvidedReference": true
@@ -62,7 +62,7 @@
       "sourceTitle": "일자목 거북목, 추나요법 받아도 소용없는 직장인 특징 2가지",
       "publishedAt": "2026-06-18",
       "questionPlacement": "before-greeting",
-      "openingMode": "two-quotation-components",
+      "openingMode": "two-quotation-components-then-greeting",
       "solutionPreviewMode": "greeting-and-preview",
       "broadKeywordPriority": 11,
       "userProvidedReference": false
@@ -75,7 +75,7 @@
       "sourceTitle": "위고비와 마운자로 이후, 25년 차 한의사가 말하는 주의사항 2가지",
       "publishedAt": "2026-06-13",
       "questionPlacement": "before-greeting",
-      "openingMode": "lead-image-then-two-quotations",
+      "openingMode": "two-quotation-components-then-greeting",
       "solutionPreviewMode": "greeting-and-preview",
       "broadKeywordPriority": 4,
       "userProvidedReference": true
@@ -87,8 +87,8 @@
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224307070715",
       "sourceTitle": "여름철 보약, 25년 경력 한의사가 말하는 시기 2가지",
       "publishedAt": "2026-06-05",
-      "questionPlacement": "after-greeting",
-      "openingMode": "greeting-then-two-quotations",
+      "questionPlacement": "before-greeting",
+      "openingMode": "two-quotation-components-then-greeting",
       "solutionPreviewMode": "knowledge-gap-then-preview",
       "broadKeywordPriority": 6,
       "userProvidedReference": true
@@ -101,7 +101,7 @@
       "sourceTitle": "공황장애·불면증 한방 치료, 효과 보는 사람 vs 못 보는 사람",
       "publishedAt": "2026-05-20",
       "questionPlacement": "before-greeting",
-      "openingMode": "two-quotation-components",
+      "openingMode": "two-quotation-components-then-greeting",
       "solutionPreviewMode": "separate-preview-after-context-media",
       "broadKeywordPriority": 5,
       "userProvidedReference": false
@@ -113,8 +113,8 @@
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224287906098",
       "sourceTitle": "갱년기 증상, 태반약침 모르면 해결 어렵습니다",
       "publishedAt": "2026-05-17",
-      "questionPlacement": "after-greeting",
-      "openingMode": "lead-image-and-greeting-then-two-quotations",
+      "questionPlacement": "before-greeting",
+      "openingMode": "two-quotation-components-then-greeting",
       "solutionPreviewMode": "knowledge-gap-then-preview",
       "broadKeywordPriority": 3,
       "userProvidedReference": false
@@ -126,8 +126,8 @@
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224280621821",
       "sourceTitle": "추나요법 건강보험 적용? 25년 경력 한의사가 알려주는 2가지",
       "publishedAt": "2026-05-10",
-      "questionPlacement": "after-greeting",
-      "openingMode": "two-quoted-questions-inside-opening-text",
+      "questionPlacement": "before-greeting",
+      "openingMode": "two-quotation-components-then-greeting",
       "solutionPreviewMode": "same-opening-text",
       "broadKeywordPriority": 9,
       "userProvidedReference": false
@@ -140,7 +140,7 @@
       "sourceTitle": "광주 트라우마치료, 25년 부부한의사가 알려주는 극복방법 2가지",
       "publishedAt": "2026-03-18",
       "questionPlacement": "before-greeting",
-      "openingMode": "two-quotation-components",
+      "openingMode": "two-quotation-components-then-greeting",
       "solutionPreviewMode": "greeting-and-preview",
       "broadKeywordPriority": 2,
       "userProvidedReference": false
@@ -153,7 +153,7 @@
       "sourceTitle": "갱년기여성 다이어트, 15년 경력 원장이 말하는 성공 조건 3가지",
       "publishedAt": "2026-03-11",
       "questionPlacement": "before-greeting",
-      "openingMode": "two-quotation-components",
+      "openingMode": "two-quotation-components-then-greeting",
       "solutionPreviewMode": "greeting-and-preview",
       "broadKeywordPriority": 1,
       "userProvidedReference": false
@@ -166,7 +166,7 @@
       "sourceTitle": "무릎통증치료, 25년 경력 한의사 2명이 알려주는 회복 원칙",
       "publishedAt": "2026-03-05",
       "questionPlacement": "before-greeting",
-      "openingMode": "two-quotation-components",
+      "openingMode": "two-quotation-components-then-greeting",
       "solutionPreviewMode": "greeting-and-preview",
       "broadKeywordPriority": 10,
       "userProvidedReference": false
@@ -179,7 +179,7 @@
       "sourceTitle": "오십견치료방법, 29,000명 진료한 한의사가 공개하는 핵심",
       "publishedAt": "2026-01-05",
       "questionPlacement": "before-greeting",
-      "openingMode": "two-quotation-components",
+      "openingMode": "two-quotation-components-then-greeting",
       "solutionPreviewMode": "greeting-and-preview",
       "broadKeywordPriority": 7,
       "userProvidedReference": false

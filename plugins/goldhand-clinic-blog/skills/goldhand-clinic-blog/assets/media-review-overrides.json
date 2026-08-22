@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "reviewedAt": "2026-08-22",
-  "policy": "자동 글 사진은 식별 가능한 환자 얼굴·차트·연락처가 없고 원장이 환자를 치료·진찰·상담·검사하는 장면으로 시각 검수된 자산만 승인한다. 로고·간판·건물·제품·약·환제·탕약·장비·빈 공간은 자동 사용하지 않는다.",
+  "policy": "실제 진료 사진은 식별 가능한 환자 얼굴·차트·연락처가 없고 원장이 환자를 치료·진찰·상담·검사하는 장면으로 시각 검수된 자산만 승인한다. 별도의 글마무리 신뢰 사진은 공식 블로그에서 원장과 증서·협약서·기부·봉사 장면이 분명하고 환자 개인정보가 없는 사진만 승인하며, 진료 사진 수량에는 포함하지 않는다. 로고·간판·건물·제품·약·환제·탕약·장비·빈 공간은 어느 쪽의 수량 보충용으로도 자동 사용하지 않는다.",
   "approved": {
     "224345090374:2": {
       "scene": "박준희 원장이 의료봉사 현장에서 아이의 상태를 살피는 장면",
@@ -61,6 +61,99 @@
       "trustPriority": 108,
       "safetyApproved": true,
       "safetyNote": "환자 얼굴과 차트가 보이지 않음",
+      "duplicateGroup": ""
+    }
+  },
+  "approvedClosingTrust": {
+    "224246993202:1": {
+      "scene": "박준희 원장이 금손한의원에서 ABC방문간호센터 관계자와 업무협약서를 들고 기념촬영한 장면",
+      "sceneType": "director-agreement-pose",
+      "directorVisible": true,
+      "documentVisible": true,
+      "closingTrustPriority": 140,
+      "safetyApproved": true,
+      "safetyNote": "공식 블로그에 공개된 마스크 착용 협약 기념사진이며 환자·차트·연락처가 보이지 않음",
+      "placementTerms": ["업무협약", "업무협약 기념촬영", "ABC방문간호센터 업무협약"],
+      "approvedAlt": "박준희 원장이 금손한의원에서 ABC방문간호센터 관계자와 업무협약서를 들고 기념촬영한 장면",
+      "contextText": "ABC방문간호센터와 업무협약을 맺고 기념촬영을 남겼습니다.",
+      "duplicateGroup": ""
+    },
+    "224254319891:1": {
+      "scene": "박준희 원장과 국공립 한우리어린이집 관계자가 협약서를 들고 기념촬영한 장면",
+      "sceneType": "director-agreement-pose",
+      "directorVisible": true,
+      "documentVisible": true,
+      "closingTrustPriority": 135,
+      "safetyApproved": true,
+      "safetyNote": "공식 블로그에 공개된 협약 기념사진이며 환자·차트·연락처가 보이지 않음",
+      "placementTerms": ["기념촬영", "어린이집 협약 기념촬영", "국공립 한우리어린이집 협약"],
+      "approvedAlt": "박준희 원장과 국공립 한우리어린이집 관계자가 협약서를 들고 기념촬영한 장면",
+      "contextText": "국공립 한우리어린이집과 협약을 맺고 기념촬영을 남겼습니다.",
+      "duplicateGroup": ""
+    },
+    "224332049965:1": {
+      "scene": "박준희 원장의 일차의료 술기교육 수료증",
+      "sceneType": "credential-detail",
+      "directorVisible": false,
+      "documentVisible": true,
+      "closingTrustPriority": 125,
+      "safetyApproved": true,
+      "safetyNote": "공식 블로그에 공개된 원장 본인의 수료증이며 환자정보가 없음",
+      "placementTerms": ["일차의료 술기교육", "일차의료 술기교육 수료증", "방문진료 술기교육 수료"],
+      "approvedAlt": "박준희 원장의 일차의료 술기교육 수료증",
+      "contextText": "방문진료에 필요한 일차의료 술기교육을 수료하고 받은 수료증입니다.",
+      "duplicateGroup": ""
+    },
+    "224133169679:1": {
+      "scene": "박준희 원장의 골타요법 교육 수료증과 학회 회원증",
+      "sceneType": "credential-detail",
+      "directorVisible": false,
+      "documentVisible": true,
+      "closingTrustPriority": 120,
+      "safetyApproved": true,
+      "safetyNote": "공식 블로그에 공개된 원장 본인의 수료증과 회원증이며 환자정보가 없음",
+      "placementTerms": ["수료증", "골타요법 교육 수료증", "학회 회원증"],
+      "approvedAlt": "박준희 원장의 골타요법 교육 수료증과 학회 회원증",
+      "contextText": "골타요법 교육을 수료하고 받은 수료증과 학회 회원증입니다.",
+      "duplicateGroup": ""
+    },
+    "224348337203:1": {
+      "scene": "박준희 원장이 금손한의원에서 초록우산 관계자와 한약 지원사업 기념촬영을 한 장면",
+      "sceneType": "director-community-pose",
+      "directorVisible": true,
+      "documentVisible": true,
+      "closingTrustPriority": 115,
+      "safetyApproved": true,
+      "safetyNote": "공식 블로그에 공개된 지원사업 기념사진이며 환자·차트·연락처가 보이지 않음",
+      "placementTerms": ["한약 지원사업", "한약 지원사업 기념촬영", "초록우산 보호대상아동 지원"],
+      "approvedAlt": "박준희 원장이 금손한의원에서 초록우산 관계자와 한약 지원사업 기념촬영을 한 장면",
+      "contextText": "초록우산의 보호대상아동 한약 지원사업에 참여하고 기념촬영을 남겼습니다.",
+      "duplicateGroup": ""
+    },
+    "224133085775:1": {
+      "scene": "박준희 원장이 광주영아일시보호소에 전달한 기부 물품 앞에서 기념촬영한 장면",
+      "sceneType": "director-community-pose",
+      "directorVisible": true,
+      "documentVisible": false,
+      "closingTrustPriority": 110,
+      "safetyApproved": true,
+      "safetyNote": "공식 블로그에 공개된 원장 기념사진이며 환자·차트·연락처가 보이지 않음",
+      "placementTerms": ["기념사진", "보호소 물품 기부 기념촬영", "광주영아일시보호소 물품 기부"],
+      "approvedAlt": "박준희 원장이 광주영아일시보호소에 전달한 기부 물품 앞에서 기념촬영한 장면",
+      "contextText": "광주영아일시보호소에 아이들에게 필요한 물품을 전달하고 기념사진을 남겼습니다.",
+      "duplicateGroup": ""
+    },
+    "224345090374:1": {
+      "scene": "박준희 원장이 광주영아일시보호소 의료봉사 현장에서 관계자와 기념촬영한 장면",
+      "sceneType": "director-community-pose",
+      "directorVisible": true,
+      "documentVisible": false,
+      "closingTrustPriority": 100,
+      "safetyApproved": true,
+      "safetyNote": "동행자 얼굴이 원본에서 가려진 공식 기념사진이며 환자·차트·연락처가 보이지 않음",
+      "placementTerms": ["의료봉사", "의료봉사 기념촬영", "광주영아일시보호소 의료봉사"],
+      "approvedAlt": "박준희 원장이 광주영아일시보호소 의료봉사 현장에서 관계자와 기념촬영한 장면",
+      "contextText": "광주영아일시보호소 의료봉사를 다녀온 뒤 현장에서 기념촬영을 남겼습니다.",
       "duplicateGroup": ""
     }
   },

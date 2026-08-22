@@ -34,6 +34,7 @@ PAGE_BUILDER = load_module("build_naver_copy_page")
 HTML_VALIDATOR = load_module("validate_html")
 STATE_RECORDER = load_module("record_article_state")
 MEDIA_RECOMMENDER = load_module("recommend_media")
+CLOSING_TRUST_RECOMMENDER = load_module("recommend_closing_trust_media")
 OFFICIAL_MEDIA_SYNC = load_module("sync_official_media_assets")
 MASTER_SELECTOR = load_module("select_reference_master")
 REFERENCE_VALIDATOR = load_module("validate_reference_reconstruction")
@@ -176,6 +177,116 @@ def wrap_first_divider_in_structural_section(article: str) -> str:
     )
 
 
+def move_generated_figures_after_section_heading(
+    article: str,
+    heading_index: int,
+    *,
+    count: int | None = None,
+) -> str:
+    figures = list(
+        re.finditer(
+            r'<figure\b(?=[^>]*data-media-provider="gpt-image")[^>]*>.*?</figure>',
+            article,
+            flags=re.I | re.S,
+        )
+    )
+    selected = figures if count is None else figures[:count]
+    if not selected:
+        raise AssertionError("테스트 원고에 GPT 이미지 figure가 없습니다.")
+    payload = "".join(match.group(0) for match in selected)
+    pieces: list[str] = []
+    cursor = 0
+    for match in selected:
+        pieces.append(article[cursor:match.start()])
+        cursor = match.end()
+    pieces.append(article[cursor:])
+    without_figures = "".join(pieces)
+    headings = list(
+        re.finditer(
+            r'<(?P<tag>[a-z][\w:-]*)\b(?=[^>]*data-reference-role="section-heading")[^>]*>.*?</(?P=tag)>',
+            without_figures,
+            flags=re.I | re.S,
+        )
+    )
+    if heading_index < 0 or heading_index >= len(headings):
+        raise AssertionError(f"테스트 원고의 {heading_index + 1}번째 설명 소제목을 찾지 못했습니다.")
+    destination = headings[heading_index]
+    return without_figures[:destination.end()] + payload + without_figures[destination.end():]
+
+
+def strip_markers_from_section_heading(
+    article: str,
+    heading_index: int,
+    *,
+    convert_to_p: bool = False,
+) -> str:
+    headings = list(
+        re.finditer(
+            r'<(?P<tag>[a-z][\w:-]*)\b(?=[^>]*data-reference-role="section-heading")[^>]*>.*?</(?P=tag)>',
+            article,
+            flags=re.I | re.S,
+        )
+    )
+    if heading_index < 0 or heading_index >= len(headings):
+        raise AssertionError(f"테스트 원고의 {heading_index + 1}번째 설명 소제목을 찾지 못했습니다.")
+    heading = headings[heading_index]
+    replacement = heading.group(0).replace(' data-reference-role="section-heading"', "").replace(
+        ' data-naver-native-component="subheading"',
+        "",
+    )
+    if convert_to_p:
+        replacement = re.sub(r"^<h[1-6]\b", "<p", replacement, flags=re.I)
+        replacement = re.sub(r"</h[1-6]>$", "</p>", replacement, flags=re.I)
+    return article[:heading.start()] + replacement + article[heading.end():]
+
+
+def remove_divider_before_section_heading(article: str, heading_index: int) -> str:
+    headings = list(
+        re.finditer(
+            r'<(?P<tag>[a-z][\w:-]*)\b(?=[^>]*data-reference-role="section-heading")[^>]*>.*?</(?P=tag)>',
+            article,
+            flags=re.I | re.S,
+        )
+    )
+    if heading_index < 0 or heading_index >= len(headings):
+        raise AssertionError(f"테스트 원고의 {heading_index + 1}번째 설명 소제목을 찾지 못했습니다.")
+    heading = headings[heading_index]
+    dividers = list(
+        re.finditer(
+            r'<hr\b[^>]*>',
+            article[:heading.start()],
+            flags=re.I | re.S,
+        )
+    )
+    if not dividers:
+        raise AssertionError("테스트 소제목 앞의 divider를 찾지 못했습니다.")
+    divider = dividers[-1]
+    return article[:divider.start()] + article[divider.end():]
+
+
+def make_markerless_p_visually_heading_like(
+    article: str,
+    heading_text_prefix: str,
+    *,
+    font_size: str = "19px",
+    font_weight: str = "700",
+) -> str:
+    matches = [
+        match
+        for match in re.finditer(r'<p\b(?=[^>]*style="text-align:center;")[^>]*>.*?</p>', article, flags=re.I | re.S)
+        if heading_text_prefix in match.group(0)
+    ]
+    if len(matches) != 1:
+        raise AssertionError("시각 소제목으로 바꿀 markerless p를 찾지 못했습니다.")
+    match = matches[0]
+    replacement = match.group(0).replace(
+        'style="text-align:center;"',
+        f'data-mobile-group="true" style="text-align:center;font-size:{font_size};font-weight:{font_weight};"',
+        1,
+    )
+    return article[:match.start()] + replacement + article[match.end():]
+
+
 def mobile_markup(text: str, *, first_role: str = "") -> str:
     words = text.split()
     lines: list[str] = []
@@ -252,6 +363,7 @@ def writing_voice_review(
         "decision": "revised" if revisions else "no-change-needed",
         "reviewChecks": {
             "wholeDraftReadAtSpeakingSpeed": True,
+            "openingHookSetReheardTogether": True,
             "genericConnectiveTissueReviewed": True,
             "flattenedRhythmReviewed": True,
             "attentionAllocationReviewed": True,
@@ -275,7 +387,7 @@ def writing_voice_review(
 def valid_article() -> str:
     paragraphs = [
         "안녕하세요, 금손한의원 박준희 원장입니다.",
-        f"{KEYWORD}을 찾는 분 가운데 같은 곳이 자꾸 불편해지는 이유를 몰라 치료 선택을 망설이는 분이 있습니다. 오늘은 아픈 곳만 볼 때 놓치기 쉬운 움직임과 생활 조건, 다른 검사를 먼저 생각할 신호까지 설명하겠습니다.",
+        f"{KEYWORD}을 찾는 분 가운데 같은 곳이 자꾸 불편해지는 이유를 몰라 치료 선택을 망설이는 분이 있습니다. 오늘은 아픈 곳만 볼 때 놓치기 쉬운 움직임과 생활 조건, 다른 검사를 먼저 생각할 신호까지 설명하겠습니다. 다리 통증도 같은 순서로 살핍니다.",
         "통증은 한 지점에 느껴져도 그 부위만의 문제로 단정하기 어렵습니다. 목을 돌리는 범위, 어깨뼈의 움직임, 골반과 발의 지지처럼 주변 관절이 함께 움직이는 방식을 차분히 비교해야 합니다.",
         "불편이 시작된 날의 활동량과 수면, 오래 유지한 자세도 중요한 단서입니다. 평소와 다른 운동을 했는지, 한쪽 손만 반복해 썼는지, 쉬었을 때와 움직일 때 차이가 있는지를 정리하면 설명이 구체적이 됩니다.",
         f"제가 {KEYWORD} 진료에서 먼저 듣는 것은 증상의 이름보다 생활 속 장면입니다. 같은 어깨 불편이라도 팔을 들 때와 가만히 있을 때의 양상이 다르고, 목이나 등 움직임이 함께 제한되는지도 사람마다 다릅니다.",
@@ -483,7 +595,7 @@ def editorial_close_article(*, include_summary: bool = True, one_question: bool 
     reading_hook = (
         '<p data-reference-role="reading-time-hook" data-reading-minutes="3" data-mobile-group="true" '
         'style="margin:0;text-align:center;color:#4D4D4D;font-size:16px;line-height:1.9;word-break:keep-all;">'
-        '팔이 잘 안 올라간다면,<br>딱 3분만 읽어 보세요.</p>'
+        '다리 통증도 함께 반복된다면,<br>딱 3분만 읽어 보세요.</p>'
         '<p data-preview-gap="true" aria-hidden="true" style="margin:0;text-align:center;color:transparent;">&#8288;</p>'
     )
     article = article.replace("</section>", reading_hook + "</section>", 1)
@@ -492,63 +604,82 @@ def editorial_close_article(*, include_summary: bool = True, one_question: bool 
         start=1,
     ):
         article = article.replace(heading, f"{index}. {heading}", 1)
-    generated_figure = (
-        '<figure data-media-provider="gpt-image" data-image-placement="after-related-paragraph" '
-        'data-image-anchor="통증" data-generation-reference-creator="callilife" '
-        'data-generation-owner-authorization="user-confirmed" '
-        'data-generation-content-preservation="medical-information-layout" '
-        'data-generation-variation-mode="person-identity-subtle-variation" '
-        'style="text-align:center;">'
-        '<img data-media-provider="gpt-image" '
-        f'data-local-image="{GPT_IMAGE_FIXTURE}" '
-        'data-generation-reference-creator="callilife" '
-        'data-generation-reference-url="https://ogqmarket.naver.com/artworks/stockImage/detail?artworkId=623801a0b4e18" '
-        'data-generation-owner-authorization="user-confirmed" '
-        'data-generation-content-preservation="medical-information-layout" '
-        'data-generation-variation-mode="person-identity-subtle-variation" '
-        'src="data:," alt="어깨 관절 운동 범위 설명 이미지"></figure>'
-    )
-    related_paragraph = re.search(
-        r'<p\b(?=[^>]*data-mobile-group="true")[^>]*>[^<]*(?:<br>[^<]*)*통증.*?</p>'
-        r'\s*<p\b(?=[^>]*data-preview-gap="true")[^>]*>.*?</p>',
-        article,
-        flags=re.I | re.S,
-    )
-    if related_paragraph is None:
-        raise AssertionError("GPT 이미지 앞에 둘 통증 모바일 문단을 찾지 못했습니다.")
-    article = article[:related_paragraph.end()] + generated_figure + article[related_paragraph.end():]
-    media_library = json.loads((SKILL_DIR / "assets" / "media-library.json").read_text(encoding="utf-8"))
-    media_by_id = {item["id"]: item for item in media_library["assets"]}
-    real_photo_slots = (
-        ("GH0016", "주변 관절", "원장이 환자에게 침 치료하는 모습"),
-        ("GH0017", "활동량", "원장이 환자를 치료하는 모습"),
-        ("GH0018", "진찰에서", "원장이 환자와 보호자에게 설명하는 모습"),
-        ("GH0020", "뼈 손상", "원장이 환자의 다리 상태를 진찰하는 모습"),
-        ("GH0014", "침이나 추나", "원장이 아이의 상태를 살피는 모습"),
-        ("GH0015", "한 번의 설명", "원장이 아이와 상담하는 모습"),
-    )
-    for media_id, anchor, alt_text in real_photo_slots:
-        asset = media_by_id[media_id]
-        figure = (
-            f'<figure data-reference-role="evidence-media" data-goldhand-role="media" '
-            f'data-real-photo="true" data-media-origin="goldhand-bundled-official-library" '
-            f'data-goldhand-media="{media_id}" data-image-placement="after-related-paragraph" '
-            f'data-image-anchor="{anchor}" style="margin:28px auto;text-align:center;max-width:580px;">'
-            f'<img src="{asset["url"]}" data-real-photo="true" '
-            f'data-media-origin="goldhand-bundled-official-library" data-goldhand-media="{media_id}" '
-            f'data-media-sha256="{asset["sha256"]}" '
-            f'data-reference-source-url="{asset["url"]}" referrerpolicy="no-referrer" '
-            f'alt="{alt_text}" style="display:block;width:100%;height:auto;margin:0 auto;"></figure>'
+    for image_index, anchor in enumerate(("주변 관절", "활동량", "진찰에서는"), start=1):
+        generated_figure = (
+            '<figure data-media-provider="gpt-image" data-image-zone="early-explanatory-body" '
+            'data-image-placement="after-related-paragraph" '
+            f'data-image-anchor="{anchor}" data-generation-reference-creator="callilife" '
+            'data-generation-owner-authorization="user-confirmed" '
+            'data-generation-content-preservation="medical-information-layout" '
+            'data-generation-variation-mode="person-identity-subtle-variation" '
+            'style="text-align:center;">'
+            '<img data-media-provider="gpt-image" '
+            f'data-local-image="{GPT_IMAGE_FIXTURE}" '
+            'data-generation-reference-creator="callilife" '
+            f'data-generation-reference-url="https://ogqmarket.naver.com/artworks/stockImage/detail?artworkId=623801a0b4e1{image_index}" '
+            'data-generation-owner-authorization="user-confirmed" '
+            'data-generation-content-preservation="medical-information-layout" '
+            'data-generation-variation-mode="person-identity-subtle-variation" '
+            'src="data:," alt="어깨 관절 운동 범위 설명 이미지"></figure>'
         )
-        paragraph = re.search(
+        related_paragraph = re.search(
             rf'<p\b(?=[^>]*data-mobile-group="true")[^>]*>.*?{re.escape(anchor)}.*?</p>'
-            rf'\s*<p\b(?=[^>]*data-preview-gap="true")[^>]*>.*?</p>',
+            r'\s*<p\b(?=[^>]*data-preview-gap="true")[^>]*>.*?</p>',
             article,
             flags=re.I | re.S,
         )
-        if paragraph is None:
-            raise AssertionError(f"실제 사진 배치 문단을 찾지 못했습니다: {anchor}")
-        article = article[:paragraph.end()] + figure + article[paragraph.end():]
+        if related_paragraph is None:
+            raise AssertionError(f"GPT 이미지 앞에 둘 모바일 문단을 찾지 못했습니다: {anchor}")
+        article = article[:related_paragraph.end()] + generated_figure + article[related_paragraph.end():]
+    media_library = json.loads((SKILL_DIR / "assets" / "media-library.json").read_text(encoding="utf-8"))
+    media_by_id = {item["id"]: item for item in media_library["assets"]}
+    media_id = "GH0016"
+    anchor = "다리 통증"
+    asset = media_by_id[media_id]
+    figure = (
+        f'<figure data-reference-role="evidence-media" data-goldhand-role="media" '
+        f'data-real-photo="true" data-real-photo-slot="before-credential" '
+        f'data-media-origin="goldhand-bundled-official-library" '
+        f'data-goldhand-media="{media_id}" data-image-placement="after-related-paragraph" '
+        f'data-image-anchor="{anchor}" style="margin:28px auto;text-align:center;max-width:580px;">'
+        f'<img src="{asset["url"]}" data-real-photo="true" '
+        f'data-media-origin="goldhand-bundled-official-library" data-goldhand-media="{media_id}" '
+        f'data-media-sha256="{asset["sha256"]}" '
+        f'data-reference-source-url="{asset["url"]}" referrerpolicy="no-referrer" '
+        f'alt="{asset["approvedAlt"]}" style="display:block;width:100%;height:auto;margin:0 auto;"></figure>'
+    )
+    solution = re.search(r'<section\b(?=[^>]*data-reference-role="solution-preview")[^>]*>.*?</section>', article, flags=re.I | re.S)
+    if solution is None:
+        raise AssertionError("실제 사진 앞 solution-preview를 찾지 못했습니다.")
+    article = article[:solution.end()] + figure + article[solution.end():]
+    trust_id = "GH0042"
+    trust_asset = media_by_id[trust_id]
+    trust_anchor = trust_asset["closingTrustPlacementTerms"][0]
+    trust_context = trust_asset["closingTrustContextText"]
+    trust_context_markup = trust_context.replace("와 업무협약", "와<br>업무협약").replace("맺고 기념촬영", "맺고<br>기념촬영")
+    trust_block = (
+        '<p data-reference-role="credential-trust-context" data-goldhand-role="proof" '
+        'data-mobile-group="true" style="margin:0;text-align:center;color:#4D4D4D;'
+        f'font-size:16px;line-height:1.9;word-break:keep-all;">{trust_context_markup}</p>'
+        '<p data-preview-gap="true" aria-hidden="true" style="margin:0;text-align:center;color:transparent;">&#8288;</p>'
+        '<figure data-reference-role="credential-trust-media" data-goldhand-role="proof" '
+        'data-trust-photo="true" data-trust-photo-slot="closing-credential-trust" '
+        'data-media-origin="goldhand-bundled-official-library" '
+        f'data-goldhand-media="{trust_id}" data-image-placement="after-related-paragraph" '
+        f'data-image-anchor="{trust_anchor}" style="margin:28px auto;text-align:center;max-width:580px;">'
+        f'<img src="{trust_asset["url"]}" data-trust-photo="true" '
+        'data-media-origin="goldhand-bundled-official-library" '
+        f'data-goldhand-media="{trust_id}" data-media-sha256="{trust_asset["sha256"]}" '
+        f'data-reference-source-url="{trust_asset["url"]}" referrerpolicy="no-referrer" '
+        f'alt="{trust_asset["closingTrustApprovedAlt"]}" '
+        'style="display:block;width:100%;height:auto;margin:0 auto;"></figure>'
+        '<p data-preview-gap="true" aria-hidden="true" style="margin:0;text-align:center;color:transparent;">&#8288;</p>'
+    )
+    article = article.replace(
+        '<p data-reference-role="clinic-hours-heading"',
+        trust_block + '<p data-reference-role="clinic-hours-heading"',
+        1,
+    )
     if one_question:
         article = article.replace(question_markup(QUESTION_TWO), "", 1)
     if not include_summary:
@@ -560,6 +691,13 @@ def editorial_close_article(*, include_summary: bool = True, one_question: bool 
             flags=re.I | re.S,
         )
     return article
+
+
+def editorial_fixture_media_library() -> dict[str, dict[str, object]]:
+    """Keep generic article tests focused while production assets stay scene-specific."""
+    payload = json.loads((SKILL_DIR / "assets" / "media-library.json").read_text(encoding="utf-8"))
+    assets = {item["id"]: dict(item) for item in payload["assets"]}
+    return assets
 
 
 def wipark_editorial_close_article() -> str:
@@ -856,6 +994,104 @@ class ArticleTests(unittest.TestCase):
         result = ARTICLE_VALIDATOR.validate_article(missing_source, TITLE, KEYWORD)
         self.assertIn("reader-question-source-missing", {item["code"] for item in result["issues"]})
 
+    def test_greeting_before_hooks_is_rejected(self) -> None:
+        article = valid_article()
+        greeting = re.search(
+            r'<p\b(?=[^>]*data-reference-role="greeting-authority")[^>]*>.*?</p>'
+            r'\s*<p\b(?=[^>]*data-preview-gap="true")[^>]*>.*?</p>',
+            article,
+            flags=re.I | re.S,
+        )
+        self.assertIsNotNone(greeting)
+        assert greeting is not None
+        article = article[:greeting.start()] + article[greeting.end():]
+        article = re.sub(r"(<article\b[^>]*>)", r"\1" + greeting.group(0), article, count=1, flags=re.I | re.S)
+        result = ARTICLE_VALIDATOR.validate_article(article, TITLE, KEYWORD)
+        codes = {item["code"] for item in result["issues"]}
+        self.assertIn("opening-hook-greeting-order", codes, result)
+        self.assertIn("greeting-position", codes, result)
+
+    def test_real_photo_requires_asset_specific_context_and_alt(self) -> None:
+        article = editorial_close_article().replace(
+            'data-image-anchor="다리 통증"',
+            'data-image-anchor="진료"',
+            1,
+        ).replace(
+            'alt="박준희 원장이 방문진료에서 환자의 다리에 침 치료를 하는 장면"',
+            'alt="진료 모습"',
+            1,
+        )
+        result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        codes = {item["code"] for item in result["issues"]}
+        self.assertIn("real-photo-anchor-not-approved", codes, result)
+        self.assertIn("real-photo-alt-mismatch", codes, result)
+
+    def test_immediately_previous_real_photo_cannot_be_reused(self) -> None:
+        article = editorial_close_article()
+        library = editorial_fixture_media_library()
+        fresh_result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=library,
+            recent_media_ids={"GH0017"},
+        )
+        self.assertNotIn(
+            "immediately-previous-real-photo-repeat",
+            {item["code"] for item in fresh_result["issues"]},
+            fresh_result,
+        )
+        repeated_result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=library,
+            recent_media_ids={"GH0016"},
+        )
+        self.assertIn(
+            "immediately-previous-real-photo-repeat",
+            {item["code"] for item in repeated_result["issues"]},
+            repeated_result,
+        )
+
+    def test_immediately_previous_closing_trust_photo_cannot_be_reused(self) -> None:
+        article = editorial_close_article()
+        library = editorial_fixture_media_library()
+        fresh_result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=library,
+            recent_trust_media_ids={"GH0029"},
+        )
+        self.assertNotIn(
+            "immediately-previous-trust-photo-repeat",
+            {item["code"] for item in fresh_result["issues"]},
+            fresh_result,
+        )
+        repeated_result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=library,
+            recent_trust_media_ids={"GH0042"},
+        )
+        self.assertIn(
+            "immediately-previous-trust-photo-repeat",
+            {item["code"] for item in repeated_result["issues"]},
+            repeated_result,
+        )
+
     def test_mobile_four_line_group_fails(self) -> None:
         article = valid_article().replace(
             "통증은 한 지점에 느껴져도 그 부위만의 문제로<br>단정하기 어렵습니다. 목을 돌리는 범위, 어깨뼈의",
@@ -879,12 +1115,13 @@ class ArticleTests(unittest.TestCase):
             KEYWORD,
             evidence=evidence,
             editorial_close=True,
+            media_library=editorial_fixture_media_library(),
         )
         self.assertEqual(result["status"], "pass", result)
         self.assertEqual(result["metrics"]["bodyKeywordCount"], 3)
         self.assertEqual(result["metrics"]["editorialMasterId"], "BM224231647991")
-        self.assertEqual(result["metrics"]["generatedImages"], 1)
-        self.assertEqual(result["metrics"]["realPhotos"], 6)
+        self.assertEqual(result["metrics"]["generatedImages"], 3)
+        self.assertEqual(result["metrics"]["realPhotos"], 1)
 
     def test_specific_number_intro_requires_one_reading_time_hook(self) -> None:
         article = re.sub(
@@ -913,6 +1150,7 @@ class ArticleTests(unittest.TestCase):
             KEYWORD,
             evidence=evidence,
             editorial_close=True,
+            media_library=editorial_fixture_media_library(),
         )
         self.assertEqual(result["status"], "pass", result)
         self.assertEqual(result["metrics"]["introPersuasionDeviceId"], "specific-number-low-friction-topic-payoff")
@@ -936,6 +1174,7 @@ class ArticleTests(unittest.TestCase):
             KEYWORD,
             evidence=evidence,
             editorial_close=True,
+            media_library=editorial_fixture_media_library(),
         )
         self.assertEqual(result["status"], "pass", result)
 
@@ -991,11 +1230,11 @@ class ArticleTests(unittest.TestCase):
 
     def test_editorial_close_rejects_generated_image_without_related_placement(self) -> None:
         article = editorial_close_article().replace(
-            '<figure data-media-provider="gpt-image" data-image-placement="after-related-paragraph" ',
-            '<figure data-media-provider="gpt-image" ',
+            '<figure data-media-provider="gpt-image" data-image-zone="early-explanatory-body" data-image-placement="after-related-paragraph" ',
+            '<figure data-media-provider="gpt-image" data-image-zone="early-explanatory-body" ',
             1,
         ).replace(
-            'data-image-anchor="통증"',
+            'data-image-anchor="주변 관절"',
             'data-image-anchor="소화"',
             1,
         )
@@ -1009,7 +1248,130 @@ class ArticleTests(unittest.TestCase):
         self.assertIn("generated-image-placement-marker", codes)
         self.assertIn("generated-image-anchor-mismatch", codes)
 
-    def test_editorial_close_requires_six_to_twelve_real_photos(self) -> None:
+    def test_editorial_close_rejects_generated_image_after_second_body_section(self) -> None:
+        article = move_generated_figures_after_section_heading(
+            editorial_close_article(),
+            2,
+            count=1,
+        )
+        result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertIn(
+            "generated-image-outside-early-body",
+            {item["code"] for item in result["issues"]},
+            result,
+        )
+
+    def test_editorial_close_requires_generated_image_in_first_body_section(self) -> None:
+        article = move_generated_figures_after_section_heading(
+            editorial_close_article(),
+            1,
+        )
+        result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertIn(
+            "generated-image-first-section-missing",
+            {item["code"] for item in result["issues"]},
+            result,
+        )
+
+    def test_editorial_close_requires_both_section_heading_markers(self) -> None:
+        for removed_marker in (
+            ' data-reference-role="section-heading"',
+            ' data-naver-native-component="subheading"',
+        ):
+            with self.subTest(removed_marker=removed_marker):
+                article = editorial_close_article().replace(removed_marker, "")
+                result = ARTICLE_VALIDATOR.validate_article(
+                    article,
+                    EDITORIAL_TITLE,
+                    KEYWORD,
+                    editorial_close=True,
+                    media_library=editorial_fixture_media_library(),
+                )
+                codes = {item["code"] for item in result["issues"]}
+                self.assertIn("section-heading-markers-invalid", codes, result)
+                self.assertIn("body-section-heading-missing", codes, result)
+
+    def test_editorial_close_cannot_hide_third_p_heading_by_removing_both_markers(self) -> None:
+        article = move_generated_figures_after_section_heading(
+            editorial_close_article(),
+            2,
+            count=1,
+        )
+        article = strip_markers_from_section_heading(article, 2, convert_to_p=True)
+        result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        codes = {item["code"] for item in result["issues"]}
+        self.assertIn("section-heading-markers-invalid", codes, result)
+        self.assertIn("generated-image-outside-early-body", codes, result)
+
+    def test_editorial_close_cannot_hide_third_section_by_removing_divider_and_markers(self) -> None:
+        cases = (
+            (False, "19px", "700"),
+            (True, "19px", "700"),
+            (True, "19px", "650"),
+            (True, "100px", "700"),
+            (True, "16px;font-size:19px", "700"),
+            (True, "19px", "400;font-weight:700"),
+        )
+        for convert_to_p, font_size, font_weight in cases:
+            with self.subTest(convert_to_p=convert_to_p, font_size=font_size, font_weight=font_weight):
+                article = move_generated_figures_after_section_heading(
+                    editorial_close_article(),
+                    2,
+                    count=1,
+                )
+                article = remove_divider_before_section_heading(article, 2)
+                article = strip_markers_from_section_heading(article, 2, convert_to_p=convert_to_p)
+                if convert_to_p:
+                    article = make_markerless_p_visually_heading_like(
+                        article,
+                        "3. ",
+                        font_size=font_size,
+                        font_weight=font_weight,
+                    )
+                result = ARTICLE_VALIDATOR.validate_article(
+                    article,
+                    EDITORIAL_TITLE,
+                    KEYWORD,
+                    editorial_close=True,
+                    media_library=editorial_fixture_media_library(),
+                )
+                codes = {item["code"] for item in result["issues"]}
+                self.assertIn("section-heading-divider-pair-invalid", codes, result)
+                self.assertIn("generated-image-outside-early-body", codes, result)
+
+    def test_editorial_close_requires_three_to_four_generated_images(self) -> None:
+        article = re.sub(
+            r'<figure\b(?=[^>]*data-media-provider="gpt-image")[^>]*>.*?</figure>',
+            "",
+            editorial_close_article(),
+            count=1,
+            flags=re.I | re.S,
+        )
+        result = ARTICLE_VALIDATOR.validate_article(
+            article, EDITORIAL_TITLE, KEYWORD, editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertIn("generated-image-count", {item["code"] for item in result["issues"]})
+
+    def test_editorial_close_requires_one_or_two_real_photos(self) -> None:
         article = re.sub(
             r'<figure\b(?=[^>]*data-real-photo="true")[^>]*>.*?</figure>',
             "",
@@ -1021,12 +1383,30 @@ class ArticleTests(unittest.TestCase):
             article, EDITORIAL_TITLE, KEYWORD, editorial_close=True,
         )
         self.assertIn("real-photo-count", {item["code"] for item in result["issues"]})
+        self.assertEqual(result["metrics"]["trustPhotos"], 1)
+
+    def test_editorial_close_requires_one_separate_closing_trust_photo(self) -> None:
+        article = re.sub(
+            r'<figure\b(?=[^>]*data-trust-photo="true")[^>]*>.*?</figure>',
+            "",
+            editorial_close_article(),
+            count=1,
+            flags=re.I | re.S,
+        )
+        result = ARTICLE_VALIDATOR.validate_article(
+            article, EDITORIAL_TITLE, KEYWORD, editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertIn("trust-photo-count", {item["code"] for item in result["issues"]})
+        self.assertEqual(result["metrics"]["realPhotos"], 1)
 
     def test_editorial_close_rejects_real_photo_without_related_placement(self) -> None:
         article = editorial_close_article().replace(
-            'data-real-photo="true" data-media-origin="goldhand-bundled-official-library" '
+            'data-real-photo="true" data-real-photo-slot="before-credential" '
+            'data-media-origin="goldhand-bundled-official-library" '
             'data-goldhand-media="GH0016" data-image-placement="after-related-paragraph"',
-            'data-real-photo="true" data-media-origin="goldhand-bundled-official-library" '
+            'data-real-photo="true" data-real-photo-slot="before-credential" '
+            'data-media-origin="goldhand-bundled-official-library" '
             'data-goldhand-media="GH0016"',
             1,
         )
@@ -1034,6 +1414,57 @@ class ArticleTests(unittest.TestCase):
             article, EDITORIAL_TITLE, KEYWORD, editorial_close=True,
         )
         self.assertIn("real-photo-placement-marker", {item["code"] for item in result["issues"]})
+
+    def test_editorial_close_accepts_two_closing_clinical_photos_before_trust_photo(self) -> None:
+        article = re.sub(
+            r'<figure\b(?=[^>]*data-real-photo="true")[^>]*>.*?</figure>',
+            "",
+            editorial_close_article(include_summary=False),
+            count=1,
+            flags=re.I | re.S,
+        )
+        media_by_id = editorial_fixture_media_library()
+        figures: list[str] = []
+        for media_id in ("GH0016", "GH0017"):
+            asset = media_by_id[media_id]
+            figures.append(
+                f'<figure data-reference-role="evidence-media" data-goldhand-role="media" '
+                f'data-real-photo="true" data-real-photo-slot="closing-trust" '
+                f'data-media-origin="goldhand-bundled-official-library" data-goldhand-media="{media_id}" '
+                f'data-image-placement="closing-clinical-gallery" '
+                f'style="margin:28px auto;text-align:center;max-width:580px;">'
+                f'<img src="{asset["url"]}" data-real-photo="true" '
+                f'data-media-origin="goldhand-bundled-official-library" data-goldhand-media="{media_id}" '
+                f'data-media-sha256="{asset["sha256"]}" data-reference-source-url="{asset["url"]}" '
+                f'referrerpolicy="no-referrer" alt="{asset["approvedAlt"]}" '
+                f'style="display:block;width:100%;height:auto;margin:0 auto;"></figure>'
+            )
+        article = article.replace(
+            '<p data-reference-role="credential-trust-context"',
+            "".join(figures) + '<p data-reference-role="credential-trust-context"',
+            1,
+        )
+        result = ARTICLE_VALIDATOR.validate_article(
+            article, EDITORIAL_TITLE, KEYWORD, editorial_close=True,
+            media_library=media_by_id,
+        )
+        codes = {item["code"] for item in result["issues"]}
+        self.assertFalse(any(code.startswith("real-photo-layout") for code in codes), result)
+        self.assertNotIn("real-photo-closing-trust-position", codes, result)
+        self.assertNotIn("real-photo-closing-trust-not-adjacent", codes, result)
+        self.assertNotIn("real-photo-anchor-missing", codes, result)
+        self.assertNotIn("real-photo-context-mismatch", codes, result)
+        repeated_result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=media_by_id,
+            recent_media_ids={"GH0016", "GH0017"},
+        )
+        repeated_codes = {item["code"] for item in repeated_result["issues"]}
+        self.assertNotIn("immediately-previous-real-photo-repeat", repeated_codes, repeated_result)
+        self.assertEqual(repeated_result["metrics"]["immediatelyPreviousRealPhotoReuseLimit"], 2)
 
     def test_editorial_close_rejects_visible_image_caption(self) -> None:
         article = editorial_close_article().replace(
@@ -1506,6 +1937,7 @@ class BuilderTests(unittest.TestCase):
             self.assertEqual(TOPIC_SELECTOR.default_state_path(), expected_state)
             self.assertEqual(STATE_RECORDER.default_state_path(), expected_state)
             self.assertEqual(MEDIA_RECOMMENDER.default_state_path(), expected_state)
+            self.assertEqual(CLOSING_TRUST_RECOMMENDER.default_state_path(), expected_state)
 
     def test_builder_strips_legacy_visible_image_captions(self) -> None:
         article = editorial_close_article().replace(
@@ -1562,6 +1994,20 @@ class BuilderTests(unittest.TestCase):
             ),
         )
         with self.assertRaisesRegex(ValueError, "원장 치료·진찰·상담 사진이 아니므로"):
+            PAGE_BUILDER.validate_person_media_policy(article, library)
+
+    def test_builder_rejects_unreviewed_closing_trust_photo(self) -> None:
+        library = json.loads((SKILL_DIR / "assets" / "media-library.json").read_text(encoding="utf-8"))
+        logo = next(item for item in library["assets"] if item["id"] == "GH0069")
+        article = valid_article().replace(
+            "</article>",
+            (
+                f'<img data-trust-photo="true" data-goldhand-media="{logo["id"]}" '
+                f'data-media-sha256="{logo["sha256"]}" '
+                f'data-reference-source-url="{logo["url"]}" src="{logo["url"]}"></article>'
+            ),
+        )
+        with self.assertRaisesRegex(ValueError, "검수된 협약·수료·기부·봉사 신뢰 사진이 아니므로"):
             PAGE_BUILDER.validate_person_media_policy(article, library)
 
     def test_local_file_copy_is_synchronous_and_does_not_inject_text_decoration(self) -> None:
@@ -1652,6 +2098,94 @@ class BuilderTests(unittest.TestCase):
         result = HTML_VALIDATOR.validate_html(page)
         self.assertEqual(result["status"], "pass", result)
         self.assertTrue(result["metrics"]["editorialClose"])
+
+    def test_copy_page_rejects_generated_image_after_second_body_section(self) -> None:
+        article = editorial_close_article(include_summary=False).replace(
+            '<article data-goldhand-type="정보전달형"',
+            '<article data-goldhand-type="정보전달형" data-editorial-mode="close-adaptation"',
+            1,
+        )
+        article = move_generated_figures_after_section_heading(article, 2, count=1)
+        article = PAGE_BUILDER.rewrite_img_tags(
+            article,
+            {GPT_IMAGE_FIXTURE: "https://goldhand-images.example/media/gpt.png"},
+        )
+        result = HTML_VALIDATOR.validate_html(PAGE_BUILDER.build_page(TITLE, article))
+        self.assertIn(
+            "generated-image-outside-early-body",
+            {item["code"] for item in result["issues"]},
+            result,
+        )
+
+    def test_copy_page_cannot_bypass_early_image_gate_by_removing_heading_role(self) -> None:
+        article = editorial_close_article(include_summary=False).replace(
+            '<article data-goldhand-type="정보전달형"',
+            '<article data-goldhand-type="정보전달형" data-editorial-mode="close-adaptation"',
+            1,
+        )
+        article = move_generated_figures_after_section_heading(article, 2, count=1)
+        article = article.replace(' data-reference-role="section-heading"', "")
+        article = PAGE_BUILDER.rewrite_img_tags(
+            article,
+            {GPT_IMAGE_FIXTURE: "https://goldhand-images.example/media/gpt.png"},
+        )
+        result = HTML_VALIDATOR.validate_html(PAGE_BUILDER.build_page(TITLE, article))
+        codes = {item["code"] for item in result["issues"]}
+        self.assertIn("section-heading-markers-invalid", codes, result)
+        self.assertIn("body-section-heading-missing", codes, result)
+        self.assertIn("generated-image-outside-early-body", codes, result)
+
+    def test_copy_page_cannot_hide_third_p_heading_by_removing_both_markers(self) -> None:
+        article = editorial_close_article(include_summary=False).replace(
+            '<article data-goldhand-type="정보전달형"',
+            '<article data-goldhand-type="정보전달형" data-editorial-mode="close-adaptation"',
+            1,
+        )
+        article = move_generated_figures_after_section_heading(article, 2, count=1)
+        article = strip_markers_from_section_heading(article, 2, convert_to_p=True)
+        article = PAGE_BUILDER.rewrite_img_tags(
+            article,
+            {GPT_IMAGE_FIXTURE: "https://goldhand-images.example/media/gpt.png"},
+        )
+        result = HTML_VALIDATOR.validate_html(PAGE_BUILDER.build_page(TITLE, article))
+        codes = {item["code"] for item in result["issues"]}
+        self.assertIn("section-heading-markers-invalid", codes, result)
+        self.assertIn("generated-image-outside-early-body", codes, result)
+
+    def test_copy_page_cannot_hide_third_section_by_removing_divider_and_markers(self) -> None:
+        cases = (
+            (False, "19px", "700"),
+            (True, "19px", "700"),
+            (True, "19px", "650"),
+            (True, "100px", "700"),
+            (True, "16px;font-size:19px", "700"),
+            (True, "19px", "400;font-weight:700"),
+        )
+        for convert_to_p, font_size, font_weight in cases:
+            with self.subTest(convert_to_p=convert_to_p, font_size=font_size, font_weight=font_weight):
+                article = editorial_close_article(include_summary=False).replace(
+                    '<article data-goldhand-type="정보전달형"',
+                    '<article data-goldhand-type="정보전달형" data-editorial-mode="close-adaptation"',
+                    1,
+                )
+                article = move_generated_figures_after_section_heading(article, 2, count=1)
+                article = remove_divider_before_section_heading(article, 2)
+                article = strip_markers_from_section_heading(article, 2, convert_to_p=convert_to_p)
+                if convert_to_p:
+                    article = make_markerless_p_visually_heading_like(
+                        article,
+                        "3. ",
+                        font_size=font_size,
+                        font_weight=font_weight,
+                    )
+                article = PAGE_BUILDER.rewrite_img_tags(
+                    article,
+                    {GPT_IMAGE_FIXTURE: "https://goldhand-images.example/media/gpt.png"},
+                )
+                result = HTML_VALIDATOR.validate_html(PAGE_BUILDER.build_page(TITLE, article))
+                codes = {item["code"] for item in result["issues"]}
+                self.assertIn("section-heading-divider-pair-invalid", codes, result)
+                self.assertIn("generated-image-outside-early-body", codes, result)
 
     def test_copy_page_rejects_credential_before_solution_preview(self) -> None:
         article = move_credential_table_before(
@@ -1866,6 +2400,41 @@ class ImageHostSetupTests(unittest.TestCase):
 
 
 class StateAndMediaTests(unittest.TestCase):
+    def test_media_history_skips_current_article_during_revalidation(self) -> None:
+        state = {
+            "entries": [
+                {
+                    "title": "현재 글",
+                    "realMediaIds": ["CURRENT"],
+                    "realMediaHashes": ["current-hash"],
+                    "trustMediaIds": ["CURRENT-TRUST"],
+                    "trustMediaHashes": ["current-trust-hash"],
+                },
+                {
+                    "title": "직전 글",
+                    "realMediaIds": ["PREVIOUS"],
+                    "realMediaHashes": ["previous-hash"],
+                    "trustMediaIds": ["PREVIOUS-TRUST"],
+                    "trustMediaHashes": ["previous-trust-hash"],
+                },
+            ]
+        }
+        ids, hashes = MEDIA_RECOMMENDER.recent_media(state, current_title="현재 글")
+        self.assertEqual(ids, {"PREVIOUS"})
+        self.assertEqual(hashes, {"previous-hash"})
+        validator_ids, validator_hashes, _, _ = ARTICLE_VALIDATOR.recent_media_policy(
+            state,
+            current_title="현재 글",
+        )
+        self.assertEqual(validator_ids, {"PREVIOUS"})
+        self.assertEqual(validator_hashes, {"previous-hash"})
+        trust_ids, trust_hashes = ARTICLE_VALIDATOR.recent_trust_media_policy(
+            state,
+            current_title="현재 글",
+        )
+        self.assertEqual(trust_ids, {"PREVIOUS-TRUST"})
+        self.assertEqual(trust_hashes, {"previous-trust-hash"})
+
     def test_state_keeps_only_latest_three_without_body(self) -> None:
         state: dict[str, object] = {}
         for index in range(4):
@@ -1954,7 +2523,7 @@ class StateAndMediaTests(unittest.TestCase):
         result = STATE_RECORDER.record(legacy, entry)
         self.assertEqual([item["type"] for item in result["entries"]], ["정보전달형"])
 
-    def test_state_v3_round_trips_semantic_topic_fields(self) -> None:
+    def test_state_v5_round_trips_semantic_topic_and_media_fields(self) -> None:
         entry = {
             "title": "광주 한의원 추천, 추나요법을 고려하기 전 확인할 기준",
             "mainKeyword": "광주 한의원 추천",
@@ -1979,13 +2548,17 @@ class StateAndMediaTests(unittest.TestCase):
             "dedupeKeys": ["추나요법", "치료선택기준"],
             "realMediaIds": ["GH0001", "GHLABC123"],
             "realMediaHashes": ["abc123"],
+            "trustMediaIds": ["GH0042"],
+            "trustMediaHashes": ["trust123"],
         }
         result = STATE_RECORDER.record({}, entry)
-        self.assertEqual(result["schemaVersion"], 4)
+        self.assertEqual(result["schemaVersion"], 5)
         self.assertEqual(result["entries"][0]["semanticTopicId"], entry["semanticTopicId"])
         self.assertEqual(result["entries"][0]["subjectIds"], entry["subjectIds"])
         self.assertEqual(result["entries"][0]["realMediaIds"], entry["realMediaIds"])
         self.assertEqual(result["entries"][0]["realMediaHashes"], entry["realMediaHashes"])
+        self.assertEqual(result["entries"][0]["trustMediaIds"], entry["trustMediaIds"])
+        self.assertEqual(result["entries"][0]["trustMediaHashes"], entry["trustMediaHashes"])
 
     def test_media_never_fills_with_objects_or_duplicate_group(self) -> None:
         library = {
@@ -2000,13 +2573,14 @@ class StateAndMediaTests(unittest.TestCase):
             topic="교통사고 통증",
             keyword="광주 교통사고 한의원",
             article_type="정보전달형",
-            count=6,
+            count=1,
             recent_ids=set(),
+            placement_mode="before-credential",
         )
         self.assertEqual(result["selectedCount"], 0, result)
-        self.assertEqual(result["status"], "shortage")
+        self.assertEqual(result["status"], "decision-required")
 
-    def test_media_reuses_recent_trust_photos_only_to_reach_six(self) -> None:
+    def test_media_excludes_immediately_previous_photos_but_allows_older_ones(self) -> None:
         assets = [
             {
                 "id": f"T{index}", "safeAuto": True, "requiresReview": False,
@@ -2017,20 +2591,45 @@ class StateAndMediaTests(unittest.TestCase):
                 "bundledPath": "assets/gpt-image-test-fixture.png", "sha256": f"trust-{index}",
                 "sceneType": "director-patient-consultation", "personInteraction": True,
                 "directorVisible": True, "trustPriority": 100,
+                "placementTerms": ["갱년기 상담"],
+                "approvedAlt": f"박준희 원장이 갱년기 환자와 상담하는 장면 {index}",
             }
-            for index in range(1, 8)
+            for index in range(1, 4)
         ]
         result = MEDIA_RECOMMENDER.recommend(
             {"assets": assets}, topic="갱년기 증상", keyword="광주 한의원 추천",
-            article_type="정보전달형", count=8, recent_ids={"T1", "T2", "T3"},
+            article_type="정보전달형", count=2, recent_ids={"T1"},
+            placement_mode="closing-trust",
         )
-        self.assertEqual(result["selectedCount"], 6, result)
-        self.assertEqual(result["freshCount"], 4, result)
-        self.assertEqual(result["fallbackRecentTrustCount"], 2, result)
-        self.assertEqual(result["status"], "minimum-complete")
-        self.assertTrue(all(item["selectionRole"] == "recent-director-patient-fallback" for item in result["selected"][-2:]))
+        self.assertEqual(result["selectedCount"], 2, result)
+        self.assertEqual(result["freshCount"], 2, result)
+        self.assertEqual(result["blockedImmediatelyPreviousCount"], 1, result)
+        self.assertEqual(result["status"], "complete")
+        self.assertEqual({item["id"] for item in result["selected"]}, {"T2", "T3"})
+        self.assertTrue(all(item["figureAttributes"]["data-real-photo-slot"] == "closing-trust" for item in result["selected"]))
 
-    def test_media_does_not_reuse_recent_when_six_fresh_photos_exist(self) -> None:
+    def test_closing_trust_selector_uses_reviewed_pool_and_rotates_previous_photo(self) -> None:
+        library = json.loads((SKILL_DIR / "assets" / "media-library.json").read_text(encoding="utf-8"))
+        first = CLOSING_TRUST_RECOMMENDER.recommend(
+            library,
+            recent_ids=set(),
+            recent_hashes=set(),
+        )
+        self.assertEqual(first["status"], "complete", first)
+        self.assertEqual(first["eligibleCount"], 7)
+        self.assertEqual(first["selectedCount"], 1)
+        self.assertEqual(first["selected"][0]["id"], "GH0042")
+        self.assertEqual(first["selected"][0]["figureAttributes"]["data-trust-photo-slot"], "closing-credential-trust")
+        rotated = CLOSING_TRUST_RECOMMENDER.recommend(
+            library,
+            recent_ids={first["selected"][0]["id"]},
+            recent_hashes={first["selected"][0]["sha256"]},
+        )
+        self.assertEqual(rotated["status"], "complete", rotated)
+        self.assertNotEqual(rotated["selected"][0]["id"], first["selected"][0]["id"])
+        self.assertEqual(rotated["blockedImmediatelyPreviousCount"], 1)
+
+    def test_media_does_not_reuse_immediately_previous_photo(self) -> None:
         assets = [
             {
                 "id": f"F{index}", "safeAuto": True, "requiresReview": False,
@@ -2041,14 +2640,17 @@ class StateAndMediaTests(unittest.TestCase):
                 "bundledPath": "assets/gpt-image-test-fixture.png", "sha256": f"fresh-{index}",
                 "sceneType": "director-patient-treatment", "personInteraction": True,
                 "directorVisible": True, "trustPriority": 100,
+                "placementTerms": ["수면 상담"],
+                "approvedAlt": f"박준희 원장이 수면 문제를 진찰하는 장면 {index}",
             }
             for index in range(1, 9)
         ]
         result = MEDIA_RECOMMENDER.recommend(
             {"assets": assets}, topic="수면 관리", keyword="광주 한의원",
-            article_type="정보전달형", count=6, recent_ids={"F1", "F2"},
+            article_type="정보전달형", count=1, recent_ids={"F1", "F2"},
+            placement_mode="before-credential",
         )
-        self.assertEqual(result["selectedCount"], 6, result)
+        self.assertEqual(result["selectedCount"], 1, result)
         self.assertEqual(result["fallbackRecentTrustCount"], 0, result)
         self.assertFalse({"F1", "F2"} & {item["id"] for item in result["selected"]})
 
@@ -2063,6 +2665,8 @@ class StateAndMediaTests(unittest.TestCase):
                 "bundledPath": "assets/gpt-image-test-fixture.png", "sha256": f"person-{index}",
                 "sceneType": "director-patient-treatment", "personInteraction": True,
                 "directorVisible": True, "trustPriority": 100,
+                "placementTerms": ["목통증 진찰"],
+                "approvedAlt": f"박준희 원장이 환자의 목을 진찰하는 장면 {index}",
             }
             for index in range(1, 7)
         ]
@@ -2079,23 +2683,90 @@ class StateAndMediaTests(unittest.TestCase):
         ]
         result = MEDIA_RECOMMENDER.recommend(
             {"assets": people + objects}, topic="목 통증", keyword="광주 한의원 추천",
-            article_type="정보전달형", count=6, recent_ids=set(),
+            article_type="정보전달형", count=2, recent_ids=set(),
+            placement_mode="closing-trust",
         )
-        self.assertEqual([item["id"][0] for item in result["selected"]], ["P"] * 6, result)
+        self.assertEqual([item["id"][0] for item in result["selected"]], ["P"] * 2, result)
 
     def test_all_official_media_is_bundled_inside_plugin(self) -> None:
         library = json.loads((SKILL_DIR / "assets" / "media-library.json").read_text(encoding="utf-8"))
-        self.assertEqual(library["schemaVersion"], 2)
+        self.assertEqual(library["schemaVersion"], 3)
         self.assertEqual(library["assetCount"], 113)
         self.assertEqual(library["bundledAssetCount"], 113)
         self.assertEqual(library["safeAutoCount"], 6)
+        self.assertEqual(library["closingTrustCount"], 7)
         self.assertEqual(OFFICIAL_MEDIA_SYNC.validate_library(library), [])
         self.assertTrue(all(str(item["bundledPath"]).startswith("assets/official-media/") for item in library["assets"]))
         approved = [item for item in library["assets"] if item.get("safeAuto")]
         self.assertTrue(all(item.get("personInteraction") is True for item in approved))
         self.assertTrue(all(item.get("directorVisible") is True for item in approved))
         self.assertTrue(all(str(item.get("sceneType", "")).startswith("director-patient-") for item in approved))
+        self.assertTrue(all(item.get("placementTerms") for item in approved))
+        self.assertTrue(all(item.get("approvedAlt") for item in approved))
         self.assertFalse(any(re.search(r"(?:로고|logo)", str(item.get("filename", "")), re.I) for item in approved))
+        closing_trust = [item for item in library["assets"] if item.get("closingTrustEligible")]
+        self.assertEqual(len(closing_trust), 7)
+        self.assertTrue(all(item.get("closingTrustReviewed") is True for item in closing_trust))
+        self.assertTrue(all(item.get("closingTrustPlacementTerms") for item in closing_trust))
+        self.assertTrue(all(item.get("closingTrustApprovedAlt") for item in closing_trust))
+        self.assertTrue(all(item.get("closingTrustContextText") for item in closing_trust))
+
+    def test_unrelated_topic_reports_exact_context_photo_shortage(self) -> None:
+        library = json.loads((SKILL_DIR / "assets" / "media-library.json").read_text(encoding="utf-8"))
+        approved_ids = {item["id"] for item in library["assets"] if item.get("safeAuto")}
+        result = MEDIA_RECOMMENDER.recommend(
+            library,
+            topic="갱년기 홍조 불면",
+            keyword="광주 한의원 추천",
+            article_type="정보전달형",
+            count=1,
+            recent_ids=approved_ids,
+            placement_mode="before-credential",
+        )
+        self.assertEqual(result["status"], "decision-required", result)
+        self.assertEqual(result["freshEligibleCount"], 0, result)
+        self.assertEqual(result["immediatelyPreviousContextEligibleCount"], 0, result)
+        self.assertEqual(result["reusedRecentCount"], 0, result)
+        self.assertEqual(result["missingToMinimum"], 1, result)
+
+    def test_closing_trust_uses_actual_treatment_photos_without_topic_context(self) -> None:
+        library = json.loads((SKILL_DIR / "assets" / "media-library.json").read_text(encoding="utf-8"))
+        result = MEDIA_RECOMMENDER.recommend(
+            library,
+            topic="갱년기 홍조 불면",
+            keyword="광주 한의원 추천",
+            article_type="정보전달형",
+            count=2,
+            recent_ids=set(),
+            placement_mode="closing-trust",
+        )
+        self.assertEqual(result["status"], "complete", result)
+        self.assertEqual([item["id"] for item in result["selected"]], ["GH0016", "GH0017"])
+        self.assertTrue(all(not item["matchedPlacementTerms"] for item in result["selected"]))
+        self.assertTrue(
+            all(
+                item["figureAttributes"]["data-image-placement"] == "closing-clinical-gallery"
+                for item in result["selected"]
+            )
+        )
+
+    def test_closing_trust_reuses_previous_approved_treatment_photos_when_needed(self) -> None:
+        library = json.loads((SKILL_DIR / "assets" / "media-library.json").read_text(encoding="utf-8"))
+        approved_ids = {item["id"] for item in library["assets"] if item.get("safeAuto")}
+        result = MEDIA_RECOMMENDER.recommend(
+            library,
+            topic="갱년기 홍조 불면",
+            keyword="광주 한의원 추천",
+            article_type="정보전달형",
+            count=2,
+            recent_ids=approved_ids,
+            placement_mode="closing-trust",
+        )
+        self.assertEqual(result["status"], "complete", result)
+        self.assertEqual(result["selectedCount"], 2, result)
+        self.assertEqual(result["freshCount"], 0, result)
+        self.assertEqual(result["reusedRecentCount"], 2, result)
+        self.assertTrue(all(item["reusedFromRecent"] for item in result["selected"]))
 
 
 class TopicSourceBoundaryTests(unittest.TestCase):
@@ -2449,6 +3120,7 @@ class SkillPackageTests(unittest.TestCase):
             "scripts/validate_final_voice_review.py",
             "scripts/sync_official_media_assets.py",
             "scripts/recommend_media.py",
+            "scripts/recommend_closing_trust_media.py",
             "scripts/setup_image_host.py",
             "../writing-voice/SKILL.md",
         ):
@@ -2468,11 +3140,34 @@ class SkillPackageTests(unittest.TestCase):
         self.assertEqual(design["retentionHooks"]["readingTime"]["maximumMinutes"], 5)
         self.assertTrue(design["retentionHooks"]["readingTime"]["topicSpecificPayoffRequired"])
         self.assertEqual(design["generatedReferenceMedia"]["creator"], "callilife")
-        self.assertEqual(design["realGoldhandMedia"]["minimumCount"], 6)
-        self.assertEqual(design["realGoldhandMedia"]["maximumCount"], 12)
-        self.assertTrue(design["realGoldhandMedia"]["recentReuseAllowedOnlyBelowMinimum"])
+        self.assertEqual(design["generatedReferenceMedia"]["minimumCount"], 3)
+        self.assertEqual(design["generatedReferenceMedia"]["maximumCount"], 4)
+        self.assertEqual(design["realGoldhandMedia"]["minimumCount"], 1)
+        self.assertEqual(design["realGoldhandMedia"]["maximumCount"], 2)
+        self.assertEqual(design["realGoldhandMedia"]["recentArticleWindow"], 1)
+        self.assertFalse(design["realGoldhandMedia"]["recentReuseAllowedWhenFreshBelowTarget"])
+        self.assertEqual(design["realGoldhandMedia"]["recentReuseMaximumPerArticle"], 0)
+        self.assertEqual(design["realGoldhandMedia"]["allowedLayouts"], {"before-credential": 1, "closing-trust": 2})
+        self.assertTrue(design["realGoldhandMedia"]["placementTermsRequired"])
+        self.assertEqual(
+            design["realGoldhandMedia"]["contextMatchRequiredByLayout"],
+            {"before-credential": True, "closing-trust": False},
+        )
+        self.assertEqual(
+            design["realGoldhandMedia"]["requiredFigurePlacementByLayout"],
+            {"before-credential": "after-related-paragraph", "closing-trust": "closing-clinical-gallery"},
+        )
+        self.assertTrue(design["realGoldhandMedia"]["closingTrustRecentReuseAllowedWhenFreshBelowTarget"])
+        self.assertEqual(design["realGoldhandMedia"]["closingTrustRecentReuseMaximumPerArticle"], 2)
+        self.assertTrue(design["realGoldhandMedia"]["approvedAltRequired"])
         self.assertTrue(design["realGoldhandMedia"]["personInteractionRequired"])
         self.assertTrue(design["realGoldhandMedia"]["directorVisibleRequired"])
+        self.assertEqual(design["closingCredentialTrustMedia"]["exactCount"], 1)
+        self.assertTrue(design["closingCredentialTrustMedia"]["separateFromClinicalMedia"])
+        self.assertFalse(design["closingCredentialTrustMedia"]["countsTowardRealGoldhandMedia"])
+        self.assertEqual(design["closingCredentialTrustMedia"]["requiredSlot"], "closing-credential-trust")
+        self.assertTrue(design["closingCredentialTrustMedia"]["mustBeLastImageBeforeClinicHours"])
+        self.assertFalse(design["closingCredentialTrustMedia"]["immediatelyPreviousArticleReuseAllowed"])
         self.assertFalse(design["fixedClosingLinks"]["enabled"])
         self.assertFalse(design["fixedClosingLinks"]["requiredOnEveryArticle"])
         self.assertEqual(design["fixedClosingLinks"]["articleEndsWith"], "clinic-info")
@@ -2498,7 +3193,8 @@ class SkillPackageTests(unittest.TestCase):
         self.assertEqual(design["textEmphasis"]["red"]["minimumCount"], 1)
         credential_placement = design["editorialCloseOverrides"]["credentialPlacement"]
         self.assertTrue(credential_placement["appliesToEveryArticle"])
-        self.assertEqual(credential_placement["requiredDirectlyAfterCompletedRole"], "solution-preview")
+        self.assertEqual(credential_placement["requiredAfterCompletedRole"], "solution-preview")
+        self.assertEqual(credential_placement["allowedInterveningContentRoles"], ["evidence-media:before-credential"])
         self.assertEqual(
             credential_placement["requiredImmediatelyBeforeFirstInformationBodyRole"],
             ["divider", "section-heading"],
@@ -2516,8 +3212,12 @@ class SkillPackageTests(unittest.TestCase):
         self.assertIn("validate_final_voice_review.py", skill)
         self.assertIn("final-writing-voice-review.md", skill)
         self.assertIn("writing-voice-final-rehear-v1", skill)
-        self.assertIn("실제 금손한의원 사진을 매 글 6~12장", skill)
-        self.assertIn("새 승인 사진이 6장보다 적을 때만", skill)
+        self.assertIn("`before-credential`은 해결 방향 예고 뒤", skill)
+        self.assertIn("`closing-trust`는 다른 사진을 우선하되", skill)
+        self.assertIn("질환·부위·본문 문맥과 맞지 않아도", skill)
+        self.assertIn("GPT Image 3~4장", skill)
+        self.assertIn("placementTerms", skill)
+        self.assertIn("approvedAlt", skill)
         self.assertIn("assets/official-media", skill)
         self.assertIn("clinic-info 운영정보 표에서 끝", skill)
         self.assertIn("`clinic-hours` 진료시간 3열 표", skill)
@@ -2628,6 +3328,48 @@ class SkillPackageTests(unittest.TestCase):
         softened_result = GOLDHAND_VOICE_VALIDATOR.validate(softened, profile)
         self.assertIn("over-softened-medical-guidance", {item["code"] for item in softened_result["issues"]})
 
+    def test_voice_gate_rejects_user_reported_parallel_hooks_and_abstract_transition(self) -> None:
+        profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
+        example = (SKILL_DIR / "examples" / "광주-한의원-네이버-순정-원고.html").read_text(encoding="utf-8")
+        bad_hooks = example.replace(
+            "치료받은 날은 편했는데, 왜 며칠 지나면 통증이 다시 나타날까요?",
+            "홍조 때문에 얼굴이 달아오르고 땀이 나서 사람 만나는 게 불편해졌나요?",
+            1,
+        ).replace(
+            "아픈 곳만 치료하면 되는 건지, 자세와 움직임도 함께 봐야 할까요?",
+            "불면 때문에 새벽에 깨고, 다음 날 피로와 가라앉은 기분도 이어지나요?",
+            1,
+        )
+        hook_result = GOLDHAND_VOICE_VALIDATOR.validate(bad_hooks, profile)
+        hook_codes = {item["code"] for item in hook_result["issues"]}
+        self.assertIn("parallel-because-hook-template", hook_codes, hook_result)
+        self.assertIn("stacked-symptom-summary-question", hook_codes, hook_result)
+
+        abstract_transition = example.replace(
+            "자주 겪는 장면 하나면 충분합니다.",
+            "어느 불편이 하루를 가장 많이 흔드는지 알면 설명도 이어집니다.",
+            1,
+        )
+        transition_result = GOLDHAND_VOICE_VALIDATOR.validate(abstract_transition, profile)
+        self.assertIn(
+            "abstract-symptom-ranking-transition",
+            {item["code"] for item in transition_result["issues"]},
+            transition_result,
+        )
+
+    def test_all_reference_profiles_force_hooks_before_greeting(self) -> None:
+        family = json.loads(
+            (SKILL_DIR / "assets" / "two-reader-hooks-reference-family.json").read_text(encoding="utf-8")
+        )
+        self.assertTrue(family["articles"])
+        self.assertTrue(all(item["questionPlacement"] == "before-greeting" for item in family["articles"]))
+        self.assertTrue(
+            all(item["openingMode"] == "two-quotation-components-then-greeting" for item in family["articles"])
+        )
+
+    def test_spoken_clinic_gate_rejects_additional_ai_registers(self) -> None:
+        profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
+        example = (SKILL_DIR / "examples" / "광주-한의원-네이버-순정-원고.html").read_text(encoding="utf-8")
         meta = example.replace(
             "제가 진료할 때 여쭙는 건",
             "이번 글에서는 함께 살펴보겠습니다",
@@ -2823,7 +3565,12 @@ class SkillPackageTests(unittest.TestCase):
         briefs = json.loads((SKILL_DIR / "assets" / "wipark-content-briefs.json").read_text(encoding="utf-8"))
         atom_ids = [atom["id"] for atom in briefs["briefs"]["INFO01"]["orderedContentAtoms"]]
         paragraph = "광주 한의원에서 모니터를 봅니다. 오후에는 목이 뻐근합니다. 어깨도 같이 올라가죠."
-        final_body = ["안녕하세요, 금손한의원 박준희 원장입니다.", *[paragraph for _ in range(10)]]
+        final_body = [
+            "모니터를 오래 보고 나면 오후마다 목이 뻐근해지나요?",
+            "고개를 돌릴 때 어깨까지 같이 당기시나요?",
+            "안녕하세요, 금손한의원 박준희 원장입니다.",
+            *[paragraph for _ in range(10)],
+        ]
         case = {
             "iteration": 1,
             "briefId": "INFO01",

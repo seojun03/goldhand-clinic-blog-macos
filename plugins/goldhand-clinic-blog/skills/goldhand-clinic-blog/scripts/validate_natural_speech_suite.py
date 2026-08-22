@@ -18,6 +18,8 @@ DEFAULT_BRIEFS = SKILL_DIR / "assets" / "wipark-content-briefs.json"
 DEFAULT_FINAL_VOICE_CONTRACT = SKILL_DIR / "assets" / "writing-voice-final-review-contract.json"
 VOICE_VALIDATOR_PATH = Path(__file__).with_name("validate_goldhand_voice.py")
 FINAL_VOICE_VALIDATOR_PATH = Path(__file__).with_name("validate_final_voice_review.py")
+EXACT_GREETING = "안녕하세요, 금손한의원 박준희 원장입니다."
+STACKED_ABSTRACT_HOOK = re.compile(r"(?:피로|기분|불편|증상).{0,28}(?:이어지|겹치|반복되)나요\?")
 
 
 def load_voice_validator() -> Any:
@@ -162,6 +164,36 @@ def validate_suite(
             add("body-missing", "finalBody에 빈 문자열이 아닌 문단 배열이 필요합니다.", iteration)
             continue
 
+        final_paragraphs = [str(value).strip() for value in raw_case.get("finalBody", [])]
+        greeting_indexes = [index for index, paragraph in enumerate(final_paragraphs) if paragraph == EXACT_GREETING]
+        greeting_index = greeting_indexes[0] if len(greeting_indexes) == 1 else -1
+        if len(greeting_indexes) != 1:
+            add("opening-greeting-count", "고정 인사는 finalBody에 정확히 한 번 있어야 합니다.", iteration)
+        if greeting_index not in {2, 3}:
+            add(
+                "opening-greeting-order",
+                "finalBody는 서로 다른 생활 장면을 묻는 질문 2~3개로 시작한 뒤 고정 인사가 이어져야 합니다.",
+                iteration,
+            )
+            opening_hooks = final_paragraphs[: max(0, greeting_index)] if greeting_index >= 0 else []
+        else:
+            opening_hooks = final_paragraphs[:greeting_index]
+        if not 2 <= len(opening_hooks) <= 3 or not all(paragraph.endswith("?") for paragraph in opening_hooks):
+            add("opening-hook-question-form", "인사 앞에는 물음표로 끝나는 독자 질문 2~3개만 둡니다.", iteration)
+        if sum("때문에" in paragraph for paragraph in opening_hooks) > 1:
+            add(
+                "opening-hook-parallel-because-template",
+                "여러 도입 질문을 모두 ‘증상명 때문에 …나요?’ 틀로 쓰면 안 됩니다.",
+                iteration,
+            )
+        for hook_index, paragraph in enumerate(opening_hooks, start=1):
+            if STACKED_ABSTRACT_HOOK.search(paragraph):
+                add(
+                    "opening-hook-abstract-symptom-stack",
+                    f"도입 질문 {hook_index}은 피로·기분 같은 증상 목록을 추상 서술어로 묶지 말고 생활 장면으로 물어야 합니다.",
+                    iteration,
+                )
+
         keyword = str(raw_case.get("keyword", "")).strip()
         title = str(raw_case.get("title", "")).strip()
         if not keyword or title.count(keyword) != 1:
@@ -178,7 +210,7 @@ def validate_suite(
         if not 1400 <= char_count <= 1800:
             add("draft-length", f"제목+평문 공백 제외 글자 수는 1400~1800자여야 합니다. 현재 {char_count}자입니다.", iteration)
 
-        paragraph_counts = [sentence_count(paragraph) for paragraph in raw_case["finalBody"][1:]]
+        paragraph_counts = [sentence_count(paragraph) for paragraph in final_paragraphs[greeting_index + 1:]]
         count_frequencies = {count: paragraph_counts.count(count) for count in set(paragraph_counts)}
         dominant_ratio = max(count_frequencies.values(), default=0) / max(1, len(paragraph_counts))
         uniform_run = longest_equal_run(paragraph_counts)

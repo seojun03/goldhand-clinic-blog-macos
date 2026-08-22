@@ -50,6 +50,91 @@ def add(issues: list[dict[str, str]], severity: str, code: str, detail: str) -> 
     issues.append({"severity": severity, "code": code, "detail": detail})
 
 
+def attr_values(fragment: str, attribute: str) -> list[str]:
+    pattern = re.compile(rf"\b{re.escape(attribute)}\s*=\s*(['\"])(.*?)\1", re.I | re.S)
+    return [match.group(2).strip() for match in pattern.finditer(fragment)]
+
+
+def explanatory_heading_candidates(article: str) -> list[re.Match[str]]:
+    """Find body headings even when one or both contract markers were removed."""
+    patterns = (
+        re.compile(
+            r"<(?P<tag>[a-z][\w:-]*)\b"
+            r"(?=[^>]*(?:\bdata-reference-role\s*=\s*['\"]section-heading['\"]"
+            r"|\bdata-naver-native-component\s*=\s*['\"]subheading['\"]))"
+            r"[^>]*>.*?</(?P=tag)>",
+            re.I | re.S,
+        ),
+        re.compile(r"<(?P<tag>h[1-6])\b[^>]*>.*?</(?P=tag)>", re.I | re.S),
+    )
+    matches_by_span: dict[tuple[int, int], re.Match[str]] = {}
+    for pattern in patterns:
+        for match in pattern.finditer(article):
+            matches_by_span[(match.start(), match.end())] = match
+    return [matches_by_span[span] for span in sorted(matches_by_span)]
+
+
+def has_explanatory_heading_contract(match: re.Match[str]) -> bool:
+    opening = re.match(r"<[a-z][\w:-]*\b[^>]*>", match.group(0), flags=re.I | re.S)
+    opening_tag = opening.group(0) if opening else ""
+    return (
+        attr_values(opening_tag, "data-reference-role") == ["section-heading"]
+        and attr_values(opening_tag, "data-naver-native-component") == ["subheading"]
+    )
+
+
+def divider_following_element(
+    article: str,
+    divider: re.Match[str],
+    region_end: int,
+) -> re.Match[str] | None:
+    """Return the first substantive element after a body divider."""
+    skippable = re.compile(
+        r"(?:\s+|<!--.*?-->|</?(?:section|div)\b[^>]*>"
+        r"|<p\b(?=[^>]*\bdata-preview-gap\s*=\s*['\"]true['\"])[^>]*>.*?</p>)*",
+        re.I | re.S,
+    )
+    prefix = skippable.match(article, divider.end(), region_end)
+    start = prefix.end() if prefix else divider.end()
+    element = re.compile(
+        r"<(?P<tag>[a-z][\w:-]*)\b[^>]*>.*?</(?P=tag)>",
+        re.I | re.S,
+    )
+    return element.match(article, start, region_end)
+
+
+def visual_paragraph_heading_candidates(article: str) -> list[re.Match[str]]:
+    """Find markerless p elements that still use the contract's heading typography."""
+    candidates = list(
+        re.finditer(
+            r"<p\b[^>]*>.*?</p>",
+            article,
+            flags=re.I | re.S,
+        )
+    )
+    result: list[re.Match[str]] = []
+    for match in candidates:
+        opening = re.match(r"<p\b[^>]*>", match.group(0), flags=re.I | re.S)
+        style_values = attr_values(opening.group(0) if opening else "", "style")
+        style = style_values[0].lower() if len(style_values) == 1 else ""
+        size_values = [
+            float(value)
+            for value in re.findall(r"font-size\s*:\s*(\d+(?:\.\d+)?)px\b", style)
+        ]
+        weight_values = [
+            float(value)
+            for value in re.findall(r"font-weight\s*:\s*(\d+(?:\.\d+)?)\b", style)
+        ]
+        large_text = any(value >= 18.0 for value in size_values)
+        heading_weight = bool(
+            any(value >= 600.0 for value in weight_values)
+            or re.search(r"font-weight\s*:\s*(?:bold|bolder)\b", style)
+        )
+        if large_text and heading_weight:
+            result.append(match)
+    return result
+
+
 def contains_only_preview_gaps(fragment: str) -> bool:
     remainder = re.sub(r"<!--.*?-->", "", fragment, flags=re.S)
     remainder = re.sub(
@@ -60,6 +145,20 @@ def contains_only_preview_gaps(fragment: str) -> bool:
     )
     remainder = re.sub(r"</?(?:section|div)\b[^>]*>", "", remainder, flags=re.I | re.S)
     return not remainder.strip()
+
+
+def contains_only_preview_gaps_and_before_credential_photo(fragment: str) -> bool:
+    figures = list(
+        re.finditer(
+            r"<figure\b(?=[^>]*\bdata-real-photo\s*=\s*['\"]true['\"])(?=[^>]*\bdata-real-photo-slot\s*=\s*['\"]before-credential['\"])[^>]*>.*?</figure>",
+            fragment,
+            flags=re.I | re.S,
+        )
+    )
+    if len(figures) != 1:
+        return False
+    remainder = fragment[:figures[0].start()] + fragment[figures[0].end():]
+    return contains_only_preview_gaps(remainder)
 
 
 def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]:
@@ -113,13 +212,19 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
         real_photo_count = len(
             re.findall(r"<img\b(?=[^>]*\bdata-real-photo\s*=\s*['\"]true['\"])[^>]*>", article_html, flags=re.I | re.S)
         )
+        trust_photo_count = len(
+            re.findall(r"<img\b(?=[^>]*\bdata-trust-photo\s*=\s*['\"]true['\"])[^>]*>", article_html, flags=re.I | re.S)
+        )
         generated_image_count = len(
             re.findall(r"<img\b(?=[^>]*\bdata-media-provider\s*=\s*['\"]gpt-image['\"])[^>]*>", article_html, flags=re.I | re.S)
         )
-        if editorial_close and not 6 <= real_photo_count <= 12:
-            add(issues, "error", "real-photo-count", f"복사용 HTML의 실제 금손 사진은 6~12장이어야 합니다. 현재 {real_photo_count}장입니다.")
-        if editorial_close and not 1 <= generated_image_count <= 3:
-            add(issues, "error", "generated-image-count", f"복사용 HTML의 GPT Image는 1~3장이어야 합니다. 현재 {generated_image_count}장입니다.")
+        if editorial_close and not 1 <= real_photo_count <= 2:
+            add(issues, "error", "real-photo-count", f"복사용 HTML의 실제 금손 사진은 1~2장이어야 합니다. 현재 {real_photo_count}장입니다.")
+        if editorial_close and trust_photo_count != 1:
+            add(issues, "error", "trust-photo-count", f"복사용 HTML의 마무리 신뢰 사진은 실제 진료 사진과 별도로 정확히 1장이어야 합니다. 현재 {trust_photo_count}장입니다.")
+        if editorial_close and not 3 <= generated_image_count <= 4:
+            add(issues, "error", "generated-image-count", f"복사용 HTML의 GPT Image는 3~4장이어야 합니다. 현재 {generated_image_count}장입니다.")
+        solution_matches: list[re.Match[str]] = []
         credential_matches = list(
             re.finditer(
                 r"<table\b(?=[^>]*\bdata-native-table-purpose\s*=\s*['\"]credential['\"])[^>]*>.*?</table>",
@@ -152,12 +257,17 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
                         "credential-before-solution-preview",
                         "금손한의원 소개 credential 표는 도입과 해결 방향 예고가 모두 끝난 뒤에 배치해야 합니다.",
                     )
-                elif not contains_only_preview_gaps(article_html[solution_match.end():credential_match.start()]):
+                elif not (
+                    contains_only_preview_gaps(article_html[solution_match.end():credential_match.start()])
+                    or contains_only_preview_gaps_and_before_credential_photo(
+                        article_html[solution_match.end():credential_match.start()]
+                    )
+                ):
                     add(
                         issues,
                         "error",
                         "credential-not-immediately-after-solution-preview",
-                        "해결 방향 예고와 금손한의원 소개 credential 표 사이에는 빈 preview-gap 외의 본문·이미지·표를 둘 수 없습니다.",
+                        "해결 방향 예고와 금손한의원 소개 credential 표 사이에는 빈 preview-gap 또는 before-credential 실제 사진 1장만 둘 수 있습니다.",
                     )
             intro_matches = list(
                 re.finditer(
@@ -200,6 +310,216 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
                     "credential-not-immediately-before-first-body-marker",
                     "금손한의원 소개 credential 표와 첫 정보 본문 divider·section-heading 사이에는 빈 preview-gap 외의 본문·이미지·표를 둘 수 없습니다.",
                 )
+        if editorial_close:
+            real_figures = list(
+                re.finditer(
+                    r"<figure\b(?=[^>]*\bdata-real-photo\s*=\s*['\"]true['\"])[^>]*>.*?</figure>",
+                    article_html,
+                    flags=re.I | re.S,
+                )
+            )
+            trust_figures = list(
+                re.finditer(
+                    r"<figure\b(?=[^>]*\bdata-trust-photo\s*=\s*['\"]true['\"])[^>]*>.*?</figure>",
+                    article_html,
+                    flags=re.I | re.S,
+                )
+            )
+            trust_context_matches = list(
+                re.finditer(
+                    r"<(?P<tag>[a-z][\w:-]*)\b(?=[^>]*\bdata-reference-role\s*=\s*['\"]credential-trust-context['\"])[^>]*>.*?</(?P=tag)>",
+                    article_html,
+                    flags=re.I | re.S,
+                )
+            )
+            generated_figures = list(
+                re.finditer(
+                    r"<figure\b(?=[^>]*\bdata-media-provider\s*=\s*['\"]gpt-image['\"])[^>]*>.*?</figure>",
+                    article_html,
+                    flags=re.I | re.S,
+                )
+            )
+            neutral_matches = list(
+                re.finditer(
+                    r"<(?P<tag>[a-z][\w:-]*)\b(?=[^>]*\bdata-reference-role\s*=\s*['\"]neutral-close['\"])[^>]*>.*?</(?P=tag)>",
+                    article_html,
+                    flags=re.I | re.S,
+                )
+            )
+            section_heading_matches = explanatory_heading_candidates(article_html)
+            clinic_heading_matches = list(
+                re.finditer(
+                    r"<(?P<tag>[a-z][\w:-]*)\b(?=[^>]*\bdata-reference-role\s*=\s*['\"]clinic-hours-heading['\"])[^>]*>.*?</(?P=tag)>",
+                    article_html,
+                    flags=re.I | re.S,
+                )
+            )
+            if len(real_figures) == 1:
+                if not re.search(
+                    r"<figure\b(?=[^>]*\bdata-real-photo-slot\s*=\s*['\"]before-credential['\"])",
+                    real_figures[0].group(0),
+                    flags=re.I | re.S,
+                ):
+                    add(issues, "error", "real-photo-layout-invalid", "실제 사진 1장 구성은 원장 소개표 바로 위 before-credential 슬롯만 허용합니다.")
+                elif len(solution_matches) == 1 and len(credential_matches) == 1 and not (
+                    solution_matches[0].end() <= real_figures[0].start()
+                    < real_figures[0].end() <= credential_matches[0].start()
+                ):
+                    add(issues, "error", "real-photo-before-credential-position", "before-credential 실제 사진은 해결 방향 예고 뒤 원장 소개표 바로 위에 있어야 합니다.")
+            elif len(real_figures) == 2:
+                if any(
+                    not re.search(
+                        r"<figure\b(?=[^>]*\bdata-real-photo-slot\s*=\s*['\"]closing-trust['\"])",
+                        figure.group(0),
+                        flags=re.I | re.S,
+                    )
+                    for figure in real_figures
+                ):
+                    add(issues, "error", "real-photo-layout-invalid", "실제 사진 2장 구성은 글마무리 closing-trust 슬롯 두 장만 허용합니다.")
+                elif len(neutral_matches) == 1 and len(clinic_heading_matches) == 1:
+                    clinical_tail_end = trust_context_matches[0].start() if len(trust_context_matches) == 1 else clinic_heading_matches[0].start()
+                    if not all(
+                        neutral_matches[0].end() <= figure.start() < figure.end() <= clinical_tail_end
+                        for figure in real_figures
+                    ):
+                        add(issues, "error", "real-photo-closing-trust-position", "closing-trust 실제 진료 사진 두 장은 neutral-close 뒤, 별도 마무리 신뢰 사진 바로 앞에 있어야 합니다.")
+                    closing_tail = article_html[real_figures[0].start():clinical_tail_end]
+                    closing_tail = re.sub(r"<figure\b(?=[^>]*\bdata-real-photo-slot\s*=\s*['\"]closing-trust['\"])[^>]*>.*?</figure>", "", closing_tail, flags=re.I | re.S)
+                    closing_tail = re.sub(r"<p\b(?=[^>]*\bdata-preview-gap\s*=\s*['\"]true['\"])[^>]*>.*?</p>", "", closing_tail, flags=re.I | re.S)
+                    closing_tail = re.sub(r"<hr\b(?=[^>]*\bdata-naver-native-component\s*=\s*['\"]divider['\"])[^>]*>", "", closing_tail, flags=re.I | re.S)
+                    closing_tail = re.sub(r"<!--.*?-->|</?(?:section|div)\b[^>]*>", "", closing_tail, flags=re.I | re.S)
+                    if closing_tail.strip():
+                        add(issues, "error", "real-photo-closing-trust-not-adjacent", "closing-trust 실제 진료 사진은 다른 본문·표 없이 별도 마무리 신뢰 구간 바로 앞에 둡니다.")
+            elif real_figures:
+                add(issues, "error", "real-photo-layout-invalid", "실제 사진은 원장 소개표 위 1장 또는 글마무리 2장 중 한 구성만 허용합니다.")
+
+            if len(trust_figures) == 1 and len(trust_context_matches) == 1 and len(neutral_matches) == 1 and len(clinic_heading_matches) == 1:
+                trust_figure = trust_figures[0]
+                trust_context = trust_context_matches[0]
+                if not (
+                    neutral_matches[0].end() <= trust_context.start() < trust_context.end()
+                    <= trust_figure.start() < trust_figure.end() <= clinic_heading_matches[0].start()
+                ):
+                    add(issues, "error", "trust-photo-position", "마무리 신뢰 사진은 neutral-close 뒤, 진료시간 안내 앞의 마지막 이미지로 둡니다.")
+                if not re.search(r"\bdata-trust-photo-slot\s*=\s*['\"]closing-credential-trust['\"]", trust_figure.group(0), flags=re.I):
+                    add(issues, "error", "trust-photo-slot-invalid", "마무리 신뢰 사진은 closing-credential-trust 슬롯이어야 합니다.")
+                bridge = article_html[trust_context.end():trust_figure.start()]
+                if not contains_only_preview_gaps(bridge):
+                    add(issues, "error", "trust-photo-context-not-adjacent", "신뢰 맥락 문단과 마무리 신뢰 사진 사이에는 preview-gap만 둘 수 있습니다.")
+                trust_tail = article_html[trust_figure.end():clinic_heading_matches[0].start()]
+                trust_tail = re.sub(r"<p\b(?=[^>]*\bdata-preview-gap\s*=\s*['\"]true['\"])[^>]*>.*?</p>", "", trust_tail, flags=re.I | re.S)
+                trust_tail = re.sub(r"<hr\b(?=[^>]*\bdata-naver-native-component\s*=\s*['\"]divider['\"])[^>]*>", "", trust_tail, flags=re.I | re.S)
+                trust_tail = re.sub(r"<!--.*?-->|</?(?:section|div)\b[^>]*>", "", trust_tail, flags=re.I | re.S)
+                if trust_tail.strip() or re.search(r"<img\b", article_html[trust_figure.end():clinic_heading_matches[0].start()], flags=re.I):
+                    add(issues, "error", "trust-photo-not-last-image", "마무리 신뢰 사진 뒤에는 진료시간 안내 전까지 다른 본문·표·이미지를 둘 수 없습니다.")
+
+            early_start: int | None = None
+            first_section_end: int | None = None
+            early_end: int | None = None
+            if len(credential_matches) == 1 and len(neutral_matches) == 1:
+                credential = credential_matches[0]
+                neutral = neutral_matches[0]
+                body_dividers = list(
+                    re.finditer(
+                        r"<hr\b[^>]*>",
+                        article_html,
+                        flags=re.I | re.S,
+                    )
+                )
+                body_dividers = [
+                    match
+                    for match in body_dividers
+                    if credential.end() <= match.start() < neutral.start()
+                ]
+                paired_body_headings = [
+                    heading
+                    for divider in body_dividers
+                    if (heading := divider_following_element(article_html, divider, neutral.start())) is not None
+                ]
+                invalid_body_headings = [
+                    match
+                    for match in paired_body_headings
+                    if match.group("tag").lower() not in {"h2", "p"}
+                    or not has_explanatory_heading_contract(match)
+                ]
+                if len(paired_body_headings) != len(body_dividers):
+                    invalid_body_headings.append(body_dividers[len(paired_body_headings)])
+                if invalid_body_headings:
+                    add(
+                        issues,
+                        "error",
+                        "section-heading-markers-invalid",
+                        "각 설명 구분선 바로 뒤의 h2 또는 p 소제목에는 data-reference-role=section-heading과 data-naver-native-component=subheading을 함께 표시해야 합니다.",
+                    )
+                valid_body_headings = [
+                    match
+                    for match in paired_body_headings
+                    if match.group("tag").lower() in {"h2", "p"}
+                    and has_explanatory_heading_contract(match)
+                ]
+                if not valid_body_headings:
+                    add(
+                        issues,
+                        "error",
+                        "body-section-heading-missing",
+                        "원장 소개표 뒤 설명 본문에서 두 표식이 모두 있는 소제목을 최소 1개 찾아야 합니다.",
+                    )
+                paired_spans = {(match.start(), match.end()) for match in paired_body_headings}
+                recognizable_body_headings = [
+                    match
+                    for match in section_heading_matches
+                    if credential.end() <= match.start() < neutral.start()
+                ]
+                recognizable_body_headings.extend(
+                    match
+                    for match in visual_paragraph_heading_candidates(article_html)
+                    if credential.end() <= match.start() < neutral.start()
+                )
+                recognizable_by_span = {
+                    (match.start(), match.end()): match
+                    for match in recognizable_body_headings
+                }
+                unpaired_headings = [
+                    match
+                    for span, match in recognizable_by_span.items()
+                    if span not in paired_spans
+                ]
+                if unpaired_headings:
+                    add(
+                        issues,
+                        "error",
+                        "section-heading-divider-pair-invalid",
+                        "설명 소제목은 본문 구분선 바로 뒤에 있어야 합니다.",
+                    )
+                boundary_by_span = {
+                    (match.start(), match.end()): match
+                    for match in paired_body_headings
+                }
+                boundary_by_span.update(recognizable_by_span)
+                body_headings = [boundary_by_span[span] for span in sorted(boundary_by_span)]
+                if body_headings:
+                    early_start = body_headings[0].end()
+                    first_section_end = body_headings[1].start() if len(body_headings) >= 2 else neutral.start()
+                    early_end = body_headings[2].start() if len(body_headings) >= 3 else neutral.start()
+
+            for index, figure in enumerate(generated_figures, start=1):
+                if not re.search(
+                    r"<figure\b(?=[^>]*\bdata-image-zone\s*=\s*['\"]early-explanatory-body['\"])",
+                    figure.group(0),
+                    flags=re.I | re.S,
+                ):
+                    add(issues, "error", "generated-image-zone-missing", f"GPT 이미지 {index}는 early-explanatory-body 구간 표시가 필요합니다.")
+                if early_start is not None and early_end is not None and not (
+                    early_start <= figure.start() < figure.end() <= early_end
+                ):
+                    add(issues, "error", "generated-image-outside-early-body", f"GPT 이미지 {index}는 원장 소개표 뒤 첫 두 개 설명 섹션 안에 배치해야 합니다.")
+            if (
+                generated_figures
+                and early_start is not None
+                and first_section_end is not None
+                and not any(early_start <= figure.start() < figure.end() <= first_section_end for figure in generated_figures)
+            ):
+                add(issues, "error", "generated-image-first-section-missing", "GPT 이미지 3~4장 가운데 최소 1장은 첫 번째 설명 섹션에 있어야 합니다.")
         tables = re.findall(r"<table\b[^>]*>.*?</table>", article_html, flags=re.I | re.S)
         clinic_info_matches = list(
             re.finditer(
@@ -333,6 +653,7 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
 
     size_bytes = len(raw.encode("utf-8"))
     real_photo_count = len(re.findall(r"<img\b(?=[^>]*\bdata-real-photo\s*=\s*['\"]true['\"])[^>]*>", raw, flags=re.I | re.S))
+    trust_photo_count = len(re.findall(r"<img\b(?=[^>]*\bdata-trust-photo\s*=\s*['\"]true['\"])[^>]*>", raw, flags=re.I | re.S))
     generated_image_count = len(re.findall(r"<img\b(?=[^>]*\bdata-media-provider\s*=\s*['\"]gpt-image['\"])[^>]*>", raw, flags=re.I | re.S))
     if size_bytes > max_megabytes * 1024 * 1024:
         add(issues, "warning", "large-html", f"HTML이 {size_bytes / 1024 / 1024:.1f}MB입니다. 복사 페이지가 불필요하게 큽니다.")
@@ -347,6 +668,7 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
             "copyRootCount": copy_root_count,
             "sizeBytes": size_bytes,
             "realPhotos": real_photo_count,
+            "trustPhotos": trust_photo_count,
             "generatedImages": generated_image_count,
             "errors": errors,
             "warnings": warnings,
