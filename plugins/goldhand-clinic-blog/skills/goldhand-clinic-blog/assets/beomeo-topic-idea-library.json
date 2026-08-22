@@ -1,0 +1,1306 @@
+{
+  "schemaVersion": 1,
+  "sourceRole": "topic-idea-and-coverage-questions-only",
+  "sourceBlogId": "beomeo_sm",
+  "sourceBlogUrl": "https://blog.naver.com/beomeo_sm",
+  "auditedAt": "2026-08-20",
+  "auditedPublicPostCount": 69,
+  "boundaryPolicy": {
+    "mayInform": [
+      "topicIdea",
+      "coverageQuestions"
+    ],
+    "mustNeverInform": [
+      "titlePattern",
+      "articleStructure",
+      "prose",
+      "formatting",
+      "medicalClaim",
+      "clinicFact",
+      "case",
+      "sentence",
+      "media"
+    ],
+    "medicalInformationRule": "The source may reveal questions worth explaining, but it is never the factual authority for a Goldhand article.",
+    "goldhandCompatibilityRule": "Drafting may use only Goldhand Clinic facts and separately verified authoritative medical information."
+  },
+  "requiredTopicClusters": [
+    "chuna",
+    "traffic-accident",
+    "pain",
+    "digestive",
+    "respiratory",
+    "tonic",
+    "growth",
+    "weight-management"
+  ],
+  "blockedNamedProductsAndDevices": [
+    "엑소웨이브",
+    "미주안",
+    "미주란",
+    "라디쥬",
+    "퓨라셀",
+    "린다이어트",
+    "보폐고 엔오",
+    "보폐고엔오",
+    "라라샷",
+    "쿨쎄라",
+    "라인약침",
+    "스파인MT",
+    "초음파를 보면서",
+    "감압치료",
+    "견인치료",
+    "무중력 감압 치료",
+    "스킨부스터",
+    "지방분해 주사",
+    "도침",
+    "서울대병원 의료기기",
+    "극초단파 리프팅",
+    "공명파 리프팅"
+  ],
+  "sourcePosts": [
+    {
+      "id": "BM224338089055",
+      "sourcePostId": "224338089055",
+      "sourceTitle": "대구 공진단, 경옥고, 여름 보약으로 좋다는 말이 사실일까?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224338089055",
+      "autoEligible": true,
+      "eligibilityReason": "계절과 몸 상태에 따른 보약 선택 질문으로 일반화할 수 있으며 금손한의원 사실 범위에 공진단·경옥고가 있다.",
+      "topicClusters": ["tonic"],
+      "subjectIds": ["seasonal-tonic", "gongjindan-gyeongokgo"]
+    },
+    {
+      "id": "BM224338056228",
+      "sourcePostId": "224338056228",
+      "sourceTitle": "수성구 허리디스크 한의원, 허리디스크 약침 치료, 초음파를 보면서 시행하는 이유!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224338056228",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 초음파 유도 시술 방식을 전제로 하므로 자동 선택에서 제외한다.",
+      "topicClusters": ["pain"],
+      "subjectIds": ["lumbar-disc", "ultrasound-guided-pharmacopuncture"]
+    },
+    {
+      "id": "BM224338019561",
+      "sourcePostId": "224338019561",
+      "sourceTitle": "대구 담적 한의원, 소화불량의 원인, 담적이란 무엇이고 어떻게 치료할까요?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224338019561",
+      "autoEligible": true,
+      "eligibilityReason": "소화불량의 증상 구분과 진찰 필요성을 설명하는 일반 정보 주제로 바꿀 수 있다.",
+      "topicClusters": ["digestive"],
+      "subjectIds": ["functional-dyspepsia", "persistent-fullness"]
+    },
+    {
+      "id": "BM224324776990",
+      "sourcePostId": "224324776990",
+      "sourceTitle": "대구 수성구 리프팅, 다운 타임이 거의 없는 엑소웨이브로 턱살, 볼살, 이중턱 집중 관리!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224324776990",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 엑소웨이브 장비와 미용 프로그램 중심 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["exowave", "facial-contouring"]
+    },
+    {
+      "id": "BM224324751919",
+      "sourcePostId": "224324751919",
+      "sourceTitle": "범어동 다이어트 한의원, 다이어트 성공 후 요요가 오는 진짜 이유! 방지법은?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224324751919",
+      "autoEligible": true,
+      "eligibilityReason": "감량 뒤 유지와 생활 조건을 다루는 보편적인 체중관리 질문으로 사용할 수 있다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["weight-regain", "maintenance-habits"]
+    },
+    {
+      "id": "BM224324709529",
+      "sourcePostId": "224324709529",
+      "sourceTitle": "대구 스킨부스터, 미주안 vs 라디쥬, 내 피부엔 어떤 스킨부스터가 좋을까?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224324709529",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 미주안·라디쥬 제품 비교 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["skin-booster", "product-comparison"]
+    },
+    {
+      "id": "BM224321061117",
+      "sourcePostId": "224321061117",
+      "sourceTitle": "대구 신부관리, 굶는 다이어트 하면 안 된다?! 정답은 기초 대사량!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224321061117",
+      "autoEligible": true,
+      "eligibilityReason": "무리한 절식과 체중관리 지속 가능성을 설명하는 일반 정보 주제로 쓸 수 있다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["restrictive-diet", "energy-balance"]
+    },
+    {
+      "id": "BM224314338921",
+      "sourcePostId": "224314338921",
+      "sourceTitle": "대구 다이어트 정체기라면, 체중 보다 ‘체성분’을 먼저 봐야합니다!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224314338921",
+      "autoEligible": true,
+      "eligibilityReason": "체중 변화만으로 정체기를 판단하지 않는 점검 기준 주제로 일반화할 수 있다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["weight-plateau", "body-composition"]
+    },
+    {
+      "id": "BM224314318179",
+      "sourcePostId": "224314318179",
+      "sourceTitle": "대구 교통사고 한의원, 교통사고 후 두통이 생겼다면 어혈이 원인? [어혈 두통 알아보기]",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224314318179",
+      "autoEligible": true,
+      "eligibilityReason": "사고 뒤 두통의 동반 신호와 평가 필요성을 묻는 안전 중심 주제로 일반화할 수 있다.",
+      "topicClusters": ["traffic-accident"],
+      "subjectIds": ["post-accident-headache", "red-flags"]
+    },
+    {
+      "id": "BM224310280758",
+      "sourcePostId": "224310280758",
+      "sourceTitle": "대구 일요일 한의원, 사고 후 72시간 지나기 전 반드시 해야 하는 것은?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224310280758",
+      "autoEligible": true,
+      "eligibilityReason": "정확한 72시간 주장과 강제 표현은 버리고 사고 초기 관찰·진찰 시점을 설명하는 주제로만 일반화한다.",
+      "topicClusters": ["traffic-accident"],
+      "subjectIds": ["early-assessment", "delayed-symptoms"]
+    },
+    {
+      "id": "BM224298807721",
+      "sourcePostId": "224298807721",
+      "sourceTitle": "대구 라디쥬 스킨부스터, 통증이 거의 없는 퓨라셀!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224298807721",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 라디쥬·퓨라셀 제품과 장비 중심 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["radijou", "puracell"]
+    },
+    {
+      "id": "BM224298761203",
+      "sourcePostId": "224298761203",
+      "sourceTitle": "범어동 리프팅, 일상 생활에 지장이 거의 없는 리프팅을 찾으신다면 ‘극초단파 리프팅’",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224298761203",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 극초단파 리프팅 장비·시술 중심 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["ultrashortwave-lifting"]
+    },
+    {
+      "id": "BM224296538575",
+      "sourcePostId": "224296538575",
+      "sourceTitle": "범어동 한의원, 봄철 나타난 만성 기침과 비염 쉽게 낫지 않는다면 ‘보폐고 엔오’를 고려!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224296538575",
+      "autoEligible": false,
+      "eligibilityReason": "만성 기침·비염이라는 질문은 참고할 수 있지만 금손한의원 사실에 없는 보폐고 엔오 프로그램을 전제로 하므로 원문 단위 자동 선택은 막는다.",
+      "topicClusters": ["respiratory"],
+      "subjectIds": ["chronic-cough", "rhinitis", "bopyego-en-o"]
+    },
+    {
+      "id": "BM224293258661",
+      "sourcePostId": "224293258661",
+      "sourceTitle": "대구 린다이어트, 다이어트 정체기 이렇게 극복하세요!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224293258661",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 린다이어트 프로그램 중심 글이므로 자동 선택에서 제외한다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["weight-plateau", "lean-diet-program"]
+    },
+    {
+      "id": "BM224293181268",
+      "sourcePostId": "224293181268",
+      "sourceTitle": "대구 다이어트 한의원, 다이어트 한약 먹고 변비가 생겼다면 원인과 대처는?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224293181268",
+      "autoEligible": true,
+      "eligibilityReason": "복용 중 새로 생긴 변비를 숨기지 않고 상담해야 할 신호와 점검 항목을 설명하는 주제로 쓸 수 있다.",
+      "topicClusters": ["weight-management", "digestive"],
+      "subjectIds": ["weight-herbal-medicine", "constipation"]
+    },
+    {
+      "id": "BM224286156877",
+      "sourcePostId": "224286156877",
+      "sourceTitle": "대구 다이어트 한약, 당뇨·고혈압 있어도 복용 가능할까?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224286156877",
+      "autoEligible": true,
+      "eligibilityReason": "기저질환·복용약을 먼저 확인해야 하는 체중관리 상담 질문으로 일반화할 수 있다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["weight-herbal-medicine", "comorbidity-medication-check"]
+    },
+    {
+      "id": "BM224276221553",
+      "sourcePostId": "224276221553",
+      "sourceTitle": "대구 교통사고 한의원, 검사 상 이상이 없는데 통증이 계속된다면?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224276221553",
+      "autoEligible": true,
+      "eligibilityReason": "검사 결과와 실제 불편이 다를 때 다시 살펴볼 움직임·기능·경고 신호를 설명하는 주제로 쓸 수 있다.",
+      "topicClusters": ["traffic-accident", "pain"],
+      "subjectIds": ["persistent-post-accident-pain", "normal-imaging"]
+    },
+    {
+      "id": "BM224276192674",
+      "sourcePostId": "224276192674",
+      "sourceTitle": "범어동 허리디스크 한의원, 과잉 진료하는 것처럼 느껴지신다면!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224276192674",
+      "autoEligible": false,
+      "eligibilityReason": "출처 한의원의 진료 태도와 신뢰 주장을 전제하는 글이어서 금손한의원 정보성 주제로 자동 전환하지 않는다.",
+      "topicClusters": ["clinic-promotion", "pain"],
+      "subjectIds": ["lumbar-disc", "overtreatment-perception"]
+    },
+    {
+      "id": "BM224272274172",
+      "sourcePostId": "224272274172",
+      "sourceTitle": "대구 소화불량 한의원, 소화제를 매일 달고 산다면? [소화제 내성 주의!]",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224272274172",
+      "autoEligible": true,
+      "eligibilityReason": "내성 단정은 옮기지 않고 소화제를 자주 찾게 되는 증상 패턴과 진찰 시점을 설명하는 주제로 일반화한다.",
+      "topicClusters": ["digestive"],
+      "subjectIds": ["frequent-digestive-aid-use", "persistent-dyspepsia"]
+    },
+    {
+      "id": "BM224263849846",
+      "sourcePostId": "224263849846",
+      "sourceTitle": "대구 여드름 한의원, 쉽게 낫지 않는 여드름에 효과적인 라라샷 치료 들어 보셨나요?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224263849846",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 라라샷 시술과 효과 주장을 전제로 한다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["acne", "larashot"]
+    },
+    {
+      "id": "BM224260330570",
+      "sourcePostId": "224260330570",
+      "sourceTitle": "대구 다이어트 병원, 체중은 빠졌지만 체형은 그대로라면? ‘쿨쎄라’를 확인해 보세요!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224260330570",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 쿨쎄라 장비·프로그램을 해결책으로 제시한다.",
+      "topicClusters": ["weight-management", "aesthetic"],
+      "subjectIds": ["body-shape", "coolsera"]
+    },
+    {
+      "id": "BM224259133517",
+      "sourcePostId": "224259133517",
+      "sourceTitle": "대구 키 성장 한의원, 성장 호르몬 주사 전에 고려해야 하는 것!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224259133517",
+      "autoEligible": true,
+      "eligibilityReason": "아이 성장 평가에서 먼저 확인할 생활·발달·진료 항목을 설명하는 안전 중심 주제로 쓸 수 있다.",
+      "topicClusters": ["growth"],
+      "subjectIds": ["child-growth-assessment", "growth-hormone-consultation"]
+    },
+    {
+      "id": "BM224250612666",
+      "sourcePostId": "224250612666",
+      "sourceTitle": "대구 설명한의원, 미주안, 피부 탄력과 건조를 동시에 케어!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224250612666",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 미주안 제품과 미용 효과 중심 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["mijuan", "skin-elasticity"]
+    },
+    {
+      "id": "BM224250590824",
+      "sourcePostId": "224250590824",
+      "sourceTitle": "수성구 린다이어트, 수면시간을 놓치면 효과가 반감될 수 있습니다!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224250590824",
+      "autoEligible": false,
+      "eligibilityReason": "수면과 체중관리 질문은 참고 가능하지만 금손한의원 사실에 없는 린다이어트 프로그램 효과를 전제로 한다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["sleep-and-weight", "lean-diet-program"]
+    },
+    {
+      "id": "BM224235801561",
+      "sourcePostId": "224235801561",
+      "sourceTitle": "대구 허리디스크 치료, 감압치료와 견인치료 무엇이 다를까요?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224235801561",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 고정되지 않은 감압·견인 장비 비교를 전제로 한다.",
+      "topicClusters": ["pain"],
+      "subjectIds": ["lumbar-disc", "decompression-vs-traction"]
+    },
+    {
+      "id": "BM224235755331",
+      "sourcePostId": "224235755331",
+      "sourceTitle": "대구 목디스크 전조 증상, 운동을 해도 목 통증이 낫지 않는다면? [목 유형별 증상]",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224235755331",
+      "autoEligible": true,
+      "eligibilityReason": "목 통증의 양상과 팔·손 동반 증상을 구분하고 진료 시점을 안내하는 일반 정보 주제로 쓸 수 있다.",
+      "topicClusters": ["pain"],
+      "subjectIds": ["neck-pain", "cervical-disc-warning-signs"]
+    },
+    {
+      "id": "BM224231647991",
+      "sourcePostId": "224231647991",
+      "sourceTitle": "대구 린다이어트, 운동을 해도 살이 안 빠지는 이유!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224231647991",
+      "autoEligible": false,
+      "eligibilityReason": "일반 질문은 참고 가능하지만 금손한의원 사실에 없는 린다이어트 프로그램으로 연결되는 글이다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["exercise-weight-plateau", "lean-diet-program"]
+    },
+    {
+      "id": "BM224231622323",
+      "sourcePostId": "224231622323",
+      "sourceTitle": "대구 스킨부스터 라디쥬, 효과는 언제부터 느껴질까요?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224231622323",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 라디쥬 제품의 효과 시점을 다룬다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["radijou", "effect-timing"]
+    },
+    {
+      "id": "BM224229288733",
+      "sourcePostId": "224229288733",
+      "sourceTitle": "대구 지방분해 주사, 뱃살만 유독 안 빠진다면? 린다이어트 라인약침",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224229288733",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 린다이어트 라인약침 프로그램을 전제로 한다.",
+      "topicClusters": ["weight-management", "aesthetic"],
+      "subjectIds": ["abdominal-fat", "line-pharmacopuncture"]
+    },
+    {
+      "id": "BM224223577105",
+      "sourcePostId": "224223577105",
+      "sourceTitle": "범어동 피부관리, 환절기 푸석해진 피부라면? 스킨부스터 미주안·미주란",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224223577105",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 미주안·미주란 제품 중심 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["seasonal-dry-skin", "mijuan-mijuran"]
+    },
+    {
+      "id": "BM224221202467",
+      "sourcePostId": "224221202467",
+      "sourceTitle": "대구 윤곽 관리, 이중턱·턱 밑살 고민이라면? 엑소웨이브를 찾는 이유",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224221202467",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 엑소웨이브 장비 중심 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["double-chin", "exowave"]
+    },
+    {
+      "id": "BM224221156767",
+      "sourcePostId": "224221156767",
+      "sourceTitle": "대구 다이어트 한약, 살이 빠지는 원리는 무엇일까요?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224221156767",
+      "autoEligible": true,
+      "eligibilityReason": "한약 하나를 만능으로 단정하지 않고 체중관리 상담에서 무엇을 확인하는지 설명하는 주제로 바꿀 수 있다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["weight-herbal-medicine", "treatment-principle"]
+    },
+    {
+      "id": "BM224211502357",
+      "sourcePostId": "224211502357",
+      "sourceTitle": "대구 야간진료 한의원, 교통사고 후유증, 퇴근 후 치료받고 싶다면?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224211502357",
+      "autoEligible": false,
+      "eligibilityReason": "출처 한의원의 야간진료 접근성과 운영 정보가 핵심인 홍보 글이다.",
+      "topicClusters": ["traffic-accident", "clinic-promotion"],
+      "subjectIds": ["after-hours-care"]
+    },
+    {
+      "id": "BM224211444245",
+      "sourcePostId": "224211444245",
+      "sourceTitle": "대구 다이어트 한의원, 연휴 이후 급찐살? 린다이어트 디톡스를 알아보세요!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224211444245",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 린다이어트 디톡스 프로그램을 해결책으로 제시한다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["holiday-weight-change", "detox-program"]
+    },
+    {
+      "id": "BM224206893896",
+      "sourcePostId": "224206893896",
+      "sourceTitle": "수성구 스킨부스터, 미주안이란 무엇인가요? 한의원에서 받는 스킨부스터 알아보기",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224206893896",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 미주안 제품 설명 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["mijuan", "skin-booster"]
+    },
+    {
+      "id": "BM224205471279",
+      "sourcePostId": "224205471279",
+      "sourceTitle": "다이어트가 치매를 예방한다고요? 만촌동 근처 다이어트 한의원에서 알려드리는 비만과 뇌 건강의 비밀",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224205471279",
+      "autoEligible": true,
+      "eligibilityReason": "예방 효과 단정은 버리고 체중과 전신 건강의 관계를 권위 자료로 확인해 설명하는 질문 주제로만 사용한다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["weight-and-overall-health", "long-term-risk"]
+    },
+    {
+      "id": "BM224204197979",
+      "sourcePostId": "224204197979",
+      "sourceTitle": "범어동 한의원, 비염이 잦고 호흡기가 약하다면? 호흡기 보약 ‘보폐고엔오’",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224204197979",
+      "autoEligible": false,
+      "eligibilityReason": "비염·호흡기 질문은 참고할 수 있지만 금손한의원 사실에 없는 보폐고엔오 프로그램을 전제로 한다.",
+      "topicClusters": ["respiratory"],
+      "subjectIds": ["recurrent-rhinitis", "bopyego-en-o"]
+    },
+    {
+      "id": "BM224202473239",
+      "sourcePostId": "224202473239",
+      "sourceTitle": "만촌동 한의원, 목·허리 통증, 추나치료가 필요한 경우는 언제일까요?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224202473239",
+      "autoEligible": true,
+      "eligibilityReason": "목·허리 불편에서 추나요법을 고려할 판단 기준을 설명하는 금손한의원 호환 주제다.",
+      "topicClusters": ["chuna", "pain"],
+      "subjectIds": ["chuna-decision", "neck-back-pain"]
+    },
+    {
+      "id": "BM224197696669",
+      "sourcePostId": "224197696669",
+      "sourceTitle": "대구 리프팅, 고주파로 아쉬웠다면? 피부 속을 채우는 엑소웨이브",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224197696669",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 엑소웨이브 장비와 미용 효과 중심 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["exowave", "lifting"]
+    },
+    {
+      "id": "BM224196665053",
+      "sourcePostId": "224196665053",
+      "sourceTitle": "범어동 보약 한의원, 정성 가득 ‘공진단’으로 부모님 건강과 마음까지 챙기세요!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224196665053",
+      "autoEligible": true,
+      "eligibilityReason": "선물 홍보가 아니라 부모님의 현재 상태와 복용 전 상담 항목을 설명하는 보약 선택 주제로 일반화한다.",
+      "topicClusters": ["tonic"],
+      "subjectIds": ["parent-tonic-consultation", "gongjindan"]
+    },
+    {
+      "id": "BM224177558299",
+      "sourcePostId": "224177558299",
+      "sourceTitle": "대구 허리디스크 한의원, 겨울철 갑자기 허리가 아플 때, 허리 통증 원인은?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224177558299",
+      "autoEligible": true,
+      "eligibilityReason": "계절과 활동 변화 속 급성 허리 통증의 구분·경고 신호를 설명하는 일반 정보 주제로 쓸 수 있다.",
+      "topicClusters": ["pain"],
+      "subjectIds": ["acute-low-back-pain", "winter-activity"]
+    },
+    {
+      "id": "BM224177473847",
+      "sourcePostId": "224177473847",
+      "sourceTitle": "대구 교통사고 한의원, 교통사고 후유증 추나치료가 효과적인 이유는? <논문 결과>",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224177473847",
+      "autoEligible": true,
+      "eligibilityReason": "출처의 논문 해석과 효과 주장은 옮기지 않고 사고 뒤 추나를 고려하는 조건·한계를 설명하는 질문으로만 사용한다.",
+      "topicClusters": ["traffic-accident", "chuna"],
+      "subjectIds": ["post-accident-chuna", "treatment-decision"]
+    },
+    {
+      "id": "BM224165115870",
+      "sourcePostId": "224165115870",
+      "sourceTitle": "대구 스킨부스터 관리, 통증과 다운타임이 거의 없다? 진실은?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224165115870",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 미용 시술의 통증·다운타임 주제다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["skin-booster", "downtime"]
+    },
+    {
+      "id": "BM224165111227",
+      "sourcePostId": "224165111227",
+      "sourceTitle": "범어동 다이어트 한의원, 린다이어트로 개선할 수 있는 질환은?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224165111227",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 린다이어트 프로그램의 질환 개선 주장을 전제로 한다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["lean-diet-program", "disease-claim"]
+    },
+    {
+      "id": "BM224164135806",
+      "sourcePostId": "224164135806",
+      "sourceTitle": "신천동 리프팅, 통증과 다운 타임이 거의 없는 공명파 리프팅 들어보셨나요?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224164135806",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 공명파 리프팅 장비·시술 중심 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["resonance-wave-lifting"]
+    },
+    {
+      "id": "BM224161686354",
+      "sourcePostId": "224161686354",
+      "sourceTitle": "대구 교통사고 한의원, 편타손상을 알고 계신가요? 목 통증·두통이 있다면 <필독>",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224161686354",
+      "autoEligible": true,
+      "eligibilityReason": "사고 뒤 목 통증·두통이 함께 나타나는 양상과 먼저 확인할 경고 신호를 설명하는 주제로 쓸 수 있다.",
+      "topicClusters": ["traffic-accident", "pain"],
+      "subjectIds": ["whiplash", "neck-pain", "headache"]
+    },
+    {
+      "id": "BM224155452929",
+      "sourcePostId": "224155452929",
+      "sourceTitle": "수성구 다이어트 한의원, 자율신경까지 고려하여 1:1 맞춤 처방하는 린다이어트",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224155452929",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 린다이어트 프로그램과 출처 한의원의 맞춤 처방 주장을 전제로 한다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["lean-diet-program", "autonomic-nervous-system"]
+    },
+    {
+      "id": "BM224155435290",
+      "sourcePostId": "224155435290",
+      "sourceTitle": "수성구 리프팅, 극초단파 리프팅의 모든 것 [엑소웨이브]",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224155435290",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 엑소웨이브 극초단파 장비 설명 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["exowave", "ultrashortwave-lifting"]
+    },
+    {
+      "id": "BM224147878462",
+      "sourcePostId": "224147878462",
+      "sourceTitle": "수성구 한의원, 허리디스크에 효과적인 스파인MT 치료를 알고 계신가요?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224147878462",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 스파인MT 장비와 효과 주장을 전제로 한다.",
+      "topicClusters": ["pain"],
+      "subjectIds": ["lumbar-disc", "spine-mt"]
+    },
+    {
+      "id": "BM224140276244",
+      "sourcePostId": "224140276244",
+      "sourceTitle": "범어동 한의원에서 알려드리는 경옥고와 공진단의 차이점, 효능은?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224140276244",
+      "autoEligible": true,
+      "eligibilityReason": "금손한의원 사실 범위에 있는 공진단·경옥고를 복용 목적과 상담 기준 중심으로 비교하는 주제로 쓸 수 있다.",
+      "topicClusters": ["tonic"],
+      "subjectIds": ["gongjindan-gyeongokgo", "tonic-selection"]
+    },
+    {
+      "id": "BM224140274012",
+      "sourcePostId": "224140274012",
+      "sourceTitle": "범어동 한의원, 라인약침, 빠지지 않는 지방과 셀룰라이트를 줄이는 방법!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224140274012",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 라인약침 미용 프로그램과 감량 효과를 전제로 한다.",
+      "topicClusters": ["weight-management", "aesthetic"],
+      "subjectIds": ["line-pharmacopuncture", "cellulite"]
+    },
+    {
+      "id": "BM224123386794",
+      "sourcePostId": "224123386794",
+      "sourceTitle": "대구 피부한의원, 라디쥬의 성분부터 제대로 알아봐요!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224123386794",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 라디쥬 제품 성분 설명 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["radijou", "ingredients"]
+    },
+    {
+      "id": "BM224123383477",
+      "sourcePostId": "224123383477",
+      "sourceTitle": "대구 다이어트 한약 먹으면 부작용이 생길까? <오해와 진실>",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224123383477",
+      "autoEligible": true,
+      "eligibilityReason": "복용 전 확인할 병력·복용약과 복용 중 상담해야 할 변화를 안내하는 안전 정보 주제로 쓸 수 있다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["weight-herbal-medicine", "safety-check"]
+    },
+    {
+      "id": "BM224123381569",
+      "sourcePostId": "224123381569",
+      "sourceTitle": "범어동 교통사고 한의원, 이런 증상이 나타난다면 치료를 고려해 보셔야 합니다.",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224123381569",
+      "autoEligible": true,
+      "eligibilityReason": "사고 뒤 관찰할 증상과 의료기관을 먼저 찾아야 할 신호를 설명하는 주제로 쓸 수 있다.",
+      "topicClusters": ["traffic-accident"],
+      "subjectIds": ["delayed-symptoms", "care-decision"]
+    },
+    {
+      "id": "BM224111718962",
+      "sourcePostId": "224111718962",
+      "sourceTitle": "범어동 리프팅, 엑소웨이브 극초단파로 턱살, 볼살, 이중턱을 관리해보세요!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224111718962",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 엑소웨이브 장비와 미용 프로그램 중심 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["exowave", "facial-contouring"]
+    },
+    {
+      "id": "BM224105758729",
+      "sourcePostId": "224105758729",
+      "sourceTitle": "만촌동 한의원에서 받는 스킨 부스터, 라디쥬는 뭐가 다를까요?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224105758729",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 라디쥬 제품 비교 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["radijou", "skin-booster"]
+    },
+    {
+      "id": "BM224103672879",
+      "sourcePostId": "224103672879",
+      "sourceTitle": "신천동 한의원, 교통사고 후 생긴 목디스크, 무중력 감압 치료를 받아보세요!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224103672879",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 무중력 감압 장비를 해결책으로 제시한다.",
+      "topicClusters": ["traffic-accident", "pain"],
+      "subjectIds": ["post-accident-neck-pain", "zero-gravity-decompression"]
+    },
+    {
+      "id": "BM224099144402",
+      "sourcePostId": "224099144402",
+      "sourceTitle": "범어동 한의원, 교통사고 후유증 치료, 추나 치료와 도수 치료의 차이점은?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224099144402",
+      "autoEligible": true,
+      "eligibilityReason": "사고 뒤 치료 선택 시 추나요법과 다른 수기치료를 구분해 물어볼 기준을 설명하는 주제로 쓸 수 있다.",
+      "topicClusters": ["traffic-accident", "chuna"],
+      "subjectIds": ["chuna-vs-manual-therapy", "treatment-comparison"]
+    },
+    {
+      "id": "BM224099141559",
+      "sourcePostId": "224099141559",
+      "sourceTitle": "범어동 스킨부스터, “동안의 비밀? 미주안으로 관리 루틴 잡아보세요”",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224099141559",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 미주안 제품과 미용 루틴 홍보 글이다.",
+      "topicClusters": ["aesthetic"],
+      "subjectIds": ["mijuan", "skin-routine"]
+    },
+    {
+      "id": "BM224093982121",
+      "sourcePostId": "224093982121",
+      "sourceTitle": "대구 다이어트 한의원, 린다이어트와 쿨쎄라를 함께 한다면~",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224093982121",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 린다이어트·쿨쎄라 결합 프로그램 글이다.",
+      "topicClusters": ["weight-management", "aesthetic"],
+      "subjectIds": ["lean-diet-program", "coolsera"]
+    },
+    {
+      "id": "BM224090116066",
+      "sourcePostId": "224090116066",
+      "sourceTitle": "만촌동 교통사고 한의원, 후유증 관리는 어떻게 해야 할까요?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224090116066",
+      "autoEligible": true,
+      "eligibilityReason": "사고 뒤 증상 기록·일상 조절·진찰 시점을 설명하는 관리 정보 주제로 쓸 수 있다.",
+      "topicClusters": ["traffic-accident"],
+      "subjectIds": ["post-accident-self-monitoring", "daily-management"]
+    },
+    {
+      "id": "BM224088404730",
+      "sourcePostId": "224088404730",
+      "sourceTitle": "범어동 다이어트 한약, 린다이어트에 대해 들어보셨나요?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224088404730",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 린다이어트 프로그램 소개 글이다.",
+      "topicClusters": ["weight-management"],
+      "subjectIds": ["lean-diet-program"]
+    },
+    {
+      "id": "BM224085933878",
+      "sourcePostId": "224085933878",
+      "sourceTitle": "건강과 피부 미용, 다이어트를 한 번에 잡은 대구 설명한의원을 소개합니다!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224085933878",
+      "autoEligible": false,
+      "eligibilityReason": "출처 한의원의 서비스 범위와 업체 소개가 핵심인 홍보 글이다.",
+      "topicClusters": ["clinic-promotion"],
+      "subjectIds": ["clinic-introduction"]
+    },
+    {
+      "id": "BM223878095136",
+      "sourcePostId": "223878095136",
+      "sourceTitle": "수성구 목·어깨·허리 통증, 도침과 추나치료로 더 빠르게 좋아졌어요",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/223878095136",
+      "autoEligible": false,
+      "eligibilityReason": "금손한의원 사실에 없는 도침과 비교 우위·호전 결과를 전제로 한다.",
+      "topicClusters": ["pain", "chuna"],
+      "subjectIds": ["acupotomy", "outcome-claim"]
+    },
+    {
+      "id": "BM222948247914",
+      "sourcePostId": "222948247914",
+      "sourceTitle": "대구 거북목, 스트레칭만으로 좋아진다? 속지 마세요.",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/222948247914",
+      "autoEligible": true,
+      "eligibilityReason": "과장된 경고 문구는 버리고 거북목 불편에서 스트레칭만으로 부족할 수 있는 생활·움직임 조건을 설명하는 주제로 쓸 수 있다.",
+      "topicClusters": ["pain", "chuna"],
+      "subjectIds": ["forward-head-posture", "stretching-limitations"]
+    },
+    {
+      "id": "BM222936992887",
+      "sourcePostId": "222936992887",
+      "sourceTitle": "대구 설명한의원 찾아오시는 길",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/222936992887",
+      "autoEligible": false,
+      "eligibilityReason": "출처 한의원의 위치·연락처·접근 정보이므로 금손한의원 주제 근거로 사용할 수 없다.",
+      "topicClusters": ["clinic-promotion"],
+      "subjectIds": ["directions"]
+    },
+    {
+      "id": "BM222927559142",
+      "sourcePostId": "222927559142",
+      "sourceTitle": "범어동 허리디스크? 1,000건 넘게 진료 본 한의원 대표원장이 알려드립니다.",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/222927559142",
+      "autoEligible": false,
+      "eligibilityReason": "출처 한의원의 누적 진료 수와 대표원장 권위를 제목 근거로 삼는 글이어서 자동 제외한다.",
+      "topicClusters": ["pain", "clinic-promotion"],
+      "subjectIds": ["lumbar-disc", "source-clinic-volume-claim"]
+    },
+    {
+      "id": "BM222923281200",
+      "sourcePostId": "222923281200",
+      "sourceTitle": "대구 라운드숄더? 3년간 추나 치료 3,600건 넘게 한 한의원 대표원장이 알려드립니다.",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/222923281200",
+      "autoEligible": false,
+      "eligibilityReason": "출처 한의원의 기간·치료 건수와 권위를 제목 근거로 삼는 글이어서 자동 제외한다.",
+      "topicClusters": ["pain", "chuna", "clinic-promotion"],
+      "subjectIds": ["rounded-shoulders", "source-clinic-volume-claim"]
+    },
+    {
+      "id": "BM222868441352",
+      "sourcePostId": "222868441352",
+      "sourceTitle": "범어동 허리디스크, 일반 한의원에서 서울대병원 의료기기를 사용하는 이유?",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/222868441352",
+      "autoEligible": false,
+      "eligibilityReason": "출처 한의원의 특정 병원 연계 의료기기 사용을 전제로 하며 금손한의원 사실과 무관하다.",
+      "topicClusters": ["pain", "clinic-promotion"],
+      "subjectIds": ["lumbar-disc", "source-clinic-device"]
+    }
+  ],
+  "topicIdeas": [
+    {
+      "id": "BTI001",
+      "topicIdea": "목·허리 통증이 있을 때 추나요법을 고려해볼 수 있는 경우는 무엇인가",
+      "topicCluster": "chuna",
+      "primarySubjectId": "chuna-decision",
+      "subjectIds": ["chuna-decision", "neck-back-pain"],
+      "intentId": "treatment-decision",
+      "semanticTopicId": "chuna.neck-back-pain.when-to-consider",
+      "dedupeKeys": ["추나요법", "목허리통증", "치료선택기준"],
+      "topicTerms": ["추나요법", "목 통증", "허리 통증", "움직임", "진찰"],
+      "coverageQuestions": [
+        "통증 위치만으로 추나 필요 여부를 정할 수 있는가?",
+        "움직임 제한과 생활 동작은 어떻게 함께 살피는가?",
+        "정밀검사나 다른 의료기관 평가를 먼저 생각할 신호는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224202473239"],
+      "autoEligible": true,
+      "eligibilityReason": "금손한의원 추나요법 사실과 통증 진료 원칙 안에서 설명할 수 있다."
+    },
+    {
+      "id": "BTI002",
+      "topicIdea": "추나요법과 도수치료를 비교할 때 독자가 먼저 물어봐야 할 기준",
+      "topicCluster": "chuna",
+      "primarySubjectId": "chuna-vs-manual-therapy",
+      "subjectIds": ["chuna-vs-manual-therapy", "treatment-comparison"],
+      "intentId": "comparison",
+      "semanticTopicId": "chuna.manual-therapy.comparison-questions",
+      "dedupeKeys": ["추나요법", "도수치료", "치료비교"],
+      "topicTerms": ["추나요법", "도수치료", "치료 목적", "적용 기준", "상담 질문"],
+      "coverageQuestions": [
+        "두 치료를 이름만으로 단순 비교하기 어려운 이유는 무엇인가?",
+        "현재 상태와 치료 목적을 어떤 질문으로 확인해야 하는가?",
+        "비용·보험·횟수처럼 개인별 확인이 필요한 항목은 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224099144402"],
+      "autoEligible": true,
+      "eligibilityReason": "특정 기관 우열 없이 독자의 치료 선택 질문만 정리할 수 있다."
+    },
+    {
+      "id": "BTI003",
+      "topicIdea": "교통사고 뒤 추나요법을 바로 결정하기 전에 확인할 증상과 진찰 항목",
+      "topicCluster": "chuna",
+      "primarySubjectId": "post-accident-chuna",
+      "subjectIds": ["post-accident-chuna", "care-decision"],
+      "intentId": "treatment-decision",
+      "semanticTopicId": "chuna.traffic-accident.pre-check",
+      "dedupeKeys": ["추나요법", "교통사고", "진찰항목"],
+      "topicTerms": ["교통사고", "추나요법", "목 통증", "두통", "경고 신호"],
+      "coverageQuestions": [
+        "사고 방식과 증상 시작 시점을 왜 함께 묻는가?",
+        "추나보다 검사나 다른 진료가 먼저일 수 있는 경우는 언제인가?",
+        "치료 뒤 반응을 어떻게 다시 점검하는가?"
+      ],
+      "sourcePostIds": ["BM224177473847", "BM224161686354"],
+      "autoEligible": true,
+      "eligibilityReason": "효과 단정 없이 사고 뒤 치료 판단 과정을 설명할 수 있다."
+    },
+    {
+      "id": "BTI004",
+      "topicIdea": "거북목이 스트레칭만 반복해도 다시 불편한 이유를 생활 움직임에서 찾는 법",
+      "topicCluster": "chuna",
+      "primarySubjectId": "forward-head-posture",
+      "subjectIds": ["forward-head-posture", "stretching-limitations", "daily-movement"],
+      "intentId": "cause",
+      "semanticTopicId": "chuna.forward-head-posture.stretching-limits",
+      "dedupeKeys": ["거북목", "스트레칭", "재발원인"],
+      "topicTerms": ["거북목", "스트레칭", "자세", "어깨 움직임", "생활습관"],
+      "coverageQuestions": [
+        "목만 늘리는 스트레칭으로 놓칠 수 있는 부위는 어디인가?",
+        "업무 자세와 반복 동작은 증상에 어떤 질문을 던지게 하는가?",
+        "통증이나 저림이 지속되면 무엇을 먼저 확인해야 하는가?"
+      ],
+      "sourcePostIds": ["BM222948247914", "BM224202473239"],
+      "autoEligible": true,
+      "eligibilityReason": "금손한의원의 체형·움직임·생활습관 관점과 직접 호환된다."
+    },
+    {
+      "id": "BTI005",
+      "topicIdea": "교통사고 직후 괜찮아 보여도 며칠간 살펴야 할 변화",
+      "topicCluster": "traffic-accident",
+      "primarySubjectId": "delayed-symptoms",
+      "subjectIds": ["delayed-symptoms", "early-assessment"],
+      "intentId": "warning",
+      "semanticTopicId": "traffic-accident.delayed-symptoms.monitoring",
+      "dedupeKeys": ["교통사고", "지연증상", "초기관찰"],
+      "topicTerms": ["교통사고", "지연 증상", "통증", "수면", "불안"],
+      "coverageQuestions": [
+        "사고 직후와 다음 날의 증상이 다를 수 있는가?",
+        "목·허리 통증 외에 기록해둘 변화는 무엇인가?",
+        "바로 응급 평가를 받아야 할 신호는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224310280758", "BM224123381569"],
+      "autoEligible": true,
+      "eligibilityReason": "고정된 시간 수치 없이 사고 뒤 관찰과 안전 기준을 설명할 수 있다."
+    },
+    {
+      "id": "BTI006",
+      "topicIdea": "교통사고 후 두통이 생겼을 때 한의원 방문 전에 구분해야 할 신호",
+      "topicCluster": "traffic-accident",
+      "primarySubjectId": "post-accident-headache",
+      "subjectIds": ["post-accident-headache", "red-flags"],
+      "intentId": "warning",
+      "semanticTopicId": "traffic-accident.headache.red-flags",
+      "dedupeKeys": ["교통사고", "두통", "위험신호"],
+      "topicTerms": ["교통사고", "두통", "어지럼", "구토", "신경학적 증상"],
+      "coverageQuestions": [
+        "두통이 시작된 시점과 양상을 왜 기록해야 하는가?",
+        "어떤 동반 증상은 다른 의료기관 평가가 먼저인가?",
+        "긴장·수면 변화 같은 일상 정보는 진찰에 어떻게 도움이 되는가?"
+      ],
+      "sourcePostIds": ["BM224314318179", "BM224161686354"],
+      "autoEligible": true,
+      "eligibilityReason": "어혈 단정 대신 안전한 증상 구분과 진료 순서를 안내할 수 있다."
+    },
+    {
+      "id": "BTI007",
+      "topicIdea": "검사에서 큰 이상이 없는데 교통사고 통증이 계속될 때 다시 살펴볼 것",
+      "topicCluster": "traffic-accident",
+      "primarySubjectId": "persistent-post-accident-pain",
+      "subjectIds": ["persistent-post-accident-pain", "normal-imaging", "movement-function"],
+      "intentId": "cause",
+      "semanticTopicId": "traffic-accident.persistent-pain.normal-imaging",
+      "dedupeKeys": ["교통사고", "검사정상", "지속통증"],
+      "topicTerms": ["교통사고", "검사", "지속 통증", "가동범위", "생활 동작"],
+      "coverageQuestions": [
+        "영상검사와 움직임 불편은 왜 같은 질문이 아닌가?",
+        "가동범위·근육 긴장·수면은 어떻게 다시 살피는가?",
+        "증상이 달라지거나 악화되면 어떤 재평가가 필요한가?"
+      ],
+      "sourcePostIds": ["BM224276221553"],
+      "autoEligible": true,
+      "eligibilityReason": "검사 결과를 부정하지 않으면서 기능과 생활 불편을 함께 설명할 수 있다."
+    },
+    {
+      "id": "BTI008",
+      "topicIdea": "교통사고 후 목 통증과 두통이 함께 올 때 편타손상을 의심하기 전에 볼 것",
+      "topicCluster": "traffic-accident",
+      "primarySubjectId": "whiplash",
+      "subjectIds": ["whiplash", "neck-pain", "headache"],
+      "intentId": "symptom-differentiation",
+      "semanticTopicId": "traffic-accident.whiplash.neck-headache",
+      "dedupeKeys": ["교통사고", "편타손상", "목통증두통"],
+      "topicTerms": ["편타손상", "목 통증", "두통", "사고 방향", "가동범위"],
+      "coverageQuestions": [
+        "사고 방향과 머리·목의 움직임을 왜 묻는가?",
+        "목 움직임 제한과 두통 양상을 어떻게 나누어 보는가?",
+        "저림·힘 빠짐·의식 변화가 있다면 어디를 먼저 찾아야 하는가?"
+      ],
+      "sourcePostIds": ["BM224161686354"],
+      "autoEligible": true,
+      "eligibilityReason": "사고 기전과 안전 신호를 중심으로 설명할 수 있다."
+    },
+    {
+      "id": "BTI009",
+      "topicIdea": "겨울철 갑자기 허리가 아플 때 디스크라고 단정하기 전에 구분할 것",
+      "topicCluster": "pain",
+      "primarySubjectId": "acute-low-back-pain",
+      "subjectIds": ["acute-low-back-pain", "winter-activity", "red-flags"],
+      "intentId": "symptom-differentiation",
+      "semanticTopicId": "pain.low-back.acute-winter-differentiation",
+      "dedupeKeys": ["허리통증", "급성요통", "겨울철"],
+      "topicTerms": ["급성 허리 통증", "허리디스크", "활동 변화", "다리 저림", "경고 신호"],
+      "coverageQuestions": [
+        "통증이 시작된 동작과 위치를 왜 구분해야 하는가?",
+        "근육·관절 불편과 신경 증상을 어떤 질문으로 나누는가?",
+        "배뇨 변화나 심한 힘 빠짐처럼 빠른 평가가 필요한 신호는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224177558299"],
+      "autoEligible": true,
+      "eligibilityReason": "계절성 단정 없이 급성 허리 통증의 분류와 안전 기준을 설명할 수 있다."
+    },
+    {
+      "id": "BTI010",
+      "topicIdea": "운동해도 목 통증이 낫지 않을 때 목디스크 전조증상으로 오해하기 쉬운 것",
+      "topicCluster": "pain",
+      "primarySubjectId": "cervical-disc-warning-signs",
+      "subjectIds": ["neck-pain", "cervical-disc-warning-signs", "exercise-response"],
+      "intentId": "symptom-differentiation",
+      "semanticTopicId": "pain.neck.cervical-disc-warning-signs",
+      "dedupeKeys": ["목통증", "목디스크", "운동반응"],
+      "topicTerms": ["목 통증", "목디스크", "팔 저림", "손 힘", "운동"],
+      "coverageQuestions": [
+        "목 통증만으로 디스크를 판단할 수 있는가?",
+        "팔·손의 저림과 힘 변화는 왜 함께 확인하는가?",
+        "운동을 중단하고 진료를 받아야 할 변화는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224235755331"],
+      "autoEligible": true,
+      "eligibilityReason": "진단 단정 없이 증상 구분과 진료 시점을 안내할 수 있다."
+    },
+    {
+      "id": "BTI011",
+      "topicIdea": "소화불량이 반복될 때 담적이라는 말보다 먼저 정리해야 할 증상",
+      "topicCluster": "digestive",
+      "primarySubjectId": "functional-dyspepsia",
+      "subjectIds": ["functional-dyspepsia", "persistent-fullness", "symptom-pattern"],
+      "intentId": "symptom-differentiation",
+      "semanticTopicId": "digestive.dyspepsia.symptom-pattern",
+      "dedupeKeys": ["소화불량", "담적", "증상구분"],
+      "topicTerms": ["소화불량", "더부룩함", "가스", "속쓰림", "식욕"],
+      "coverageQuestions": [
+        "식후 더부룩함·가스·속쓰림은 어떻게 나누어 기록하는가?",
+        "식사량·수면·배변 변화는 왜 함께 묻는가?",
+        "체중 감소나 출혈처럼 검사를 먼저 생각할 신호는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224338019561"],
+      "autoEligible": true,
+      "eligibilityReason": "처방을 단정하지 않고 소화 증상 패턴과 진찰 필요성을 설명할 수 있다."
+    },
+    {
+      "id": "BTI012",
+      "topicIdea": "소화제를 자주 찾게 될 때 약을 바꾸기 전에 확인할 생활·증상 기록",
+      "topicCluster": "digestive",
+      "primarySubjectId": "frequent-digestive-aid-use",
+      "subjectIds": ["frequent-digestive-aid-use", "persistent-dyspepsia"],
+      "intentId": "self-care",
+      "semanticTopicId": "digestive.frequent-aid-use.reassessment",
+      "dedupeKeys": ["소화제", "반복복용", "소화불량"],
+      "topicTerms": ["소화제", "소화불량", "식사 기록", "배변", "복용약"],
+      "coverageQuestions": [
+        "언제 어떤 증상 때문에 소화제를 찾는지 왜 기록해야 하는가?",
+        "다른 복용약과 식사 패턴은 어떻게 함께 점검하는가?",
+        "자가 관리보다 진료가 먼저인 변화는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224272274172"],
+      "autoEligible": true,
+      "eligibilityReason": "소화제 내성을 단정하지 않고 반복 증상의 재평가 기준만 설명할 수 있다."
+    },
+    {
+      "id": "BTI013",
+      "topicIdea": "체중관리 한약을 복용한 뒤 변비가 생겼을 때 숨기지 말아야 할 변화",
+      "topicCluster": "digestive",
+      "primarySubjectId": "constipation-during-weight-care",
+      "subjectIds": ["weight-herbal-medicine", "constipation", "safety-check"],
+      "intentId": "warning",
+      "semanticTopicId": "digestive.constipation.weight-herbal-medicine",
+      "dedupeKeys": ["다이어트한약", "변비", "복용중변화"],
+      "topicTerms": ["체중관리 한약", "변비", "수분", "식사량", "복용 조정"],
+      "coverageQuestions": [
+        "배변 횟수뿐 아니라 함께 기록할 증상은 무엇인가?",
+        "수분·식사량·활동 변화는 어떻게 확인하는가?",
+        "복용을 임의로 계속하거나 늘리지 말고 상담해야 할 때는 언제인가?"
+      ],
+      "sourcePostIds": ["BM224293181268"],
+      "autoEligible": true,
+      "eligibilityReason": "금손한의원의 맞춤 처방 원칙과 부작용을 숨기지 않는 정보 글로 작성할 수 있다."
+    },
+    {
+      "id": "BTI014",
+      "topicIdea": "봄철 비염과 오래가는 기침이 함께 있을 때 같은 감기로만 보면 안 되는 이유",
+      "topicCluster": "respiratory",
+      "primarySubjectId": "rhinitis-chronic-cough",
+      "subjectIds": ["rhinitis", "chronic-cough", "seasonal-trigger"],
+      "intentId": "symptom-differentiation",
+      "semanticTopicId": "respiratory.rhinitis-chronic-cough.seasonal",
+      "dedupeKeys": ["비염", "만성기침", "봄철"],
+      "topicTerms": ["비염", "오래가는 기침", "코막힘", "가래", "알레르기"],
+      "coverageQuestions": [
+        "코 증상과 기침의 시작 시점을 어떻게 나누어 기록하는가?",
+        "감기 뒤 기침·알레르기 비염·다른 원인을 구분할 때 무엇을 묻는가?",
+        "호흡곤란·고열·피 섞인 가래처럼 빠른 평가가 필요한 신호는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224296538575", "BM224204197979"],
+      "autoEligible": true,
+      "eligibilityReason": "출처의 보폐고엔오 프로그램은 완전히 제외하고 금손한의원 호흡기 진료 범위의 증상 질문만 남겼다."
+    },
+    {
+      "id": "BTI015",
+      "topicIdea": "비염이 자주 반복되는 아이에게 보약부터 정하기 전에 확인할 것",
+      "topicCluster": "respiratory",
+      "primarySubjectId": "child-recurrent-rhinitis",
+      "subjectIds": ["recurrent-rhinitis", "child-respiratory-health", "tonic-consultation"],
+      "intentId": "treatment-decision",
+      "semanticTopicId": "respiratory.child-rhinitis.before-tonic",
+      "dedupeKeys": ["소아비염", "반복비염", "보약상담"],
+      "topicTerms": ["아이 비염", "코막힘", "수면", "식욕", "기관지"],
+      "coverageQuestions": [
+        "비염이 심해지는 계절·환경을 어떻게 기록하는가?",
+        "수면·식욕·기침·복용약을 왜 함께 확인하는가?",
+        "진찰 없이 같은 처방을 권할 수 없는 이유는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224204197979", "BM224296538575"],
+      "autoEligible": true,
+      "eligibilityReason": "특정 제품을 제거하고 금손한의원 소아·호흡기 사실 범위의 상담 질문으로 재구성했다."
+    },
+    {
+      "id": "BTI016",
+      "topicIdea": "공진단과 경옥고를 이름이 아니라 복용 목적과 현재 상태로 구분하는 법",
+      "topicCluster": "tonic",
+      "primarySubjectId": "gongjindan-gyeongokgo-selection",
+      "subjectIds": ["gongjindan-gyeongokgo", "tonic-selection"],
+      "intentId": "comparison",
+      "semanticTopicId": "tonic.gongjindan-gyeongokgo.selection",
+      "dedupeKeys": ["공진단", "경옥고", "보약비교"],
+      "topicTerms": ["공진단", "경옥고", "체력", "식욕", "복용 목적"],
+      "coverageQuestions": [
+        "유명세보다 현재 불편과 복용 목적을 왜 먼저 묻는가?",
+        "식욕·소화·수면·활동량을 어떻게 함께 살피는가?",
+        "복용 중인 약과 질환은 왜 상담 전에 알려야 하는가?"
+      ],
+      "sourcePostIds": ["BM224140276244", "BM224338089055"],
+      "autoEligible": true,
+      "eligibilityReason": "금손한의원 공진단·경옥고 사실과 맞춤 처방 원칙 안에서 작성할 수 있다."
+    },
+    {
+      "id": "BTI017",
+      "topicIdea": "여름 보약은 더울 때 먹으면 안 된다는 말보다 먼저 볼 몸 상태",
+      "topicCluster": "tonic",
+      "primarySubjectId": "seasonal-tonic",
+      "subjectIds": ["seasonal-tonic", "summer-fatigue"],
+      "intentId": "myth-check",
+      "semanticTopicId": "tonic.summer.timing-and-condition",
+      "dedupeKeys": ["여름보약", "복용시기", "몸상태"],
+      "topicTerms": ["여름 보약", "더위", "식욕", "수면", "피로"],
+      "coverageQuestions": [
+        "계절만으로 보약 복용 가능 여부를 정할 수 있는가?",
+        "더위 뒤 식욕·수면·체력 변화를 어떻게 확인하는가?",
+        "모든 사람에게 같은 처방을 권할 수 없는 이유는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224338089055"],
+      "autoEligible": true,
+      "eligibilityReason": "금손한의원 보약 사실 범위에서 체질·상태별 상담 원칙을 설명할 수 있다."
+    },
+    {
+      "id": "BTI018",
+      "topicIdea": "부모님 보약을 선물하기 전에 자녀가 먼저 확인해둘 질문",
+      "topicCluster": "tonic",
+      "primarySubjectId": "parent-tonic-consultation",
+      "subjectIds": ["parent-tonic-consultation", "medication-check"],
+      "intentId": "checklist",
+      "semanticTopicId": "tonic.parents.pre-consultation-checklist",
+      "dedupeKeys": ["부모님보약", "선물", "상담체크"],
+      "topicTerms": ["부모님 보약", "복용약", "만성질환", "소화", "수면"],
+      "coverageQuestions": [
+        "현재 복용약과 치료 중인 질환을 왜 먼저 확인해야 하는가?",
+        "소화·수면·기력 중 어떤 불편이 우선인지 어떻게 묻는가?",
+        "제품명보다 진찰과 복용 목적이 먼저인 이유는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224196665053"],
+      "autoEligible": true,
+      "eligibilityReason": "선물 홍보가 아닌 안전한 복용 상담 체크리스트로 쓸 수 있다."
+    },
+    {
+      "id": "BTI019",
+      "topicIdea": "아이 키가 또래보다 작아 보일 때 성장치료보다 먼저 기록할 것",
+      "topicCluster": "growth",
+      "primarySubjectId": "child-growth-assessment",
+      "subjectIds": ["child-growth-assessment", "growth-pattern"],
+      "intentId": "checklist",
+      "semanticTopicId": "growth.child.before-treatment-records",
+      "dedupeKeys": ["아이성장", "키성장", "성장기록"],
+      "topicTerms": ["아이 성장", "키 변화", "성장 곡선", "식욕", "수면"],
+      "coverageQuestions": [
+        "한 번의 키 측정보다 성장 추세가 중요한 이유는 무엇인가?",
+        "식욕·소화·수면·활동량을 왜 함께 기록하는가?",
+        "소아과 평가나 검사가 먼저일 수 있는 경우는 언제인가?"
+      ],
+      "sourcePostIds": ["BM224259133517"],
+      "autoEligible": true,
+      "eligibilityReason": "금손한의원 소아 성장 진료 범위에서 안전한 사전 점검 정보로 작성할 수 있다."
+    },
+    {
+      "id": "BTI020",
+      "topicIdea": "성장호르몬 주사를 고민할 때 한의원 상담에서 대신할 수 없는 것과 도울 수 있는 것",
+      "topicCluster": "growth",
+      "primarySubjectId": "growth-hormone-consultation",
+      "subjectIds": ["growth-hormone-consultation", "scope-boundary"],
+      "intentId": "treatment-decision",
+      "semanticTopicId": "growth.hormone-injection.scope-boundary",
+      "dedupeKeys": ["성장호르몬", "성장상담", "진료범위"],
+      "topicTerms": ["성장호르몬", "성장 평가", "검사", "생활 관리", "협진"],
+      "coverageQuestions": [
+        "성장호르몬 치료 판단에 어떤 전문 평가가 필요한가?",
+        "한의원에서는 식욕·소화·수면 같은 생활 상태를 어떻게 살필 수 있는가?",
+        "두 진료를 대체 관계로 단정하면 안 되는 이유는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224259133517"],
+      "autoEligible": true,
+      "eligibilityReason": "치료 대체나 효과를 약속하지 않고 진료 범위와 협진 기준을 설명할 수 있다."
+    },
+    {
+      "id": "BTI021",
+      "topicIdea": "다이어트 성공 뒤 요요가 오는 이유를 의지 부족으로만 보면 놓치는 것",
+      "topicCluster": "weight-management",
+      "primarySubjectId": "weight-regain",
+      "subjectIds": ["weight-regain", "maintenance-habits"],
+      "intentId": "cause",
+      "semanticTopicId": "weight-management.regain.maintenance-conditions",
+      "dedupeKeys": ["요요", "감량후유지", "생활조건"],
+      "topicTerms": ["요요", "감량 유지", "식사", "수면", "활동량"],
+      "coverageQuestions": [
+        "감량 과정에서 지나치게 줄인 식사량은 유지기에 어떤 질문을 남기는가?",
+        "수면·활동량·식사 패턴을 어떻게 다시 점검하는가?",
+        "체중이 다시 오를 때 계획을 어떻게 조정해야 하는가?"
+      ],
+      "sourcePostIds": ["BM224324751919"],
+      "autoEligible": true,
+      "eligibilityReason": "특정 프로그램 없이 장기 유지 조건을 설명하는 정보 글로 쓸 수 있다."
+    },
+    {
+      "id": "BTI022",
+      "topicIdea": "굶는 다이어트가 오래가기 어려운 이유를 체중 숫자 밖에서 설명하기",
+      "topicCluster": "weight-management",
+      "primarySubjectId": "restrictive-diet",
+      "subjectIds": ["restrictive-diet", "energy-balance", "sustainable-habits"],
+      "intentId": "risk-warning",
+      "semanticTopicId": "weight-management.restrictive-diet.sustainability",
+      "dedupeKeys": ["굶는다이어트", "기초대사", "지속가능성"],
+      "topicTerms": ["절식", "기초대사량", "근육량", "피로", "감량 유지"],
+      "coverageQuestions": [
+        "짧은 체중 변화와 장기 유지가 왜 다른 목표인가?",
+        "식사량·근육량·활동량을 어떻게 함께 살피는가?",
+        "어지럼·무월경·기력 저하처럼 중단하고 상담할 신호는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224321061117"],
+      "autoEligible": true,
+      "eligibilityReason": "결과 보장 없이 무리한 절식의 한계와 안전 기준을 설명할 수 있다."
+    },
+    {
+      "id": "BTI023",
+      "topicIdea": "다이어트 정체기에는 체중계 말고 어떤 변화를 같이 봐야 할까",
+      "topicCluster": "weight-management",
+      "primarySubjectId": "weight-plateau",
+      "subjectIds": ["weight-plateau", "body-composition", "habit-review"],
+      "intentId": "checklist",
+      "semanticTopicId": "weight-management.plateau.beyond-scale",
+      "dedupeKeys": ["다이어트정체기", "체성분", "체중계"],
+      "topicTerms": ["정체기", "체중", "체성분", "허리둘레", "활동량"],
+      "coverageQuestions": [
+        "같은 체중이어도 함께 볼 수 있는 변화는 무엇인가?",
+        "측정 조건이 달라 생기는 오차를 어떻게 줄이는가?",
+        "식사·수면·활동 기록에서 무엇을 다시 점검하는가?"
+      ],
+      "sourcePostIds": ["BM224314338921"],
+      "autoEligible": true,
+      "eligibilityReason": "특정 프로그램 없이 체중관리 평가 기준을 다양화하는 정보 글로 쓸 수 있다."
+    },
+    {
+      "id": "BTI024",
+      "topicIdea": "당뇨·고혈압 약을 복용 중이라면 체중관리 한약 상담 전에 준비할 것",
+      "topicCluster": "weight-management",
+      "primarySubjectId": "comorbidity-medication-check",
+      "subjectIds": ["weight-herbal-medicine", "comorbidity-medication-check"],
+      "intentId": "safety-check",
+      "semanticTopicId": "weight-management.herbal-medicine.comorbidity-check",
+      "dedupeKeys": ["다이어트한약", "당뇨고혈압", "복용약확인"],
+      "topicTerms": ["체중관리 한약", "당뇨", "고혈압", "복용약", "혈압·혈당 기록"],
+      "coverageQuestions": [
+        "진단명과 현재 복용약을 왜 빠짐없이 알려야 하는가?",
+        "최근 혈압·혈당 변화와 식사 상태를 어떻게 준비하는가?",
+        "처방 뒤 어떤 변화를 기록하고 상담해야 하는가?"
+      ],
+      "sourcePostIds": ["BM224286156877"],
+      "autoEligible": true,
+      "eligibilityReason": "복용 가능 여부를 일괄 답하지 않고 의료진 상담에 필요한 정보를 안내할 수 있다."
+    },
+    {
+      "id": "BTI025",
+      "topicIdea": "체중관리 한약의 부작용이 걱정될 때 복용 전후로 확인할 질문",
+      "topicCluster": "weight-management",
+      "primarySubjectId": "weight-herbal-medicine-safety",
+      "subjectIds": ["weight-herbal-medicine", "safety-check", "adverse-change"] ,
+      "intentId": "safety-check",
+      "semanticTopicId": "weight-management.herbal-medicine.safety-questions",
+      "dedupeKeys": ["다이어트한약", "부작용", "안전질문"],
+      "topicTerms": ["체중관리 한약", "복용 전", "복용약", "불편 변화", "상담"],
+      "coverageQuestions": [
+        "복용 전 병력·약·건강기능식품을 왜 함께 확인하는가?",
+        "복용 중 수면·두근거림·소화·배변 변화를 어떻게 기록하는가?",
+        "임의 증량이나 타인 처방 공유가 위험한 이유는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224123383477", "BM224293181268"],
+      "autoEligible": true,
+      "eligibilityReason": "안전 점검과 맞춤 처방 원칙을 중심으로 정보성 글을 작성할 수 있다."
+    },
+    {
+      "id": "BTI026",
+      "topicIdea": "체중관리 한약은 어떻게 살을 빼는가보다 먼저 어떤 사람에게 맞는지 봐야 하는 이유",
+      "topicCluster": "weight-management",
+      "primarySubjectId": "weight-herbal-medicine-principle",
+      "subjectIds": ["weight-herbal-medicine", "treatment-principle", "individual-assessment"],
+      "intentId": "treatment-decision",
+      "semanticTopicId": "weight-management.herbal-medicine.individual-fit",
+      "dedupeKeys": ["다이어트한약", "작동원리", "개인별판단"],
+      "topicTerms": ["체중관리 한약", "식욕", "소화", "수면", "개인별 처방"],
+      "coverageQuestions": [
+        "체중 증가 원인이 사람마다 다를 수 있는가?",
+        "식욕·소화·수면·기저질환을 왜 함께 묻는가?",
+        "한 가지 처방을 모든 사람에게 적용할 수 없는 이유는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224221156767", "BM224123383477"],
+      "autoEligible": true,
+      "eligibilityReason": "효과 기전을 단정하기보다 환자별 평가와 처방 원칙을 설명할 수 있다."
+    },
+    {
+      "id": "BTI027",
+      "topicIdea": "수면이 흐트러지면 체중관리 계획도 함께 점검해야 하는 이유",
+      "topicCluster": "weight-management",
+      "primarySubjectId": "sleep-and-weight",
+      "subjectIds": ["sleep-and-weight", "habit-review"],
+      "intentId": "self-care",
+      "semanticTopicId": "weight-management.sleep.habit-review",
+      "dedupeKeys": ["수면", "체중관리", "생활습관"],
+      "topicTerms": ["수면", "체중관리", "야식", "피로", "활동량"],
+      "coverageQuestions": [
+        "수면 시간과 식사·야식 패턴은 어떻게 연결해 기록하는가?",
+        "피로와 활동량 변화는 계획에 어떤 영향을 줄 수 있는가?",
+        "수면 문제 자체의 진료가 먼저일 수 있는 경우는 언제인가?"
+      ],
+      "sourcePostIds": ["BM224250590824"],
+      "autoEligible": true,
+      "eligibilityReason": "린다이어트 프로그램과 효과 수치를 제거하고 일반 생활관리 질문만 남겼다."
+    },
+    {
+      "id": "BTI028",
+      "topicIdea": "운동을 꾸준히 해도 체중이 줄지 않을 때 운동량보다 먼저 확인할 기록",
+      "topicCluster": "weight-management",
+      "primarySubjectId": "exercise-weight-plateau",
+      "subjectIds": ["exercise-weight-plateau", "habit-review"],
+      "intentId": "cause",
+      "semanticTopicId": "weight-management.exercise.plateau-records",
+      "dedupeKeys": ["운동", "체중정체", "생활기록"],
+      "topicTerms": ["운동", "체중 정체", "식사", "회복", "근육량"],
+      "coverageQuestions": [
+        "운동 종류·강도·회복을 어떻게 기록하는가?",
+        "식사량과 간식·음료를 왜 함께 확인하는가?",
+        "체중 외에 볼 수 있는 변화는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224231647991", "BM224314338921"],
+      "autoEligible": true,
+      "eligibilityReason": "린다이어트 프로그램을 제거하고 생활·측정 점검이라는 일반 정보 주제로 재구성했다."
+    },
+    {
+      "id": "BTI029",
+      "topicIdea": "체중과 전신 건강의 관계를 과장 없이 설명하려면 어떤 지표를 봐야 할까",
+      "topicCluster": "weight-management",
+      "primarySubjectId": "weight-and-overall-health",
+      "subjectIds": ["weight-and-overall-health", "long-term-risk"],
+      "intentId": "information",
+      "semanticTopicId": "weight-management.overall-health.risk-context",
+      "dedupeKeys": ["체중", "전신건강", "건강지표"],
+      "topicTerms": ["체중", "허리둘레", "혈압", "혈당", "생활습관"],
+      "coverageQuestions": [
+        "체중 하나만으로 건강 상태를 판단할 수 있는가?",
+        "허리둘레·혈압·혈당·활동량을 왜 함께 보는가?",
+        "특정 질환 예방을 체중감량 하나로 약속할 수 없는 이유는 무엇인가?"
+      ],
+      "sourcePostIds": ["BM224205471279"],
+      "autoEligible": true,
+      "eligibilityReason": "치매 예방 주장을 버리고 권위 자료로 전신 건강 지표를 설명하는 질문만 남겼다."
+    }
+  ]
+}

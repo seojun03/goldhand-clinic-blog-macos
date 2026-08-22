@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "id": "writing-voice-final-rehear-v1",
+  "sourceSkill": "writing-voice",
+  "stage": "after-complete-visible-prose-and-seo-before-production-assembly",
+  "purpose": "완성된 글 전체를 말하는 속도로 다시 듣고, 내용과 구조를 바꾸지 않은 채 금손한의원 박준희 원장의 구체적인 어휘·확신의 강도·리듬·독자에게 머무는 시선을 보존한다.",
+  "requiredReviewChecks": [
+    "wholeDraftReadAtSpeakingSpeed",
+    "genericConnectiveTissueReviewed",
+    "flattenedRhythmReviewed",
+    "attentionAllocationReviewed",
+    "unsupportedPolishReviewed",
+    "distinctiveGrainPreserved",
+    "wholeDraftReheardAfterEdits"
+  ],
+  "requiredFrozenMaterialChecks": [
+    "contentAndOrderPreserved",
+    "factsAndMedicalBoundariesPreserved",
+    "claimStrengthPreserved",
+    "referenceMechanismsPreserved",
+    "keywordAndTitlePromisePreserved",
+    "htmlComponentsAndLinksPreserved"
+  ],
+  "allowedDecisions": [
+    "revised",
+    "no-change-needed"
+  ],
+  "revisionContract": {
+    "paragraphIndexBase": 1,
+    "positiveExpressiveAccountRequired": true,
+    "positiveAccountSignals": [
+      "독자",
+      "환자",
+      "원장",
+      "뜻",
+      "확신",
+      "불확실",
+      "주의",
+      "강조",
+      "리듬",
+      "호흡",
+      "전환",
+      "관계",
+      "장면",
+      "직접",
+      "말",
+      "거리",
+      "유보",
+      "구체",
+      "초점"
+    ],
+    "genericAccountsForbidden": [
+      "더 자연스럽게",
+      "문장이 더 좋아지게",
+      "매끄럽게 다듬기",
+      "문장 다듬기",
+      "sounds better"
+    ]
+  },
+  "proseOnly": true,
+  "mustNot": [
+    "add-remove-or-reorder-material",
+    "invent-fact-event-memory-reaction-certainty-or-intention",
+    "normalize-distinctive-voice-into-generic-good-writing",
+    "change-medical-boundary-or-claim-strength",
+    "change-reference-title-opening-flow-or-closing-mechanism",
+    "change-seo-keyword-promise-or-fixed-html-components",
+    "force-an-edit-when-the-draft-already-passes"
+  ]
+}

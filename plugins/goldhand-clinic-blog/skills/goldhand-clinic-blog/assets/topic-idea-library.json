@@ -1,0 +1,651 @@
+{
+  "schemaVersion": 2,
+  "sourceBlogId": "wi-parkclinic",
+  "sourceBlogUrl": "https://blog.naver.com/wi-parkclinic",
+  "cutoffInclusive": "2024-10-04",
+  "referenceFamilyId": "two-or-three-reader-concern-hooks-solution-preview-info",
+  "allowedReferenceIds": [
+    "WP224337414108",
+    "WP224320052203",
+    "WP224314708696",
+    "WP224307070715",
+    "WP224291545650",
+    "WP224287906098",
+    "WP224280621821",
+    "WP224221217878",
+    "WP224212833691",
+    "WP224205420099",
+    "WP224134818728"
+  ],
+  "allowedMasterIds": [
+    "INFO01",
+    "INFO03",
+    "INFO04",
+    "INFO05",
+    "INFO06",
+    "INFO07",
+    "INFO08",
+    "INFO09",
+    "INFO10",
+    "INFO11",
+    "INFO12"
+  ],
+  "sourceArticleCount": 130,
+  "articleCount": 11,
+  "excludedCount": 119,
+  "sourceExcludedCount": 32,
+  "familyFilteredOutCount": 119,
+  "factPolicy": "Use only Goldhand Clinic facts. Never transfer source facts, claims, cases, sentences or media.",
+  "writingMasterRegistry": {
+    "INFO03": {
+      "label": "전남광주 광산구 구안와사, 25년 경력 한의사가 답하는 질문 2가지",
+      "type": "정보전달형",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224337414108",
+      "autoEligible": true,
+      "bestFor": "환자의 두 가지 핵심 질문에 각각 직접 답하고 다른 검사·기관이 먼저인 경우를 밝힐 때",
+      "selectionTags": [
+        "질문 2가지",
+        "갑작스러운 증상",
+        "언제 검사",
+        "치료 병행",
+        "안전 기준"
+      ]
+    },
+    "INFO01": {
+      "label": "일자목 거북목, 추나요법 받아도 소용없는 직장인 특징 2가지",
+      "type": "정보전달형",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224320052203",
+      "autoEligible": true,
+      "bestFor": "치료만 반복해도 변화가 더딘 이유와 생활 조건 두 가지를 설명할 때",
+      "selectionTags": [
+        "치료받아도 소용없는 특징",
+        "생활습관",
+        "치료 지속",
+        "직장인",
+        "2가지"
+      ]
+    },
+    "INFO09": {
+      "label": "위고비와 마운자로 이후, 25년 차 한의사가 말하는 주의사항 2가지",
+      "type": "정보전달형",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224314708696",
+      "autoEligible": true,
+      "bestFor": "치료·관리 중단 뒤 생길 수 있는 변화와 이후 유지 조건 두 가지를 설명할 때",
+      "selectionTags": [
+        "주의사항 2가지",
+        "중단 이후",
+        "요요",
+        "생활 변화",
+        "유지 조건"
+      ]
+    },
+    "INFO08": {
+      "label": "여름철 보약, 25년 경력 한의사가 말하는 시기 2가지",
+      "type": "정보전달형",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224307070715",
+      "autoEligible": true,
+      "bestFor": "같은 관리도 시작 시점과 몸 상태에 따라 달라지는 두 경우를 비교할 때",
+      "selectionTags": [
+        "시기 2가지",
+        "보약",
+        "예방",
+        "회복",
+        "체질 차이"
+      ]
+    },
+    "INFO04": {
+      "label": "공황장애·불면증 한방 치료, 효과 보는 사람 vs 못 보는 사람",
+      "type": "정보전달형",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224291545650",
+      "autoEligible": true,
+      "bestFor": "같은 관리에도 반응이 다른 조건을 비교하고 자신에게 맞는지 구분하게 할 때",
+      "selectionTags": [
+        "효과 보는 사람",
+        "못 보는 사람",
+        "비교",
+        "공통점",
+        "자가 점검"
+      ]
+    },
+    "INFO10": {
+      "label": "갱년기 증상, 태반약침 모르면 해결 어렵습니다",
+      "type": "정보전달형",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224287906098",
+      "autoEligible": true,
+      "bestFor": "오래 이어지는 증상의 원인, 흔한 접근의 한계, 고려할 치료 원리를 순서대로 설명할 때",
+      "selectionTags": [
+        "증상 원인",
+        "일반 치료의 한계",
+        "치료 원리",
+        "오래가는 불편",
+        "두 고민"
+      ]
+    },
+    "INFO05": {
+      "label": "추나요법 건강보험 적용? 25년 경력 한의사가 알려주는 2가지",
+      "type": "정보전달형",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224280621821",
+      "autoEligible": true,
+      "bestFor": "보험·제도·적용 조건처럼 정확한 기준과 예외를 두 갈래로 설명할 때",
+      "selectionTags": [
+        "건강보험",
+        "적용 기준",
+        "비용",
+        "횟수",
+        "많이 묻는 질문"
+      ]
+    },
+    "INFO11": {
+      "label": "광주 트라우마치료, 25년 부부한의사가 알려주는 극복방법 2가지",
+      "type": "정보전달형",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224221217878",
+      "autoEligible": true,
+      "bestFor": "오래된 불편을 한 면으로만 보지 않고 두 갈래의 회복 기준을 설명할 때",
+      "selectionTags": [
+        "극복 방법 2가지",
+        "오래된 불편",
+        "몸과 마음",
+        "치료 가능성",
+        "두 질문"
+      ]
+    },
+    "INFO12": {
+      "label": "갱년기여성 다이어트, 15년 경력 원장이 말하는 성공 조건 3가지",
+      "type": "정보전달형",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224212833691",
+      "autoEligible": true,
+      "bestFor": "같은 노력을 해도 결과가 다른 이유와 성공을 좌우하는 여러 조건을 설명할 때",
+      "selectionTags": [
+        "성공 조건",
+        "같은 노력 다른 결과",
+        "몸의 변화",
+        "조건 3가지",
+        "두 고민"
+      ]
+    },
+    "INFO06": {
+      "label": "무릎통증치료, 25년 경력 한의사 2명이 알려주는 회복 원칙",
+      "type": "정보전달형",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224205420099",
+      "autoEligible": true,
+      "bestFor": "아픈 부위만 보지 않고 움직임과 주변 구조를 함께 살피는 두 원칙을 설명할 때",
+      "selectionTags": [
+        "회복 원칙",
+        "움직임 분석",
+        "구조적 원인",
+        "2가지",
+        "통증 반복"
+      ]
+    },
+    "INFO07": {
+      "label": "오십견치료방법, 29,000명 진료한 한의사가 공개하는 핵심",
+      "type": "정보전달형",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224134818728",
+      "autoEligible": true,
+      "bestFor": "한 증상의 치료 원리를 두세 단계로 나누고 각 단계의 이유를 설명할 때",
+      "selectionTags": [
+        "치료방법 핵심",
+        "관절 움직임",
+        "염증",
+        "일상 불편",
+        "단계별 설명"
+      ]
+    }
+  },
+  "articles": [
+    {
+      "id": "WP224337414108",
+      "sourceTitle": "전남광주 광산구 구안와사, 25년 경력 한의사가 답하는 질문 2가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224337414108",
+      "publishedAt": "2026-07-05",
+      "sourceContentType": "정보전달형",
+      "primaryType": "symptom-cause",
+      "primaryTypeLabel": "증상 원인·구분",
+      "titlePatternId": "expert-answer-numbered",
+      "titlePatternDescription": "전문가가 독자의 질문에 서로 다른 답을 정해진 개수로 설명",
+      "topicTerms": [
+        "구안와사",
+        "한의사가",
+        "질문"
+      ],
+      "readerQuestion": "구안와사·한의사가 관련 증상이 반복될 때 어떤 원인과 동반 신호를 나누어 봐야 하는가?",
+      "answerAgenda": [
+        "흔한 원인과 숨은 연결",
+        "증상·움직임·생활 조건 구분",
+        "검사나 진찰을 먼저 생각할 예외"
+      ],
+      "compatibleWritingMasterIds": [
+        "INFO03"
+      ],
+      "referenceFamilyId": "two-or-three-reader-concern-hooks-solution-preview-info",
+      "minimumReaderHookCount": 2,
+      "maximumReaderHookCount": 3,
+      "allowedReaderHookCounts": [
+        2,
+        3
+      ],
+      "requiresSolutionPreviewBeforeBody": true,
+      "questionPlacement": "before-greeting",
+      "openingMode": "two-quotation-components",
+      "solutionPreviewMode": "greeting-and-preview",
+      "broadKeywordPriority": 8,
+      "sourceFactsBlocked": true,
+      "sourceSentencesBlocked": true,
+      "sourceMediaBlocked": true
+    },
+    {
+      "id": "WP224320052203",
+      "sourceTitle": "일자목 거북목, 추나요법 받아도 소용없는 직장인 특징 2가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224320052203",
+      "publishedAt": "2026-06-18",
+      "sourceContentType": "정보전달형",
+      "primaryType": "risk-warning",
+      "primaryTypeLabel": "방치·주의·피해야 할 조건",
+      "titlePatternId": "reader-commonality-numbered",
+      "titlePatternDescription": "특정 결과를 보인 사람들의 공통 조건을 공개",
+      "topicTerms": [
+        "일자목",
+        "거북목",
+        "추나요법",
+        "받아도",
+        "소용없는",
+        "직장인",
+        "특징"
+      ],
+      "readerQuestion": "일자목·거북목 관련 불편을 그대로 두거나 한 가지 치료만 반복할 때 무엇을 놓칠 수 있는가?",
+      "answerAgenda": [
+        "놓치기 쉬운 악화 조건",
+        "상태를 다시 구분할 신호",
+        "의료진과 상의할 다음 판단"
+      ],
+      "compatibleWritingMasterIds": [
+        "INFO01"
+      ],
+      "referenceFamilyId": "two-or-three-reader-concern-hooks-solution-preview-info",
+      "minimumReaderHookCount": 2,
+      "maximumReaderHookCount": 3,
+      "allowedReaderHookCounts": [
+        2,
+        3
+      ],
+      "requiresSolutionPreviewBeforeBody": true,
+      "questionPlacement": "before-greeting",
+      "openingMode": "two-quotation-components",
+      "solutionPreviewMode": "greeting-and-preview",
+      "broadKeywordPriority": 11,
+      "sourceFactsBlocked": true,
+      "sourceSentencesBlocked": true,
+      "sourceMediaBlocked": true
+    },
+    {
+      "id": "WP224314708696",
+      "sourceTitle": "위고비와 마운자로 이후, 25년 차 한의사가 말하는 주의사항 2가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224314708696",
+      "publishedAt": "2026-06-13",
+      "sourceContentType": "정보전달형",
+      "primaryType": "risk-warning",
+      "primaryTypeLabel": "방치·주의·피해야 할 조건",
+      "titlePatternId": "warning-consequence-numbered",
+      "titlePatternDescription": "놓치기 쉬운 조건과 그 결과를 경고",
+      "topicTerms": [
+        "위고비와",
+        "마운자로",
+        "이후",
+        "한의사가"
+      ],
+      "readerQuestion": "위고비와·마운자로 관련 불편을 그대로 두거나 한 가지 치료만 반복할 때 무엇을 놓칠 수 있는가?",
+      "answerAgenda": [
+        "놓치기 쉬운 악화 조건",
+        "상태를 다시 구분할 신호",
+        "의료진과 상의할 다음 판단"
+      ],
+      "compatibleWritingMasterIds": [
+        "INFO09"
+      ],
+      "referenceFamilyId": "two-or-three-reader-concern-hooks-solution-preview-info",
+      "minimumReaderHookCount": 2,
+      "maximumReaderHookCount": 3,
+      "allowedReaderHookCounts": [
+        2,
+        3
+      ],
+      "requiresSolutionPreviewBeforeBody": true,
+      "questionPlacement": "before-greeting",
+      "openingMode": "lead-image-then-two-quotations",
+      "solutionPreviewMode": "greeting-and-preview",
+      "broadKeywordPriority": 4,
+      "sourceFactsBlocked": true,
+      "sourceSentencesBlocked": true,
+      "sourceMediaBlocked": true
+    },
+    {
+      "id": "WP224307070715",
+      "sourceTitle": "여름철 보약, 25년 경력 한의사가 말하는 시기 2가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224307070715",
+      "publishedAt": "2026-06-05",
+      "sourceContentType": "정보전달형",
+      "primaryType": "treatment-decision",
+      "primaryTypeLabel": "치료 선택·적용 기준",
+      "titlePatternId": "expert-answer-numbered",
+      "titlePatternDescription": "전문가가 독자의 질문에 서로 다른 답을 정해진 개수로 설명",
+      "topicTerms": [
+        "여름철",
+        "보약",
+        "한의사가",
+        "시기"
+      ],
+      "readerQuestion": "여름철·보약과 관련해 어떤 치료가 필요한지 무엇으로 구분할 수 있는가?",
+      "answerAgenda": [
+        "치료 전 확인할 상태",
+        "치료를 선택하는 이유와 한계",
+        "함께 살필 생활 조건과 재점검"
+      ],
+      "compatibleWritingMasterIds": [
+        "INFO08"
+      ],
+      "referenceFamilyId": "two-or-three-reader-concern-hooks-solution-preview-info",
+      "minimumReaderHookCount": 2,
+      "maximumReaderHookCount": 3,
+      "allowedReaderHookCounts": [
+        2,
+        3
+      ],
+      "requiresSolutionPreviewBeforeBody": true,
+      "questionPlacement": "after-greeting",
+      "openingMode": "greeting-then-two-quotations",
+      "solutionPreviewMode": "knowledge-gap-then-preview",
+      "broadKeywordPriority": 6,
+      "sourceFactsBlocked": true,
+      "sourceSentencesBlocked": true,
+      "sourceMediaBlocked": true
+    },
+    {
+      "id": "WP224291545650",
+      "sourceTitle": "공황장애·불면증 한방 치료, 효과 보는 사람 vs 못 보는 사람",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224291545650",
+      "publishedAt": "2026-05-20",
+      "sourceContentType": "정보전달형",
+      "primaryType": "treatment-decision",
+      "primaryTypeLabel": "치료 선택·적용 기준",
+      "titlePatternId": "versus-comparison",
+      "titlePatternDescription": "서로 다른 두 상태·선택을 대비해 차이를 설명",
+      "topicTerms": [
+        "공황장애",
+        "불면증",
+        "한방",
+        "효과",
+        "사람"
+      ],
+      "readerQuestion": "공황장애·불면증과 관련해 어떤 치료가 필요한지 무엇으로 구분할 수 있는가?",
+      "answerAgenda": [
+        "치료 전 확인할 상태",
+        "치료를 선택하는 이유와 한계",
+        "함께 살필 생활 조건과 재점검"
+      ],
+      "compatibleWritingMasterIds": [
+        "INFO04"
+      ],
+      "referenceFamilyId": "two-or-three-reader-concern-hooks-solution-preview-info",
+      "minimumReaderHookCount": 2,
+      "maximumReaderHookCount": 3,
+      "allowedReaderHookCounts": [
+        2,
+        3
+      ],
+      "requiresSolutionPreviewBeforeBody": true,
+      "questionPlacement": "before-greeting",
+      "openingMode": "two-quotation-components",
+      "solutionPreviewMode": "separate-preview-after-context-media",
+      "broadKeywordPriority": 5,
+      "sourceFactsBlocked": true,
+      "sourceSentencesBlocked": true,
+      "sourceMediaBlocked": true
+    },
+    {
+      "id": "WP224287906098",
+      "sourceTitle": "갱년기 증상, 태반약침 모르면 해결 어렵습니다",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224287906098",
+      "publishedAt": "2026-05-17",
+      "sourceContentType": "정보전달형",
+      "primaryType": "risk-warning",
+      "primaryTypeLabel": "방치·주의·피해야 할 조건",
+      "titlePatternId": "warning-consequence",
+      "titlePatternDescription": "놓치기 쉬운 조건과 그 결과를 경고",
+      "topicTerms": [
+        "갱년기",
+        "증상",
+        "태반약침",
+        "모르면",
+        "해결",
+        "어렵습니다"
+      ],
+      "readerQuestion": "갱년기·증상 관련 불편을 그대로 두거나 한 가지 치료만 반복할 때 무엇을 놓칠 수 있는가?",
+      "answerAgenda": [
+        "놓치기 쉬운 악화 조건",
+        "상태를 다시 구분할 신호",
+        "의료진과 상의할 다음 판단"
+      ],
+      "compatibleWritingMasterIds": [
+        "INFO10"
+      ],
+      "referenceFamilyId": "two-or-three-reader-concern-hooks-solution-preview-info",
+      "minimumReaderHookCount": 2,
+      "maximumReaderHookCount": 3,
+      "allowedReaderHookCounts": [
+        2,
+        3
+      ],
+      "requiresSolutionPreviewBeforeBody": true,
+      "questionPlacement": "after-greeting",
+      "openingMode": "lead-image-and-greeting-then-two-quotations",
+      "solutionPreviewMode": "knowledge-gap-then-preview",
+      "broadKeywordPriority": 3,
+      "sourceFactsBlocked": true,
+      "sourceSentencesBlocked": true,
+      "sourceMediaBlocked": true
+    },
+    {
+      "id": "WP224280621821",
+      "sourceTitle": "추나요법 건강보험 적용? 25년 경력 한의사가 알려주는 2가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224280621821",
+      "publishedAt": "2026-05-10",
+      "sourceContentType": "정보전달형",
+      "primaryType": "treatment-decision",
+      "primaryTypeLabel": "치료 선택·적용 기준",
+      "titlePatternId": "expert-answer-numbered",
+      "titlePatternDescription": "전문가가 독자의 질문에 서로 다른 답을 정해진 개수로 설명",
+      "topicTerms": [
+        "추나요법",
+        "건강보험",
+        "적용",
+        "한의사가"
+      ],
+      "readerQuestion": "추나요법·건강보험과 관련해 어떤 치료가 필요한지 무엇으로 구분할 수 있는가?",
+      "answerAgenda": [
+        "치료 전 확인할 상태",
+        "치료를 선택하는 이유와 한계",
+        "함께 살필 생활 조건과 재점검"
+      ],
+      "compatibleWritingMasterIds": [
+        "INFO05"
+      ],
+      "referenceFamilyId": "two-or-three-reader-concern-hooks-solution-preview-info",
+      "minimumReaderHookCount": 2,
+      "maximumReaderHookCount": 3,
+      "allowedReaderHookCounts": [
+        2,
+        3
+      ],
+      "requiresSolutionPreviewBeforeBody": true,
+      "questionPlacement": "after-greeting",
+      "openingMode": "two-quoted-questions-inside-opening-text",
+      "solutionPreviewMode": "same-opening-text",
+      "broadKeywordPriority": 9,
+      "sourceFactsBlocked": true,
+      "sourceSentencesBlocked": true,
+      "sourceMediaBlocked": true
+    },
+    {
+      "id": "WP224221217878",
+      "sourceTitle": "광주 트라우마치료, 25년 부부한의사가 알려주는 극복방법 2가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224221217878",
+      "publishedAt": "2026-03-18",
+      "sourceContentType": "정보전달형",
+      "primaryType": "treatment-decision",
+      "primaryTypeLabel": "치료 선택·적용 기준",
+      "titlePatternId": "expert-answer-numbered",
+      "titlePatternDescription": "전문가가 독자의 질문에 서로 다른 답을 정해진 개수로 설명",
+      "topicTerms": [
+        "트라우마치료",
+        "부부한의사가",
+        "극복방법"
+      ],
+      "readerQuestion": "트라우마치료·부부한의사가과 관련해 어떤 치료가 필요한지 무엇으로 구분할 수 있는가?",
+      "answerAgenda": [
+        "치료 전 확인할 상태",
+        "치료를 선택하는 이유와 한계",
+        "함께 살필 생활 조건과 재점검"
+      ],
+      "compatibleWritingMasterIds": [
+        "INFO11"
+      ],
+      "referenceFamilyId": "two-or-three-reader-concern-hooks-solution-preview-info",
+      "minimumReaderHookCount": 2,
+      "maximumReaderHookCount": 3,
+      "allowedReaderHookCounts": [
+        2,
+        3
+      ],
+      "requiresSolutionPreviewBeforeBody": true,
+      "questionPlacement": "before-greeting",
+      "openingMode": "two-quotation-components",
+      "solutionPreviewMode": "greeting-and-preview",
+      "broadKeywordPriority": 2,
+      "sourceFactsBlocked": true,
+      "sourceSentencesBlocked": true,
+      "sourceMediaBlocked": true
+    },
+    {
+      "id": "WP224212833691",
+      "sourceTitle": "갱년기여성 다이어트, 15년 경력 원장이 말하는 성공 조건 3가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224212833691",
+      "publishedAt": "2026-03-11",
+      "sourceContentType": "정보전달형",
+      "primaryType": "symptom-cause",
+      "primaryTypeLabel": "증상 원인·구분",
+      "titlePatternId": "expert-answer-numbered",
+      "titlePatternDescription": "전문가가 독자의 질문에 서로 다른 답을 정해진 개수로 설명",
+      "topicTerms": [
+        "갱년기여성",
+        "다이어트",
+        "성공",
+        "조건"
+      ],
+      "readerQuestion": "갱년기여성·다이어트 관련 증상이 반복될 때 어떤 원인과 동반 신호를 나누어 봐야 하는가?",
+      "answerAgenda": [
+        "흔한 원인과 숨은 연결",
+        "증상·움직임·생활 조건 구분",
+        "검사나 진찰을 먼저 생각할 예외"
+      ],
+      "compatibleWritingMasterIds": [
+        "INFO12"
+      ],
+      "referenceFamilyId": "two-or-three-reader-concern-hooks-solution-preview-info",
+      "minimumReaderHookCount": 2,
+      "maximumReaderHookCount": 3,
+      "allowedReaderHookCounts": [
+        2,
+        3
+      ],
+      "requiresSolutionPreviewBeforeBody": true,
+      "questionPlacement": "before-greeting",
+      "openingMode": "two-quotation-components",
+      "solutionPreviewMode": "greeting-and-preview",
+      "broadKeywordPriority": 1,
+      "sourceFactsBlocked": true,
+      "sourceSentencesBlocked": true,
+      "sourceMediaBlocked": true
+    },
+    {
+      "id": "WP224205420099",
+      "sourceTitle": "무릎통증치료, 25년 경력 한의사 2명이 알려주는 회복 원칙",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224205420099",
+      "publishedAt": "2026-03-05",
+      "sourceContentType": "정보전달형",
+      "primaryType": "treatment-decision",
+      "primaryTypeLabel": "치료 선택·적용 기준",
+      "titlePatternId": "how-to-principle",
+      "titlePatternDescription": "상태를 구분하고 행동으로 옮길 수 있는 방법을 설명",
+      "topicTerms": [
+        "무릎통증치료",
+        "명이",
+        "회복",
+        "원칙"
+      ],
+      "readerQuestion": "무릎통증치료·명이과 관련해 어떤 치료가 필요한지 무엇으로 구분할 수 있는가?",
+      "answerAgenda": [
+        "치료 전 확인할 상태",
+        "치료를 선택하는 이유와 한계",
+        "함께 살필 생활 조건과 재점검"
+      ],
+      "compatibleWritingMasterIds": [
+        "INFO06"
+      ],
+      "referenceFamilyId": "two-or-three-reader-concern-hooks-solution-preview-info",
+      "minimumReaderHookCount": 2,
+      "maximumReaderHookCount": 3,
+      "allowedReaderHookCounts": [
+        2,
+        3
+      ],
+      "requiresSolutionPreviewBeforeBody": true,
+      "questionPlacement": "before-greeting",
+      "openingMode": "two-quotation-components",
+      "solutionPreviewMode": "greeting-and-preview",
+      "broadKeywordPriority": 10,
+      "sourceFactsBlocked": true,
+      "sourceSentencesBlocked": true,
+      "sourceMediaBlocked": true
+    },
+    {
+      "id": "WP224134818728",
+      "sourceTitle": "오십견치료방법, 29,000명 진료한 한의사가 공개하는 핵심",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224134818728",
+      "publishedAt": "2026-01-05",
+      "sourceContentType": "정보전달형",
+      "primaryType": "treatment-decision",
+      "primaryTypeLabel": "치료 선택·적용 기준",
+      "titlePatternId": "how-to-principle",
+      "titlePatternDescription": "상태를 구분하고 행동으로 옮길 수 있는 방법을 설명",
+      "topicTerms": [
+        "오십견치료방법",
+        "진료한",
+        "한의사가"
+      ],
+      "readerQuestion": "오십견치료방법·진료한과 관련해 어떤 치료가 필요한지 무엇으로 구분할 수 있는가?",
+      "answerAgenda": [
+        "치료 전 확인할 상태",
+        "치료를 선택하는 이유와 한계",
+        "함께 살필 생활 조건과 재점검"
+      ],
+      "compatibleWritingMasterIds": [
+        "INFO07"
+      ],
+      "referenceFamilyId": "two-or-three-reader-concern-hooks-solution-preview-info",
+      "minimumReaderHookCount": 2,
+      "maximumReaderHookCount": 3,
+      "allowedReaderHookCounts": [
+        2,
+        3
+      ],
+      "requiresSolutionPreviewBeforeBody": true,
+      "questionPlacement": "before-greeting",
+      "openingMode": "two-quotation-components",
+      "solutionPreviewMode": "greeting-and-preview",
+      "broadKeywordPriority": 7,
+      "sourceFactsBlocked": true,
+      "sourceSentencesBlocked": true,
+      "sourceMediaBlocked": true
+    }
+  ]
+}

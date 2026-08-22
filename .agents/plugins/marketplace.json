@@ -1,0 +1,20 @@
+{
+  "name": "goldhand-clinic-macos",
+  "interface": {
+    "displayName": "Goldhand Clinic Blog for macOS"
+  },
+  "plugins": [
+    {
+      "name": "goldhand-clinic-blog",
+      "source": {
+        "source": "local",
+        "path": "./plugins/goldhand-clinic-blog"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

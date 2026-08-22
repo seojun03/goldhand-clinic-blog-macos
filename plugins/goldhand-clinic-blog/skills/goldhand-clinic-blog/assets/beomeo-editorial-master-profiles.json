@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "sourceBlogId": "beomeo_sm",
+  "sourceBlogUrl": "https://blog.naver.com/beomeo_sm",
+  "sourceRole": "title-tone-content-sequence-only",
+  "selectionPolicy": {
+    "onePrimaryEditorialSourcePerTopicIdea": true,
+    "primaryEditorialSourceMustBelongToTopicSourcePostIds": true,
+    "fallbackToFirstSourcePost": false,
+    "unassignedTopicIdeasRemainWithoutEditorialMaster": true,
+    "unassignedTopicIdeasRequireLiveSourceAudit": true,
+    "promotionRequiresValidatedProfile": true,
+    "emitOneLiveAuditCandidateForUnassignedTopic": true,
+    "candidateCannotBecomeMasterBeforeSourceAudit": true
+  },
+  "reuseBoundary": {
+    "mayInform": [
+      "title-device",
+      "reader-question-shape",
+      "problem-framing",
+      "content-sequence",
+      "sentence-rhythm",
+      "everyday-reader-vocabulary"
+    ],
+    "mustNeverInform": [
+      "clinic-fact",
+      "named-program",
+      "case",
+      "number",
+      "medical-claim",
+      "source-sentence",
+      "media"
+    ],
+    "medicalInformationRule": "원문에서 설명 의제와 전개 순서는 참고할 수 있지만 의료 사실과 수치의 근거로 사용하지 않는다.",
+    "goldhandCompatibilityRule": "완성 글의 업체 사실은 금손한의원 자료만, 일반 의료 정보는 별도로 확인한 권위 자료만 사용한다.",
+    "antiCopyRule": "제목 장치와 정보 순서는 가깝게 따르되 원문 문장, 고유 사례, 비유, 수치, 프로그램 설명을 옮기거나 유의어만 바꾸어 재작성하지 않는다."
+  },
+  "topicIdeaAssignments": {
+    "BTI028": {
+      "primaryEditorialSource": "BM224231647991",
+      "selectionReason": "두 원문 중 운동을 해도 살이 빠지지 않는다는 독자의 질문을 제목과 도입에서 직접 다루고, 운동의 역할을 부정하지 않으면서 감량과 유지의 차이로 이어지는 글 한 편이 이번 의제에 가장 가깝다."
+    }
+  },
+  "liveAuditCandidateAssignments": {
+    "BTI003": {
+      "primaryEditorialCandidate": "BM224177473847",
+      "selectionReason": "추나요법을 교통사고 뒤 언제 고려하는지 직접 다루는 제목이 의제와 가장 가깝다."
+    },
+    "BTI004": {
+      "primaryEditorialCandidate": "BM222948247914",
+      "selectionReason": "거북목과 스트레칭만 반복하는 문제를 제목에서 직접 묻는 글이다."
+    },
+    "BTI005": {
+      "primaryEditorialCandidate": "BM224310280758",
+      "selectionReason": "사고 직후의 관찰 시점을 직접 다루되 72시간 수치는 사실 근거로 사용하지 않는다."
+    },
+    "BTI006": {
+      "primaryEditorialCandidate": "BM224314318179",
+      "selectionReason": "교통사고 뒤 두통이라는 독자 질문을 가장 직접적으로 다루는 글이다."
+    },
+    "BTI014": {
+      "primaryEditorialCandidate": "BM224296538575",
+      "selectionReason": "봄철 기침과 비염이 함께 오래가는 상황을 제목에서 직접 다루는 글이다."
+    },
+    "BTI015": {
+      "primaryEditorialCandidate": "BM224204197979",
+      "selectionReason": "반복되는 비염과 호흡기 상태를 보약 결정 전에 살피는 의제와 가장 가깝다."
+    },
+    "BTI016": {
+      "primaryEditorialCandidate": "BM224140276244",
+      "selectionReason": "경옥고와 공진단의 차이를 직접 비교하는 글이라 복용 목적 구분 의제와 가깝다."
+    },
+    "BTI025": {
+      "primaryEditorialCandidate": "BM224123383477",
+      "selectionReason": "체중관리 한약의 부작용 걱정을 일반 질문으로 직접 다루는 글이다."
+    },
+    "BTI026": {
+      "primaryEditorialCandidate": "BM224221156767",
+      "selectionReason": "체중관리 한약의 작용 원리를 묻는 글이라 적합 대상까지 설명할 출발점과 가깝다."
+    }
+  },
+  "profiles": {
+    "BM224231647991": {
+      "id": "BM224231647991",
+      "sourcePostId": "224231647991",
+      "sourceBlogId": "beomeo_sm",
+      "sourceTitle": "대구 린다이어트, 운동을 해도 살이 안 빠지는 이유!",
+      "sourceUrl": "https://blog.naver.com/beomeo_sm/224231647991",
+      "sourceRole": "title-tone-content-sequence-only",
+      "sourceAuditStatus": "body-reviewed",
+      "autoEligible": true,
+      "appliesToTopicIdeaIds": [
+        "BTI028"
+      ],
+      "titleContract": {
+        "device": "검색 키워드 뒤에 독자가 실제로 하는 원인 질문을 일상어로 바로 붙인다.",
+        "preferredShape": "{정확 메인키워드}, 운동하는데 왜 살이 잘 안 빠질까요?",
+        "keepNaturalWords": [
+          "운동",
+          "살",
+          "안 빠지는 이유"
+        ],
+        "avoidAbstractWords": [
+          "먼저 볼 기록",
+          "확인할 기준",
+          "체중이 그대로라면",
+          "생활의 흐름",
+          "판단 기준"
+        ],
+        "brandAndProgramTermsBlocked": true
+      },
+      "toneContract": {
+        "voice": "원장이 상담실에서 흔한 질문에 답하듯 쉬운 단어로 말한다.",
+        "rhythm": "짧은 질문과 짧은 결론 뒤에 이유를 설명하는 문단을 붙이고, 설명이 길어지면 다시 독자의 질문으로 환기한다.",
+        "readerLanguage": "체중 감량, 신체 조성 같은 명사형 표현보다 살이 빠지다, 몸무게가 줄다, 운동을 더 해야 하나처럼 독자가 실제로 쓰는 말을 우선한다.",
+        "transitions": [
+          "왜 운동한 만큼 몸무게가 줄지 않는 걸까요?",
+          "그럼 운동은 안 해도 되는 걸까요?",
+          "아닙니다. 운동이 맡는 역할은 따로 있습니다."
+        ],
+        "transitionRule": "위 전환문의 논리적 역할만 재현하고 세 문장을 그대로 연속 복사하지 않는다.",
+        "avoid": [
+          "보고서식 체크리스트 나열",
+          "추상 명사 연쇄",
+          "같은 길이의 단문 반복",
+          "권위만 내세우는 단정",
+          "기계적인 요약 문단"
+        ]
+      },
+      "requiredContentBeats": [
+        "exercise-effort-frustration",
+        "exercise-matters-but-is-not-a-direct-calorie-equation",
+        "why-weight-loss-can-stall-despite-exercise",
+        "exercise-still-matters-for-loss-and-maintenance",
+        "practical-management-direction"
+      ],
+      "contentBeatGuidance": {
+        "exercise-effort-frustration": "운동을 꾸준히 하는데도 몸무게가 줄지 않아 답답한 독자의 상황과 질문으로 시작한다.",
+        "exercise-matters-but-is-not-a-direct-calorie-equation": "운동이 중요하다는 점을 먼저 인정한 뒤 운동량과 체중 감소가 일대일로 움직이지 않는다는 핵심을 예고한다.",
+        "why-weight-loss-can-stall-despite-exercise": "운동 중 소비만 떼어 보지 않고 하루 전체 섭취와 소비, 회복, 식욕 같은 조건을 함께 설명한다. 원문의 수치와 연구 주장은 옮기지 않는다.",
+        "exercise-still-matters-for-loss-and-maintenance": "운동이 소용없다는 결론으로 흐르지 않게 막고 감량 과정과 감량 후 유지에서 운동이 맡는 역할을 구분한다.",
+        "practical-management-direction": "운동을 무조건 더 늘리기 전에 식사, 수면, 피로, 운동 뒤 식욕과 현재 운동 강도를 함께 돌아보는 현실적인 다음 행동으로 마무리한다."
+      },
+      "contentSequenceContract": {
+        "orderIsRequired": true,
+        "oneSourceOnly": true,
+        "doNotMergeWith": [
+          "BM224314338921"
+        ],
+        "closingMode": "독자가 지금의 감량 방법을 점검할 수 있는 질문을 남기고 과장된 내원 권유 없이 닫는다."
+      },
+      "blockedReuse": [
+        "clinicFact",
+        "namedProgram",
+        "case",
+        "number",
+        "medicalClaim",
+        "sourceSentence",
+        "media"
+      ],
+      "sourceFactsBlocked": true,
+      "sourceProgramsBlocked": true,
+      "sourceCasesBlocked": true,
+      "sourceNumbersBlocked": true,
+      "sourceMedicalClaimsBlocked": true,
+      "sourceSentencesBlocked": true,
+      "sourceMediaBlocked": true
+    }
+  }
+}

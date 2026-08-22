@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 4,
+  "enabled": false,
+  "requiredOnEveryArticle": false,
+  "articleEndsWith": "clinic-info",
+  "forbiddenClosingElements": [
+    "related-post-label",
+    "latest-blog-post-link",
+    "naver-place-map"
+  ]
+}

@@ -1,0 +1,513 @@
+{
+  "schemaVersion": 2,
+  "sourceBlogId": "wi-parkclinic",
+  "sourceBlogUrl": "https://blog.naver.com/wi-parkclinic",
+  "cutoffInclusive": "2024-10-04",
+  "liveReviewedOn": "2026-08-21",
+  "contentAuthority": "선택한 한 편의 주제·독자 질문·핵심 일반 정보·정보 공개 순서를 사용한다. 문장과 업체 고유 사실은 사용하지 않는다.",
+  "alwaysBlocked": [
+    "위석부부한의원 상호·지역·원장·경력·학력",
+    "환자 수·소개율·감량 수치·치료 횟수·회복률·효과 배수",
+    "위석부부한의원의 사례·후기·직접 인용",
+    "Human Anatomy Atlas·EFT 등 금손 자료에 없는 프로그램",
+    "원문 사진·연락처·진료시간·예약 링크",
+    "원문 문장 또는 7어절 이상 연속 표현"
+  ],
+  "briefs": {
+    "INFO01": {
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224320052203",
+      "topic": "추나요법이나 통증 치료를 받아도 변화가 더딘 생활 조건",
+      "readerConcerns": [
+        "치료를 받아도 다시 아픈 이유",
+        "직장 생활을 하면서도 관리할 수 있는지"
+      ],
+      "orderedContentAtoms": [
+        {
+          "id": "INFO01-A1",
+          "role": "treatment-response-timing",
+          "observables": ["치료받은 날의 통증", "다음 날 목 움직임", "아침과 오후의 차이"],
+          "meaning": ["짧은 반응만으로 치료 중단 결정 금지", "서로 다른 시점의 반응 분리"]
+        },
+        {
+          "id": "INFO01-A2",
+          "role": "daily-neck-load",
+          "observables": ["눈보다 낮은 모니터", "가슴 앞 스마트폰", "오래 앉아 일함"],
+          "meaning": ["치료 뒤 같은 자세 지속", "같은 부위 재통증 가능"]
+        },
+        {
+          "id": "INFO01-A3",
+          "role": "posture-and-movement",
+          "observables": ["목이 돌아가는 범위", "고개를 돌릴 때 어깨가 들림", "주변 근육 긴장"],
+          "meaning": ["뼈 배열만으로 설명 금지", "근육과 실제 움직임 함께 평가"]
+        },
+        {
+          "id": "INFO01-A4",
+          "role": "combined-management",
+          "observables": ["치료 뒤 다시 업무 복귀", "모니터 높이 조절", "아프지 않은 범위의 움직임"],
+          "meaning": ["치료와 생활 자세 함께 조정"]
+        }
+      ],
+      "orderedGeneralInformation": [
+        "짧은 기간의 반응만 보고 치료를 중단하면 경과를 다시 판단하기 어렵다.",
+        "치료 뒤에도 모니터 높이·스마트폰 자세·오래 앉는 습관이 그대로면 같은 부위에 부담이 반복될 수 있다.",
+        "일자목·거북목은 뼈의 배열만이 아니라 주변 근육의 긴장과 움직임을 함께 봐야 한다.",
+        "치료와 생활 습관 조정이 같이 가야 한다."
+      ],
+      "blockedFromSource": [
+        "최소 4주 치료 단정",
+        "치료 효과 2배·3개월 변화 보장",
+        "약침 병행이 반드시 필요하다는 단정"
+      ]
+    },
+    "INFO03": {
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224337414108",
+      "topic": "갑작스러운 안면마비 의심 증상의 초기 판단과 치료 병행",
+      "readerConcerns": [
+        "갑자기 입이 돌아갔을 때 바로 진료가 필요한지",
+        "한방 치료만으로 충분한지"
+      ],
+      "orderedContentAtoms": [
+        {
+          "id": "INFO03-A1",
+          "role": "first-differential",
+          "observables": ["갑자기 한쪽 입이 처짐", "눈이 잘 감기지 않음"],
+          "meaning": ["중추성·말초성 우선 구분"]
+        },
+        {
+          "id": "INFO03-A2",
+          "role": "emergency-boundary",
+          "observables": ["팔·다리 힘 빠짐", "말이 어눌함"],
+          "meaning": ["동반 시 응급 평가 우선"]
+        },
+        {
+          "id": "INFO03-A3",
+          "role": "early-evaluation",
+          "observables": ["얼굴 마비 시작 시점", "증상 변화"],
+          "meaning": ["말초성 의심도 초기 평가와 치료 시기 중요"]
+        },
+        {
+          "id": "INFO03-A4",
+          "role": "treatment-choice",
+          "observables": ["현재 받고 있는 치료", "침·한약 고려"],
+          "meaning": ["현재 상태와 다른 치료 필요성 함께 판단"]
+        }
+      ],
+      "orderedGeneralInformation": [
+        "갑작스러운 얼굴 마비는 중추성과 말초성을 먼저 구분해야 한다.",
+        "팔·다리 힘 빠짐이나 말 어눌함 같은 증상이 동반되면 응급 평가가 우선이다.",
+        "말초성 안면마비도 초기 평가와 치료 시기를 놓치지 않는 것이 중요하다.",
+        "침·한약 등 한방 치료는 현재 상태와 다른 치료의 필요성을 함께 판단해 선택한다."
+      ],
+      "blockedFromSource": [
+        "특정 회복 기간·회복률",
+        "WHO 인정 문구를 근거 확인 없이 재사용",
+        "침과 한약이 가장 효과적이라는 단정"
+      ]
+    },
+    "INFO04": {
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224291545650",
+      "topic": "공황·불면 관리에서 반응 차이를 만드는 상태 구분",
+      "readerConcerns": [
+        "한의원 치료가 자신에게 맞는지",
+        "약을 줄이거나 끊으면 다시 힘들어질지"
+      ],
+      "orderedContentAtoms": [
+        {
+          "id": "INFO04-A1",
+          "role": "initial-history",
+          "observables": ["증상 시작 시점", "현재 복용약", "잠드는 시간과 자주 깨는지"],
+          "meaning": ["기간·약·수면 양상 우선 확인"]
+        },
+        {
+          "id": "INFO04-A2",
+          "role": "body-reactions",
+          "observables": ["가슴 답답함", "두근거림", "소화불량"],
+          "meaning": ["불안·불면과 함께 나타나는 몸의 반응 확인"]
+        },
+        {
+          "id": "INFO04-A3",
+          "role": "response-variation",
+          "observables": ["치료 뒤 잠과 신체 증상의 변화"],
+          "meaning": ["사람별 반응 차이", "한 가지 치료만으로 결론 금지"]
+        },
+        {
+          "id": "INFO04-A4",
+          "role": "care-boundary",
+          "observables": ["기존 정신건강의학과 치료", "증상 악화"],
+          "meaning": ["필요 시 병행 치료 또는 다른 평가 우선"]
+        }
+      ],
+      "orderedGeneralInformation": [
+        "증상 기간·현재 복용약·수면 양상·신체 증상을 먼저 확인한다.",
+        "가슴 답답함·두근거림·소화불량 같은 신체 반응이 함께 나타나는지 살핀다.",
+        "치료 반응은 사람마다 다르며 한 가지 치료만으로 판단하지 않는다.",
+        "필요하면 정신건강의학과 치료와 병행하거나 다른 평가를 먼저 한다."
+      ],
+      "blockedFromSource": [
+        "EFT 적합도 체크리스트와 횟수",
+        "약 중단 사례",
+        "특정 치료 반응 수치"
+      ]
+    },
+    "INFO05": {
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224280621821",
+      "topic": "추나요법 건강보험 적용 기준과 치료 적합성",
+      "readerConcerns": [
+        "건강보험·자동차보험 적용 여부",
+        "본인부담과 이용 횟수"
+      ],
+      "orderedContentAtoms": [
+        {
+          "id": "INFO05-A1",
+          "role": "current-insurance-rule",
+          "observables": ["발행 시점의 공식 보험 기준", "현재 횟수와 본인부담금"],
+          "meaning": ["시점별 변동 가능", "발행 직전 공식 기준 확인"]
+        },
+        {
+          "id": "INFO05-A2",
+          "role": "clinical-fit",
+          "observables": ["근골격계 진단", "통증이 생기는 동작"],
+          "meaning": ["추나요법 적용 여부 우선 판단"]
+        },
+        {
+          "id": "INFO05-A3",
+          "role": "value-beyond-price",
+          "observables": ["통증 위치", "움직이는 범위"],
+          "meaning": ["가격보다 현재 상태와 치료 적합성 우선"]
+        },
+        {
+          "id": "INFO05-A4",
+          "role": "other-care-first",
+          "observables": ["추나보다 먼저 필요한 검사나 치료"],
+          "meaning": ["비적합 상태 구분"]
+        }
+      ],
+      "orderedGeneralInformation": [
+        "보험 적용 여부와 횟수·본인부담금은 시점에 따라 달라질 수 있어 발행 직전 공식 기준을 확인한다.",
+        "근골격계 상태와 진단에 따라 추나요법의 적용 여부를 먼저 판단한다.",
+        "가격만 보지 않고 현재 통증과 움직임에 추나요법이 맞는지 확인한다.",
+        "다른 치료나 검사가 먼저인 상태도 구분한다."
+      ],
+      "blockedFromSource": [
+        "원문에 적힌 횟수·금액을 현재값으로 복사",
+        "소화불량·이명 등 비근골격 증상에 효과적이라는 단정",
+        "자동차보험 무부담 단정"
+      ]
+    },
+    "INFO06": {
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224205420099",
+      "topic": "무릎 통증을 아픈 부위만 보지 않는 회복 원칙",
+      "readerConcerns": [
+        "계단을 내려갈 때 반복되는 통증",
+        "검사상 큰 이상이 없는데 계속 아픈 이유"
+      ],
+      "orderedContentAtoms": [
+        {
+          "id": "INFO06-A1",
+          "role": "walking-observation",
+          "observables": ["걸을 때 한쪽으로 체중이 쏠림", "계단을 내려갈 때 무릎 통증"],
+          "meaning": ["걷는 모습과 체중 방향 확인"]
+        },
+        {
+          "id": "INFO06-A2",
+          "role": "connected-joints",
+          "observables": ["발·발목", "무릎", "골반", "주변 근육"],
+          "meaning": ["아픈 무릎만 보지 않음", "연결된 움직임 함께 평가"]
+        },
+        {
+          "id": "INFO06-A3",
+          "role": "imaging-limit",
+          "observables": ["영상검사상 큰 이상 없음", "걸을 때 남는 통증"],
+          "meaning": ["영상과 동작 통증의 차이"]
+        },
+        {
+          "id": "INFO06-A4",
+          "role": "real-life-response",
+          "observables": ["치료 뒤 걷기", "계단 오르내리기", "일상 동작"],
+          "meaning": ["실제 동작이 편해졌는지 재평가"]
+        }
+      ],
+      "orderedGeneralInformation": [
+        "걷는 모습과 체중이 실리는 방향을 확인한다.",
+        "발·발목·무릎·골반과 주변 근육의 연결을 함께 본다.",
+        "영상검사에서 큰 이상이 없어도 움직임에 따른 통증은 남을 수 있다.",
+        "치료 뒤 보행과 일상 동작이 실제로 달라졌는지 다시 확인한다."
+      ],
+      "blockedFromSource": [
+        "보이지 않는 에너지 불균형 진단 주장",
+        "특정 통합치료가 재발을 막는다는 단정",
+        "타지역 소개·소개율"
+      ]
+    },
+    "INFO07": {
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224134818728",
+      "topic": "오십견에서 통증과 관절 움직임을 함께 관리하는 순서",
+      "readerConcerns": [
+        "옷 입기·머리 감기처럼 팔을 올리는 동작의 어려움",
+        "물리치료를 받아도 변화가 더딘 이유"
+      ],
+      "orderedContentAtoms": [
+        {
+          "id": "INFO07-A1",
+          "role": "pain-and-range",
+          "observables": ["옷 입을 때 팔이 안 올라감", "머리 감을 때 어깨 통증", "팔이 올라가는 범위"],
+          "meaning": ["통증과 관절 움직임 함께 평가"]
+        },
+        {
+          "id": "INFO07-A2",
+          "role": "movement-extremes",
+          "observables": ["아프다고 팔을 전혀 안 움직임", "통증을 참고 무리하게 스트레칭"],
+          "meaning": ["두 극단 모두 피함"]
+        },
+        {
+          "id": "INFO07-A3",
+          "role": "sequence-by-state",
+          "observables": ["통증 강도", "염증 상태", "어깨 주변 구조"],
+          "meaning": ["운동과 치료 순서 결정"]
+        },
+        {
+          "id": "INFO07-A4",
+          "role": "different-source",
+          "observables": ["다른 어깨 질환", "목에서 팔로 내려오는 증상"],
+          "meaning": ["오십견과 다른 원인 구분"]
+        }
+      ],
+      "orderedGeneralInformation": [
+        "오십견은 통증뿐 아니라 관절 가동범위 제한을 함께 본다.",
+        "아프다고 전혀 움직이지 않거나 반대로 무리하게 스트레칭하는 두 극단을 피한다.",
+        "통증·염증 상태와 어깨 주변 구조를 확인해 운동과 치료 순서를 정한다.",
+        "다른 어깨 질환이나 목에서 내려오는 증상과의 구분이 필요할 수 있다."
+      ],
+      "blockedFromSource": [
+        "한 번의 시술로 즉각 개선",
+        "약침이 재발을 막는다는 단정",
+        "오십견은 저절로 낫지 않는다는 절대 표현"
+      ]
+    },
+    "INFO08": {
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224307070715",
+      "topic": "여름철 보약을 생각할 수 있는 두 시기와 몸 상태",
+      "readerConcerns": [
+        "더위 전에 미리 먹어야 하는지",
+        "기력이 떨어진 뒤 먹어도 되는지"
+      ],
+      "orderedContentAtoms": [
+        {
+          "id": "INFO08-A1",
+          "role": "before-summer-state",
+          "observables": ["더위 전에 쉽게 지침", "소화", "수면", "평소 체력"],
+          "meaning": ["복용 시기보다 현재 몸 상태 확인"]
+        },
+        {
+          "id": "INFO08-A2",
+          "role": "after-heat-state",
+          "observables": ["한여름 뒤 기력 저하", "땀", "식욕", "잠과 회복"],
+          "meaning": ["더위 뒤 달라진 상태 함께 평가"]
+        },
+        {
+          "id": "INFO08-A3",
+          "role": "prescription-basis",
+          "observables": ["현재 소화·수면·체력"],
+          "meaning": ["달력보다 현재 몸 상태가 처방 기준"]
+        },
+        {
+          "id": "INFO08-A4",
+          "role": "no-universal-month",
+          "observables": ["사람마다 다른 더위 반응"],
+          "meaning": ["모든 사람에게 같은 달 권유 금지"]
+        }
+      ],
+      "orderedGeneralInformation": [
+        "더위 전에 쉽게 지치는 사람은 소화·수면·평소 체력을 먼저 본다.",
+        "한여름 이후 기력이 떨어진 사람은 땀·식욕·수면·회복 상태를 함께 본다.",
+        "같은 보약이라도 시작 시점보다 현재 몸 상태가 처방을 결정한다.",
+        "특정 달을 모든 사람에게 같은 복용 시기로 권하지 않는다."
+      ],
+      "blockedFromSource": [
+        "6월 중순·7월 하순을 보편적 정답으로 고정",
+        "복용 후 2~3주 효과 단정",
+        "체질별 약재를 원문 그대로 처방"
+      ]
+    },
+    "INFO09": {
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224314708696",
+      "topic": "위고비·마운자로 중단 뒤 체중을 유지할 때 살필 점",
+      "readerConcerns": [
+        "중단 뒤 식욕과 체중이 다시 늘 수 있는지",
+        "주사 없이 체중을 유지하려면 무엇을 해야 하는지"
+      ],
+      "orderedContentAtoms": [
+        {
+          "id": "INFO09-A1",
+          "role": "stopping-plan",
+          "observables": ["중단 뒤 식욕 증가", "체중 변화"],
+          "meaning": ["처방 의료진과 전환 계획 상의", "임의 중단 금지"]
+        },
+        {
+          "id": "INFO09-A2",
+          "role": "habits-left-behind",
+          "observables": ["주사 사용 중 식사량만 줄임", "이전 생활 습관 유지"],
+          "meaning": ["약 중단 전 유지 습관 준비"]
+        },
+        {
+          "id": "INFO09-A3",
+          "role": "maintenance-routine",
+          "observables": ["식사", "근력운동", "수면", "체중 기록"],
+          "meaning": ["지속 가능한 유지 방식 구성"]
+        },
+        {
+          "id": "INFO09-A4",
+          "role": "replacement-boundary",
+          "observables": ["한방 식욕억제제로 임의 대체"],
+          "meaning": ["임의 대체 권유 금지"]
+        }
+      ],
+      "orderedGeneralInformation": [
+        "중단 뒤 식욕과 체중 변화가 생길 수 있어 처방 의료진과 전환 계획을 상의한다.",
+        "주사를 사용하는 동안 식사량만 줄인 경우 생활 습관이 그대로 남아 있을 수 있다.",
+        "식사·근력운동·수면·체중 기록을 함께 보며 유지 가능한 방식을 만든다.",
+        "임의로 중단하거나 한방 식욕억제제로 대체한다고 쓰지 않는다."
+      ],
+      "blockedFromSource": [
+        "중단하면 높은 확률로 요요가 온다는 수치 단정",
+        "한방 식욕억제환 권유",
+        "감량·혈당·콜레스테롤 성과 사례"
+      ]
+    },
+    "INFO10": {
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224287906098",
+      "topic": "갱년기 증상이 오래갈 때 원인과 치료 선택을 보는 순서",
+      "readerConcerns": [
+        "안면홍조 때문에 일상이 불편한 상황",
+        "불면·피로·우울감이 함께 이어지는 상황"
+      ],
+      "orderedContentAtoms": [
+        {
+          "id": "INFO10-A1",
+          "role": "symptom-range",
+          "observables": ["얼굴 화끈거림", "잠들기 어려움", "피로", "기분 저하"],
+          "meaning": ["호르몬 변화와 여러 신체·수면·기분 증상"]
+        },
+        {
+          "id": "INFO10-A2",
+          "role": "current-state",
+          "observables": ["증상 강도와 기간", "현재 복용약", "기존 건강 상태"],
+          "meaning": ["치료 선택 전 우선 확인"]
+        },
+        {
+          "id": "INFO10-A3",
+          "role": "single-solution-limit",
+          "observables": ["한 가지 건강기능식품", "한 가지 치료"],
+          "meaning": ["모든 증상을 하나로 설명 금지"]
+        },
+        {
+          "id": "INFO10-A4",
+          "role": "clinic-fact-boundary",
+          "observables": ["태반약침 등 특정 치료"],
+          "meaning": ["금손 실제 시행 확인 시에만 언급", "미확인 시 일반 선택 기준으로 전환"]
+        }
+      ],
+      "orderedGeneralInformation": [
+        "갱년기에는 호르몬 변화와 함께 여러 신체·수면·기분 증상이 나타날 수 있다.",
+        "증상 강도와 기간, 현재 복용 중인 약과 건강 상태를 먼저 확인한다.",
+        "한 가지 건강기능식품이나 치료만으로 모든 증상을 설명하지 않는다.",
+        "태반약침 등 특정 치료는 금손에서 실제 시행이 확인된 경우에만 다루고, 아니라면 일반적인 선택 기준으로 바꾼다."
+      ],
+      "blockedFromSource": [
+        "태반약침 횟수·효과 시점",
+        "세포 재생·호르몬 촉진 단정",
+        "위석부부한의원 통합치료 구성"
+      ]
+    },
+    "INFO11": {
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224221217878",
+      "topic": "트라우마 뒤 몸과 마음의 반응을 함께 보는 회복 원칙",
+      "readerConcerns": [
+        "과거 경험을 평생 안고 살아야 하는지",
+        "약을 먹어도 계속 힘든 경우 무엇을 더 볼지"
+      ],
+      "orderedContentAtoms": [
+        {
+          "id": "INFO11-A1",
+          "role": "mind-and-body-reactions",
+          "observables": ["몸이 긴장함", "잠을 설침", "숨이 가빠짐", "통증"],
+          "meaning": ["기억과 몸의 반응이 함께 나타날 수 있음"]
+        },
+        {
+          "id": "INFO11-A2",
+          "role": "whole-state-evaluation",
+          "observables": ["감정", "수면", "호흡", "통증"],
+          "meaning": ["몸과 마음을 나누지 않고 함께 평가"]
+        },
+        {
+          "id": "INFO11-A3",
+          "role": "safe-pace",
+          "observables": ["과거 경험을 말하기 어려움"],
+          "meaning": ["무리한 발화 요구 금지", "안전한 속도"]
+        },
+        {
+          "id": "INFO11-A4",
+          "role": "psychiatric-boundary",
+          "observables": ["심한 불안", "자해 위험", "출근·식사·수면이 어려움"],
+          "meaning": ["정신건강의학과 평가 우선"]
+        }
+      ],
+      "orderedGeneralInformation": [
+        "트라우마 뒤에는 기억뿐 아니라 긴장·수면·호흡·통증 같은 신체 반응이 함께 나타날 수 있다.",
+        "몸의 반응과 감정·수면 상태를 나누지 않고 함께 평가한다.",
+        "과거 경험을 무리하게 말하게 하지 않고 안전한 속도로 접근한다.",
+        "심한 불안·자해 위험·일상 기능 저하가 있으면 정신건강의학과 평가가 우선이다."
+      ],
+      "blockedFromSource": [
+        "EFT를 금손의 치료로 소개",
+        "몇 회 만에 약 중단·50% 개선",
+        "트라우마를 지운다는 표현"
+      ]
+    },
+    "INFO12": {
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224212833691",
+      "topic": "갱년기 여성의 체중 관리가 달라져야 하는 이유와 조건",
+      "readerConcerns": [
+        "운동과 식사 조절에도 체중이 변하지 않는 상황",
+        "예전 방식이 더는 통하지 않는 이유"
+      ],
+      "orderedContentAtoms": [
+        {
+          "id": "INFO12-A1",
+          "role": "changed-conditions",
+          "observables": ["호르몬 변화", "근육량 감소", "잠이 달라짐", "활동량 감소"],
+          "meaning": ["체중 관리에 여러 변화 동시 영향"]
+        },
+        {
+          "id": "INFO12-A2",
+          "role": "personal-baseline",
+          "observables": ["현재 건강 상태", "평소 식사 패턴"],
+          "meaning": ["관리 계획 전 우선 확인"]
+        },
+        {
+          "id": "INFO12-A3",
+          "role": "goal-setting",
+          "observables": ["외모 목표", "건강과 일상 유지"],
+          "meaning": ["지속 가능한 건강 목표"]
+        },
+        {
+          "id": "INFO12-A4",
+          "role": "exercise-balance",
+          "observables": ["유산소 운동만 반복", "근력운동", "운동 뒤 회복"],
+          "meaning": ["근력과 회복 함께 계획"]
+        }
+      ],
+      "orderedGeneralInformation": [
+        "갱년기에는 호르몬·근육량·수면·활동량 변화가 체중 관리에 함께 영향을 줄 수 있다.",
+        "개인의 건강 상태와 식사 패턴을 먼저 확인한다.",
+        "겉모습만이 아니라 건강을 위한 지속 가능한 목표를 세운다.",
+        "유산소 운동만 고집하지 않고 근력운동과 회복을 함께 계획한다."
+      ],
+      "blockedFromSource": [
+        "기초대사율 15~20% 감소 수치",
+        "체질별 처방과 성공률 2배",
+        "3개월 5~7kg·갱년기 증상 개선 보장"
+      ]
+    }
+  }
+}

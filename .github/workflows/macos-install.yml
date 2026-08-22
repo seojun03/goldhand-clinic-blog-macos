@@ -1,0 +1,130 @@
+name: macOS installer
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: macos-14
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m pip install --disable-pip-version-check --requirement requirements-macos.txt
+      - run: python3 scripts/validate_distribution.py
+      - name: Run the complete plugin content suite
+        run: python3 -m unittest discover -s plugins/goldhand-clinic-blog/skills/goldhand-clinic-blog/tests -v
+      - name: Prove Windows artifacts are absent from the macOS root
+        run: |
+          test ! -e INSTALL-WINDOWS.cmd
+          test ! -e SETUP-IMAGES-WINDOWS.cmd
+          test ! -e install-from-download-windows.ps1
+          test ! -e requirements-windows.txt
+
+  macos-install:
+    runs-on: macos-14
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install the official Codex command
+        run: |
+          curl -fsSL https://chatgpt.com/codex/install.sh -o "$RUNNER_TEMP/codex-install.sh"
+          bash "$RUNNER_TEMP/codex-install.sh"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "GOLDHANDBLOG_CODEX_PATH=$HOME/.local/bin/codex" >> "$GITHUB_ENV"
+          "$HOME/.local/bin/codex" plugin --help >/dev/null
+      - name: Build a complete local macOS release archive
+        run: |
+          parent="$(dirname "$GITHUB_WORKSPACE")"
+          ditto -c -k --keepParent "$GITHUB_WORKSPACE" "$RUNNER_TEMP/goldhand-clinic-blog-macos.zip"
+          unzip -t "$RUNNER_TEMP/goldhand-clinic-blog-macos.zip" >/dev/null
+      - name: Install when only the Mac installer is present
+        env:
+          CODEX_HOME: ${{ runner.temp }}/codex-home-isolated
+          GOLDHANDBLOG_MAC_EDITABLE_ROOT: ${{ runner.temp }}/GoldhandBlogMac-isolated
+          GOLDHANDBLOG_MAC_SOURCE_ARCHIVE: ${{ runner.temp }}/goldhand-clinic-blog-macos.zip
+          GOLDHANDBLOG_RELEASE_TAG: ci-initial
+          GOLDHANDBLOG_SKIP_AUTO_UPDATE_REGISTRATION: "1"
+          GOLDHANDBLOG_SKIP_IMAGE_HOST_SETUP: "1"
+          GOLDHANDBLOG_SKIP_DESKTOP_SHORTCUT: "1"
+          GOLDHANDBLOG_SKIP_PAUSE: "1"
+        run: |
+          mkdir -p "$RUNNER_TEMP/isolated-mac-installer"
+          cp INSTALL-MAC.command "$RUNNER_TEMP/isolated-mac-installer/INSTALL-MAC.command"
+          chmod +x "$RUNNER_TEMP/isolated-mac-installer/INSTALL-MAC.command"
+          "$RUNNER_TEMP/isolated-mac-installer/INSTALL-MAC.command"
+          python3 "$GOLDHANDBLOG_MAC_EDITABLE_ROOT/scripts/validate_distribution.py"
+          test "$(cat "$GOLDHANDBLOG_MAC_EDITABLE_ROOT/.goldhand-clinic-blog-macos-managed-release")" = "ci-initial"
+          test -x "$CODEX_HOME/state/goldhand-clinic-blog/bin/python3"
+          test -x "$CODEX_HOME/state/goldhand-clinic-blog/bin/vercel"
+          "$CODEX_HOME/state/goldhand-clinic-blog/bin/vercel" --version >/dev/null
+          "$GOLDHANDBLOG_CODEX_PATH" plugin list --json > "$RUNNER_TEMP/isolated-plugin-list.json"
+          python3 - <<'PY'
+          import json, os
+          data=json.load(open(os.environ['RUNNER_TEMP'] + '/isolated-plugin-list.json'))
+          found=[x for x in data['installed'] if x['pluginId']=='goldhand-clinic-blog@goldhand-clinic-macos']
+          assert len(found)==1 and found[0]['enabled']
+          assert found[0]['marketplaceSource']['sourceType']=='local'
+          PY
+      - name: Replace the managed Mac install through the updater
+        env:
+          CODEX_HOME: ${{ runner.temp }}/codex-home-isolated
+          GOLDHANDBLOG_MAC_EDITABLE_ROOT: ${{ runner.temp }}/GoldhandBlogMac-isolated
+          GOLDHANDBLOG_MAC_UPDATE_ARCHIVE: ${{ runner.temp }}/goldhand-clinic-blog-macos.zip
+          GOLDHANDBLOG_MAC_UPDATE_TAG: ci-update
+          GOLDHANDBLOG_FORCE_UPDATE: "1"
+        run: |
+          touch "$GOLDHANDBLOG_MAC_EDITABLE_ROOT/stale-file-that-must-disappear"
+          bash scripts/update-macos.sh --codex "$GOLDHANDBLOG_CODEX_PATH" --root "$GOLDHANDBLOG_MAC_EDITABLE_ROOT"
+          test ! -e "$GOLDHANDBLOG_MAC_EDITABLE_ROOT/stale-file-that-must-disappear"
+          test "$(cat "$GOLDHANDBLOG_MAC_EDITABLE_ROOT/.goldhand-clinic-blog-macos-managed-release")" = "ci-update"
+      - name: Prove the distributable Mac installer ZIP preserves execution permission
+        run: |
+          package="$RUNNER_TEMP/Goldhand-Clinic-Blog-Mac-Installer"
+          mkdir -p "$package"
+          cp INSTALL-MAC.command "$package/INSTALL-MAC.command"
+          chmod +x "$package/INSTALL-MAC.command"
+          ditto -c -k --keepParent "$package" "$RUNNER_TEMP/Goldhand-Clinic-Blog-Mac-Installer.zip"
+          extract="$RUNNER_TEMP/mac-installer-extracted"
+          mkdir -p "$extract"
+          ditto -x -k "$RUNNER_TEMP/Goldhand-Clinic-Blog-Mac-Installer.zip" "$extract"
+          test -x "$extract/Goldhand-Clinic-Blog-Mac-Installer/INSTALL-MAC.command"
+      - name: Install through the published public Mac-only route when this release is current
+        env:
+          CODEX_HOME: ${{ runner.temp }}/codex-home-public
+          GOLDHANDBLOG_MAC_EDITABLE_ROOT: ${{ runner.temp }}/GoldhandBlogMac-public
+          GOLDHANDBLOG_SKIP_AUTO_UPDATE_REGISTRATION: "1"
+          GOLDHANDBLOG_SKIP_IMAGE_HOST_SETUP: "1"
+          GOLDHANDBLOG_SKIP_DESKTOP_SHORTCUT: "1"
+          GOLDHANDBLOG_SKIP_PAUSE: "1"
+        run: |
+          version="$(python3 -c 'import json; print(json.load(open("plugins/goldhand-clinic-blog/.codex-plugin/plugin.json"))["version"])')"
+          expected="v${version/+/-}"
+          latest="$(python3 -c 'import json,urllib.request; print(json.load(urllib.request.urlopen(urllib.request.Request("https://api.github.com/repos/seojun03/goldhand-clinic-blog-macos/releases/latest",headers={"User-Agent":"goldhand-macos-ci"})))["tag_name"])' 2>/dev/null || true)"
+          if [ "$latest" != "$expected" ]; then
+            echo "Public release is not current yet; publish $expected and dispatch this workflow again."
+            exit 0
+          fi
+          curl -fL --retry 3 -o "$RUNNER_TEMP/Goldhand-Clinic-Blog-Mac-Installer.zip" https://github.com/seojun03/goldhand-clinic-blog-macos/releases/latest/download/Goldhand-Clinic-Blog-Mac-Installer.zip
+          mkdir -p "$RUNNER_TEMP/public-mac-installer"
+          ditto -x -k "$RUNNER_TEMP/Goldhand-Clinic-Blog-Mac-Installer.zip" "$RUNNER_TEMP/public-mac-installer"
+          public_installer="$(find "$RUNNER_TEMP/public-mac-installer" -type f -name INSTALL-MAC.command -print -quit)"
+          test -x "$public_installer"
+          "$public_installer"
+          python3 "$GOLDHANDBLOG_MAC_EDITABLE_ROOT/scripts/validate_distribution.py"

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">금손한의원</title>
+  <desc id="desc">크림 배경 위 골드 손과 잎을 형상화한 금손한의원 표식</desc>
+  <rect width="512" height="512" rx="112" fill="#FBF8F4"/>
+  <circle cx="256" cy="256" r="176" fill="#4D4D4D"/>
+  <path d="M161 283c0-25 20-45 45-45h12v-83c0-14 11-25 25-25s25 11 25 25v66-86c0-14 11-25 25-25s25 11 25 25v91-70c0-14 11-25 25-25s25 11 25 25v107c0 73-49 125-119 125h-7c-63 0-111-42-111-105z" fill="#C99F75"/>
+  <path d="M354 170c-39 4-68 29-75 68 37-5 64-30 75-68z" fill="#FBF8F4"/>
+  <path d="M278 239c24-14 45-33 63-58" fill="none" stroke="#4D4D4D" stroke-width="10" stroke-linecap="round"/>
+</svg>

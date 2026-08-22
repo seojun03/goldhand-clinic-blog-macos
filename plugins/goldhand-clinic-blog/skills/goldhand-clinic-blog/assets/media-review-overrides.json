@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-08-22",
+  "policy": "자동 글 사진은 식별 가능한 환자 얼굴·차트·연락처가 없고 원장이 환자를 치료·진찰·상담·검사하는 장면으로 시각 검수된 자산만 승인한다. 로고·간판·건물·제품·약·환제·탕약·장비·빈 공간은 자동 사용하지 않는다.",
+  "approved": {
+    "224345090374:2": {
+      "scene": "박준희 원장이 의료봉사 현장에서 아이의 상태를 살피는 장면",
+      "sceneType": "director-patient-treatment",
+      "personInteraction": true,
+      "directorVisible": true,
+      "trustPriority": 100,
+      "safetyApproved": true,
+      "safetyNote": "아이와 관계자 얼굴이 장식으로 가려져 식별되지 않음",
+      "duplicateGroup": ""
+    },
+    "224345090374:3": {
+      "scene": "박준희 원장이 아이와 마주 앉아 문진·상담하는 장면",
+      "sceneType": "director-patient-consultation",
+      "personInteraction": true,
+      "directorVisible": true,
+      "trustPriority": 100,
+      "safetyApproved": true,
+      "safetyNote": "아이 얼굴이 장식으로 가려져 식별되지 않음",
+      "duplicateGroup": ""
+    },
+    "224345065147:1": {
+      "scene": "박준희 원장이 환자 다리에 침 치료하는 장면",
+      "sceneType": "director-patient-treatment",
+      "personInteraction": true,
+      "directorVisible": true,
+      "trustPriority": 110,
+      "safetyApproved": true,
+      "safetyNote": "환자 얼굴과 식별정보가 보이지 않음",
+      "duplicateGroup": ""
+    },
+    "224345065147:2": {
+      "scene": "박준희 원장이 환자 복부에 침 치료하는 장면",
+      "sceneType": "director-patient-treatment",
+      "personInteraction": true,
+      "directorVisible": true,
+      "trustPriority": 110,
+      "safetyApproved": true,
+      "safetyNote": "환자 얼굴이 장식으로 가려져 식별되지 않음",
+      "duplicateGroup": ""
+    },
+    "224342597447:1": {
+      "scene": "박준희 원장이 환자와 보호자에게 방문진료 내용을 설명하는 장면",
+      "sceneType": "director-patient-consultation",
+      "personInteraction": true,
+      "directorVisible": true,
+      "trustPriority": 105,
+      "safetyApproved": true,
+      "safetyNote": "환자 얼굴이 장식으로 가려지고 보호자는 뒷모습만 보임",
+      "duplicateGroup": ""
+    },
+    "224342597447:3": {
+      "scene": "박준희 원장이 누워 있는 환자의 다리 상태를 진찰하는 장면",
+      "sceneType": "director-patient-examination",
+      "personInteraction": true,
+      "directorVisible": true,
+      "trustPriority": 108,
+      "safetyApproved": true,
+      "safetyNote": "환자 얼굴과 차트가 보이지 않음",
+      "duplicateGroup": ""
+    }
+  },
+  "denied": {
+    "224379815063:1": {"reason": "자동 글 사진은 원장 치료·진찰·상담 장면만 허용"},
+    "224379815063:3": {"reason": "약·장비 단독 사진 자동 사용 금지"},
+    "224379815063:5": {"reason": "제품 단독 사진 자동 사용 금지"},
+    "224379815063:6": {"reason": "건물 단독 사진 자동 사용 금지"},
+    "224376660990:1": {"reason": "건물 단독 사진 자동 사용 금지"},
+    "224179867672:1": {"reason": "제품 단독 사진 자동 사용 금지"},
+    "224179867672:2": {"reason": "제품 단독 사진 자동 사용 금지"},
+    "224179738511:1": {"reason": "제품 단독 사진 자동 사용 금지"},
+    "223950001905:1": {"reason": "금손한의원 로고 자동 사용 절대 금지"},
+    "223428011694:1": {"reason": "약 단독 사진 자동 사용 금지"},
+    "223428011694:2": {"reason": "약 단독 사진 자동 사용 금지"}
+  }
+}

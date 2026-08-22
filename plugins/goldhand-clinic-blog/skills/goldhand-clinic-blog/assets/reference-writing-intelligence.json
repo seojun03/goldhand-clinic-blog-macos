@@ -1,0 +1,556 @@
+{
+  "schemaVersion": 1,
+  "id": "goldhand-reference-writing-intelligence-v1",
+  "learningMode": "curated-portable-editorial-reasoning",
+  "modelTrainingClaim": false,
+  "sourceBlogId": "wi-parkclinic",
+  "allowedMasterIds": [
+    "INFO03",
+    "INFO01",
+    "INFO09",
+    "INFO08",
+    "INFO04",
+    "INFO10",
+    "INFO05",
+    "INFO11",
+    "INFO12",
+    "INFO06",
+    "INFO07"
+  ],
+  "globalDecisionContract": {
+    "analysisBeforeDraft": true,
+    "principleNotPhrase": "레퍼런스의 표면 문구를 규칙으로 복사하지 말고, 그 문구가 독자의 주의·불안·신뢰·이해에 어떤 작용을 하는지 먼저 추론한다.",
+    "oneReferenceOneReadingExperience": "한 글에서는 한 레퍼런스의 제목 장치, 도입 심리, 정보 공개 순서, 전환 방식, 마무리 감정을 하나의 읽기 경험으로 유지한다.",
+    "goldhandAdaptation": "레퍼런스의 업체 사실 슬롯은 확인된 금손한의원 사실로 바꾸거나 생략한다. 일반 건강 정보는 검토된 내용 원자와 필요한 권위 자료로 다시 쓴다.",
+    "goldhandVoiceRole": "금손 공식 말투는 레퍼런스의 설득 장치와 흐름을 지우는 대체 템플릿이 아니라, 최종 문장을 박준희 원장이 실제 진료실에서 말할 법한 생활어로 자연화하는 기준이다.",
+    "decisionRecordFields": [
+      "reader-state",
+      "title-device-and-why",
+      "opening-device-and-why",
+      "chosen-effort-or-attention-device",
+      "topic-specific-payoff",
+      "flow-beat-mapping",
+      "source-fact-slot-to-goldhand-fact-or-omit",
+      "closing-emotion-and-recap",
+      "copy-distance-check"
+    ],
+    "sourceSentenceImitationBlocked": true,
+    "sourceFactReplacementRequired": true,
+    "maximumConsecutiveSourceWords": 6
+  },
+  "approvedLessons": [
+    {
+      "id": "specific-number-low-friction-topic-payoff",
+      "status": "user-approved",
+      "observedIn": ["INFO06", "INFO08"],
+      "psychologyChain": [
+        "구체적인 숫자가 읽는 데 드는 비용을 직관적으로 만든다",
+        "2분이나 3분처럼 짧은 시간은 부담을 낮춘다",
+        "낮아진 부담이 첫 문단 이탈을 줄인다",
+        "바로 뒤의 주제별 보상이 읽을 이유를 만든다"
+      ],
+      "transferRule": "분 단위 숫자는 글마다 자동 삽입하지 않는다. 짧은 시간 안에 실제로 줄 수 있는 주제별 답이 있을 때만 1~5분 범위에서 글의 밀도에 맞춰 선택한다.",
+      "requiredPayoff": "통증에서 먼저 볼 움직임, 응급 평가가 먼저인 신호, 복용 시기를 나눌 몸 상태처럼 그 글에서만 성립하는 구체적인 보상",
+      "failureModes": [
+        "모든 글에 같은 3분 문장 사용",
+        "읽어보라는 말 뒤에 구체적인 보상이 없음",
+        "본문 분량과 맞지 않는 임의의 시간",
+        "레퍼런스 문장을 그대로 복사"
+      ]
+    },
+    {
+      "id": "authority-is-an-evidence-slot-not-a-copy-slot",
+      "status": "user-approved",
+      "observedIn": ["INFO03", "INFO05", "INFO06", "INFO07", "INFO08", "INFO09", "INFO12"],
+      "psychologyChain": [
+        "독자가 답을 믿어도 되는지 빠르게 판단한다",
+        "구체적인 경력이나 경험 표시는 불확실성을 낮춘다",
+        "제목의 답과 관련 있는 권위일 때만 설득력이 생긴다"
+      ],
+      "transferRule": "위석의 경력·환자 수·인원은 버린다. 주제와 관련 있고 clinic-facts.md에 있는 금손 사실만 같은 신뢰 기능에 배치한다. 맞는 사실이 없으면 숫자를 꾸미지 말고 구체적인 진찰·설명 방식으로 신뢰를 만든다."
+    },
+    {
+      "id": "reader-question-as-self-identification",
+      "status": "user-approved",
+      "observedIn": ["INFO01", "INFO03", "INFO04", "INFO05", "INFO06", "INFO07", "INFO08", "INFO09", "INFO10", "INFO11", "INFO12"],
+      "psychologyChain": [
+        "독자가 실제 생활에서 겪는 장면을 먼저 본다",
+        "내 이야기라는 느낌이 생긴다",
+        "두 질문이 서로 다른 불안이나 판단 축을 열어 본문의 필요성을 만든다"
+      ],
+      "transferRule": "질문 수를 채우지 말고 현재 불편과 다음 판단을 나누는 서로 다른 고민만 쓴다."
+    },
+    {
+      "id": "topic-specific-recap-trust-emotion",
+      "status": "user-approved",
+      "observedIn": ["INFO01", "INFO03", "INFO06", "INFO07", "INFO11", "INFO12"],
+      "psychologyChain": [
+        "본문의 답을 실제 명사로 다시 묶어 기억을 돕는다",
+        "확인된 금손 경험이나 진료 태도로 신뢰를 회수한다",
+        "안도·희망·감사 가운데 주제에 맞는 감정 하나로 글을 닫는다"
+      ],
+      "transferRule": "모든 글을 같은 중립 문장으로 끝내지 않는다. 본문의 직접 답, 독자가 느껴야 할 감정, 원장의 마지막 태도를 선택한 레퍼런스에 맞춰 결정한다."
+    },
+    {
+      "id": "observable-spoken-korean",
+      "status": "user-approved",
+      "observedIn": ["INFO01", "INFO06", "INFO07", "INFO08", "INFO10", "INFO12"],
+      "psychologyChain": [
+        "몸의 동작과 생활 장면이 보이면 이해가 빨라진다",
+        "추상 명사보다 자기 증상과 연결하기 쉽다",
+        "진료실에서 듣는 설명처럼 느껴져 신뢰가 높아진다"
+      ],
+      "transferRule": "걸을 때 남는 통증 같은 압축 표현을 그대로 두지 말고, 계단을 내려갈 때 무릎 앞쪽이 다시 아프다처럼 누가·언제·무엇을 할 때·어디가 어떻게 불편한지 보이게 쓴다."
+    }
+  ],
+  "profiles": {
+    "INFO03": {
+      "sourceTitle": "전남광주 광산구 구안와사, 25년 경력 한의사가 답하는 질문 2가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224337414108",
+      "readerState": "갑자기 얼굴 한쪽이 달라져 당황했고 지금 무엇부터 해야 하는지 급하게 알고 싶은 상태",
+      "titleMechanism": {
+        "primaryId": "verified-authority-plus-two-urgent-answers",
+        "allowedIds": ["verified-authority-plus-two-urgent-answers", "urgent-questions-with-direct-answer"],
+        "readerPsychology": "답변자의 신뢰 근거와 해결할 질문 수를 동시에 보여 주어 긴급한 검색의 불확실성을 낮춘다.",
+        "goldhandAdaptation": "위석 경력은 버리고 확인된 금손 경력 사실이 주제와 맞을 때만 사용한다. 그렇지 않으면 응급 신호와 초기 판단이라는 직접 답을 앞세운다."
+      },
+      "openingMechanism": {
+        "primaryDeviceId": "urgent-decision-boundary-with-low-friction-payoff",
+        "allowedDeviceIds": ["urgent-decision-boundary-with-low-friction-payoff", "specific-number-low-friction-topic-payoff"],
+        "attentionLogic": "두 긴급 질문으로 독자의 현재 불안을 그대로 말한 뒤, 짧게 읽으면 진료 준비와 우선순서를 알 수 있다고 약속한다.",
+        "topicPayoff": "응급 평가가 먼저인 신호와 초기 진료에서 확인할 순서",
+        "whyItWorks": "위험을 과장하지 않으면서도 당장 필요한 행동을 예고해 검색을 멈추고 읽게 한다."
+      },
+      "flowBeats": [
+        {"id": "mirror-sudden-change", "purpose": "갑작스러운 얼굴 변화와 두려움을 구체적인 장면으로 확인한다.", "transition": "독자가 가장 먼저 묻는 안전 문제로 이동한다."},
+        {"id": "answer-emergency-first", "purpose": "팔·다리 힘 빠짐이나 말 어눌함처럼 다른 평가가 먼저인 경계를 결론부터 말한다.", "transition": "응급 경계에 해당하지 않을 때의 초기 평가로 좁힌다."},
+        {"id": "explain-early-evaluation", "purpose": "시작 시점과 변화 양상을 왜 빨리 확인하는지 설명한다.", "transition": "현재 받고 있는 치료와 병행 판단으로 이어 간다."},
+        {"id": "answer-treatment-choice", "purpose": "한방 치료만으로 단정하지 않고 현재 상태와 기존 치료를 함께 보는 이유를 설명한다.", "transition": "두 질문의 답을 실제 행동 순서로 회수한다."}
+      ],
+      "microExpressionPatterns": [
+        {"function": "긴급성 조절", "shape": "놀랄 만한 장면을 인정한 뒤, 공포 대신 먼저 볼 동반 신호를 짧게 제시", "adaptationRule": "위험을 키우는 표현 없이 금손의 안전 경계로 쓴다."},
+        {"function": "결론 우선", "shape": "질문 하나를 다시 짚고 첫 문장에서 직접 답한 다음 이유와 예외를 풀이", "adaptationRule": "한 문단을 읽어야 답이 나오는 지연형 서술을 피한다."},
+        {"function": "실용 보상", "shape": "짧게 읽으면 진료 전에 무엇을 확인할지 알게 된다는 약속", "adaptationRule": "추상적인 도움 대신 실제 준비 항목을 보상으로 쓴다."}
+      ],
+      "trustMechanism": {
+        "sourceFactSlots": ["25년 경력", "진료 경험"],
+        "goldhandRule": "clinic-facts.md의 관련 경력·진료 원칙만 사용하고, 초기 안전 경계를 분명히 말하는 태도로 신뢰를 보완한다.",
+        "omitWhenUnsupported": true
+      },
+      "closingMechanism": {
+        "primaryId": "two-answer-recap-and-calm-next-step",
+        "allowedIds": ["two-answer-recap-and-calm-next-step"],
+        "readerEmotion": "당황에서 차분한 다음 행동으로 이동",
+        "adaptationRule": "응급 경계와 초기 평가를 다시 묶고, 독자가 지금 할 수 있는 다음 행동을 과장 없이 건넨다."
+      }
+    },
+    "INFO01": {
+      "sourceTitle": "일자목 거북목, 추나요법 받아도 소용없는 직장인 특징 2가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224320052203",
+      "readerState": "치료를 받아도 다시 아파서 치료 자체가 소용없는지 의심하는 직장인",
+      "titleMechanism": {
+        "primaryId": "candid-limit-plus-two-self-check-traits",
+        "allowedIds": ["candid-limit-plus-two-self-check-traits", "treatment-doubt-with-candid-answer"],
+        "readerPsychology": "좋은 결과만 말하지 않고 효과가 더딘 사람을 먼저 언급해 광고 경계를 낮추고 자기 상태를 대조하게 한다.",
+        "goldhandAdaptation": "본문에서 실제로 서로 다른 조건을 설명할 때만 개수를 쓴다. 숫자가 흐름을 해치면 치료가 더딘 이유를 직접 묻는 제목을 쓴다."
+      },
+      "openingMechanism": {
+        "primaryDeviceId": "candid-limit-before-benefit",
+        "allowedDeviceIds": ["candid-limit-before-benefit", "specific-number-low-friction-topic-payoff"],
+        "attentionLogic": "치료 효과에 대한 두 의심을 먼저 보여 주고, 실제로 변화가 더딘 경우가 있음을 솔직히 인정한다.",
+        "topicPayoff": "치료를 계속해도 목이 다시 뻐근해지는 두 생활 조건",
+        "whyItWorks": "독자가 이미 품은 반론을 숨기지 않아 방어심을 낮추고, 나에게 해당하는지 확인하게 한다."
+      },
+      "flowBeats": [
+        {"id": "acknowledge-doubt", "purpose": "치료가 소용없는 것 같다는 경험을 부정하지 않는다.", "transition": "치료 반응을 어느 시점에 봤는지로 이동한다."},
+        {"id": "separate-response-times", "purpose": "치료 직후와 다음 날, 아침과 오후 반응을 나눠 본다.", "transition": "치료 뒤 다시 놓이는 직장 환경으로 이동한다."},
+        {"id": "show-daily-load", "purpose": "낮은 모니터와 스마트폰, 오래 앉는 자세가 같은 부위에 다시 부담을 주는 장면을 보여 준다.", "transition": "목뼈만이 아니라 실제 움직임을 확인하는 이유로 확장한다."},
+        {"id": "pair-treatment-and-life", "purpose": "치료와 모니터 높이·무리 없는 움직임을 함께 조정해야 하는 이유를 정리한다.", "transition": "두 조건을 구체적으로 회수한다."}
+      ],
+      "microExpressionPatterns": [
+        {"function": "광고 경계 해제", "shape": "효과를 먼저 자랑하지 않고 도움이 더딘 사람이 있다는 사실부터 인정", "adaptationRule": "치료 실패를 단정하지 말고 관찰 시점과 생활 조건을 바로 연결한다."},
+        {"function": "자기 장면 대입", "shape": "모니터 위치·스마트폰 각도·오후 목 상태를 연속으로 보여 줌", "adaptationRule": "직장인이 바로 떠올릴 수 있는 금손식 생활어로 쓴다."},
+        {"function": "이분법 해소", "shape": "치료 또는 생활관리 중 하나가 아니라 둘이 같은 목표를 맡는다고 회수", "adaptationRule": "치료명 나열 대신 각 역할을 한 문장씩 설명한다."}
+      ],
+      "trustMechanism": {
+        "sourceFactSlots": ["원장의 장기 진료 경험"],
+        "goldhandRule": "확인된 금손 사실이 관련될 때만 넣고, 솔직한 한계 설명과 재점검 원칙으로 신뢰를 만든다.",
+        "omitWhenUnsupported": true
+      },
+      "closingMechanism": {
+        "primaryId": "two-condition-recap-and-shared-role",
+        "allowedIds": ["two-condition-recap-and-shared-role"],
+        "readerEmotion": "치료가 헛수고라는 체념에서 조정할 지점이 있다는 현실감으로 이동",
+        "adaptationRule": "반응을 본 시점과 반복되는 업무 자세를 실제 명사로 다시 묶고 치료와 생활의 역할을 회수한다."
+      }
+    },
+    "INFO09": {
+      "sourceTitle": "위고비와 마운자로 이후, 25년 차 한의사가 말하는 주의사항 2가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224314708696",
+      "readerState": "주사를 중단하면 식욕과 체중이 다시 늘까 불안하고 유지 방법을 찾는 상태",
+      "titleMechanism": {
+        "primaryId": "after-treatment-anxiety-plus-cautions",
+        "allowedIds": ["after-treatment-anxiety-plus-cautions", "verified-authority-plus-maintenance-question"],
+        "readerPsychology": "치료 중이 아니라 중단 이후라는 다음 문제를 앞세워 현재 사용자가 놓치기 쉬운 위험을 선점한다.",
+        "goldhandAdaptation": "약물 중단을 지시하지 말고 처방 의료진과 상의해야 한다는 경계를 유지한다. 위석 경력은 쓰지 않는다."
+      },
+      "openingMechanism": {
+        "primaryDeviceId": "future-loss-anxiety-to-sustainable-payoff",
+        "allowedDeviceIds": ["future-loss-anxiety-to-sustainable-payoff", "specific-number-low-friction-topic-payoff"],
+        "attentionLogic": "다시 찔까 봐 두려운 미래를 구체화한 뒤, 주사 없이도 이어 갈 생활 구조를 이해하는 보상을 제시한다.",
+        "topicPayoff": "중단 전 준비할 유지 습관과 임의 대체를 피할 기준",
+        "whyItWorks": "독자가 가장 걱정하는 미래 손실을 먼저 다루고, 지속 가능성이라는 더 큰 목표를 제안한다."
+      },
+      "flowBeats": [
+        {"id": "name-rebound-anxiety", "purpose": "식욕과 체중이 다시 늘 수 있다는 걱정을 숨기지 않는다.", "transition": "중단 방식 자체의 안전 문제로 이동한다."},
+        {"id": "set-stopping-boundary", "purpose": "임의 중단 대신 처방 의료진과 전환 계획을 상의해야 함을 밝힌다.", "transition": "약을 쓰는 동안 남겨야 할 습관으로 이동한다."},
+        {"id": "build-maintenance-routine", "purpose": "식사·근력운동·수면을 유지 가능한 단위로 설명한다.", "transition": "다른 식욕억제 수단으로 단순 교체하려는 생각을 다룬다."},
+        {"id": "block-unsafe-replacement", "purpose": "한방 식욕억제제로 임의 대체하지 않는 경계를 말한다.", "transition": "지속 가능한 유지 원칙을 회수한다."}
+      ],
+      "microExpressionPatterns": [
+        {"function": "미래 불안 명명", "shape": "중단 뒤 식욕과 체중이 어떻게 될지 독자가 속으로 묻는 문장", "adaptationRule": "공포를 키우지 말고 전환 계획이라는 답으로 바로 잇는다."},
+        {"function": "목표 재정의", "shape": "단기 감량보다 지속 가능한 유지라는 상위 목표 제시", "adaptationRule": "추상 슬로건으로 끝내지 말고 식사·운동·수면 장면으로 풀어 쓴다."},
+        {"function": "선택 적합성", "shape": "무엇이 더 세다는 비교 대신 현재 상태와 유지 가능성을 묻는 문장", "adaptationRule": "금손 치료 우월성으로 바꾸지 않는다."}
+      ],
+      "trustMechanism": {
+        "sourceFactSlots": ["25년 경력", "비만 진료 경험"],
+        "goldhandRule": "확인된 한방비만치료 전문가과정 수료 표현과 과잉 권유 없는 원칙만 정확한 명칭으로 사용한다.",
+        "omitWhenUnsupported": true
+      },
+      "closingMechanism": {
+        "primaryId": "maintenance-principle-and-fit-statement",
+        "allowedIds": ["maintenance-principle-and-fit-statement"],
+        "readerEmotion": "재증가 공포에서 준비할 수 있다는 통제감으로 이동",
+        "adaptationRule": "중단 계획과 유지 습관을 묶고, 한 가지 방법을 모든 사람에게 권하지 않는 금손의 선택 원칙으로 닫는다."
+      }
+    },
+    "INFO08": {
+      "sourceTitle": "여름철 보약, 25년 경력 한의사가 말하는 시기 2가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224307070715",
+      "readerState": "보약을 더위 전에 먹어야 할지 기력이 떨어진 뒤 먹어도 될지 시점을 결정하지 못하는 상태",
+      "titleMechanism": {
+        "primaryId": "opposite-timing-questions-plus-two-answers",
+        "allowedIds": ["opposite-timing-questions-plus-two-answers", "condition-before-calendar"],
+        "readerPsychology": "서로 반대인 두 선택지를 한 제목에서 해결해 줄 것처럼 보여 선택 피로를 줄인다.",
+        "goldhandAdaptation": "두 시점을 실제로 나눠 설명할 때만 숫자를 쓰고, 달력보다 몸 상태가 중요하다는 결론을 제목과 본문이 함께 지지하게 한다."
+      },
+      "openingMechanism": {
+        "primaryDeviceId": "specific-number-low-friction-topic-payoff",
+        "allowedDeviceIds": ["specific-number-low-friction-topic-payoff", "opposite-question-resolution"],
+        "attentionLogic": "서로 반대인 두 질문 뒤에 2분이라는 낮은 읽기 비용을 제시하고, 내 몸에 맞는 복용 시기를 가르는 답을 약속한다.",
+        "topicPayoff": "더위 전과 더위 뒤 가운데 현재 몸 상태에 맞는 시기를 나누는 기준",
+        "whyItWorks": "3분이 아니라 2분을 쓴 사실이 시간 숫자는 고정 문구가 아니라 부담을 낮추는 가변 장치임을 보여 준다."
+      },
+      "flowBeats": [
+        {"id": "pose-opposite-timings", "purpose": "미리 먹기와 지친 뒤 먹기라는 두 선택을 같은 무게로 보여 준다.", "transition": "첫 시기에 해당하는 몸 상태로 이동한다."},
+        {"id": "explain-before-summer", "purpose": "더위 전 쉽게 지치고 소화·수면이 흔들리는 상태를 설명한다.", "transition": "더위 뒤 달라진 상태와 대조한다."},
+        {"id": "explain-after-heat", "purpose": "땀·식욕·잠·회복이 달라진 상태를 설명한다.", "transition": "두 시기를 하나의 처방 기준으로 묶는다."},
+        {"id": "condition-over-calendar", "purpose": "모든 사람에게 같은 달을 권하지 않고 현재 상태가 먼저임을 밝힌다.", "transition": "일반 기준의 한계를 회수한다."}
+      ],
+      "microExpressionPatterns": [
+        {"function": "양자택일 해소", "shape": "A가 맞는지 B도 늦지 않은지 연속 질문", "adaptationRule": "두 질문이 같은 뜻이 되지 않게 시점과 상태를 분리한다."},
+        {"function": "낮은 읽기 비용", "shape": "짧은 분 단위 숫자와 내 상태에 맞는 답을 한 호흡으로 연결", "adaptationRule": "분량과 보상이 맞을 때만 1~5분을 선택한다."},
+        {"function": "달력 상식 뒤집기", "shape": "월이나 계절보다 소화·수면·기력이라는 몸 상태를 앞세움", "adaptationRule": "금손 진료 기준으로 자연스럽게 바꾸되 만능 시기를 만들지 않는다."}
+      ],
+      "trustMechanism": {
+        "sourceFactSlots": ["25년 경력", "보약 진료 경험"],
+        "goldhandRule": "금손의 확인된 진료 범위와 현재 상태를 먼저 본다는 원칙만 사용한다.",
+        "omitWhenUnsupported": true
+      },
+      "closingMechanism": {
+        "primaryId": "two-timings-recap-with-individual-limit",
+        "allowedIds": ["two-timings-recap-with-individual-limit"],
+        "readerEmotion": "언제 먹어야 한다는 조급함에서 내 상태를 먼저 볼 수 있다는 안정감으로 이동",
+        "adaptationRule": "두 시기를 실제 상태로 다시 묶고 모든 사람에게 같은 달이 답은 아니라는 한계로 닫는다."
+      }
+    },
+    "INFO04": {
+      "sourceTitle": "공황장애·불면증 한방 치료, 효과 보는 사람 vs 못 보는 사람",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224291545650",
+      "readerState": "치료가 자신에게 맞는지, 약을 줄이면 다시 힘들어질지 불안한 상태",
+      "titleMechanism": {
+        "primaryId": "responder-versus-nonresponder-contrast",
+        "allowedIds": ["responder-versus-nonresponder-contrast", "who-it-fits-and-why"],
+        "readerPsychology": "두 집단의 대비가 독자에게 나는 어느 쪽인지 즉시 대입하게 만들어 자기 확인 욕구를 높인다.",
+        "goldhandAdaptation": "효과를 보장하거나 환자를 단정적으로 분류하지 않는다. 반응 차이를 만드는 확인 항목과 병행 경계로 대비를 바꾼다."
+      },
+      "openingMechanism": {
+        "primaryDeviceId": "contrast-self-identification",
+        "allowedDeviceIds": ["contrast-self-identification", "specific-number-low-friction-topic-payoff"],
+        "attentionLogic": "치료 가능성과 재발 걱정을 함께 보여 준 뒤 반응 차이가 생기는 이유를 예고한다.",
+        "topicPayoff": "내 상태에서 먼저 확인할 수면·복용약·몸 반응과 병행 치료 경계",
+        "whyItWorks": "독자가 효과 여부를 수동적으로 기다리는 대신 자기 상태를 구분해 보게 한다."
+      },
+      "flowBeats": [
+        {"id": "mirror-fit-anxiety", "purpose": "치료가 나에게 맞는지와 약 중단 뒤 불안을 함께 인정한다.", "transition": "반응 차이를 만드는 첫 확인 항목으로 이동한다."},
+        {"id": "check-history-and-sleep", "purpose": "시작 시점·복용약·잠드는 시간과 깨는 양상을 확인한다.", "transition": "잠 이외의 몸 반응으로 넓힌다."},
+        {"id": "connect-body-reactions", "purpose": "가슴 답답함·두근거림·소화 불편을 함께 설명한다.", "transition": "한 가지 치료로 결과를 단정할 수 없는 이유로 이동한다."},
+        {"id": "set-care-boundary", "purpose": "기존 정신건강의학과 치료와 악화 시 우선 평가 경계를 밝힌다.", "transition": "반응 차이를 현재 상태의 문제로 회수한다."}
+      ],
+      "microExpressionPatterns": [
+        {"function": "자기 분류", "shape": "효과 있는 사람과 없는 사람을 대비하되 그 사이의 확인 조건을 제시", "adaptationRule": "환자 낙인이나 보장 표현 없이 상태 차이로 쓴다."},
+        {"function": "불안의 두 층", "shape": "지금 치료가 맞는가와 나중에 다시 힘들어질까를 분리", "adaptationRule": "도입 질문이 서로 다른 시간을 맡게 한다."},
+        {"function": "경계로 신뢰 형성", "shape": "다른 치료를 끊게 하지 않고 병행 또는 우선 평가 조건을 분명히 말함", "adaptationRule": "금손의 안전 원칙을 직접적으로 쓴다."}
+      ],
+      "trustMechanism": {
+        "sourceFactSlots": ["치료 경험", "반응 사례"],
+        "goldhandRule": "검증되지 않은 사례는 쓰지 않고 복용약·수면·몸 반응을 함께 묻는 진찰 과정과 병행 원칙으로 신뢰를 만든다.",
+        "omitWhenUnsupported": true
+      },
+      "closingMechanism": {
+        "primaryId": "response-difference-with-care-boundary",
+        "allowedIds": ["response-difference-with-care-boundary"],
+        "readerEmotion": "효과 여부의 막연한 불안에서 확인할 조건이 있다는 현실감으로 이동",
+        "adaptationRule": "반응 차이를 만드는 항목을 묶고 누구에게나 같은 결과가 아니라는 점과 병행 경계를 회수한다."
+      }
+    },
+    "INFO10": {
+      "sourceTitle": "갱년기 증상, 태반약침 모르면 해결 어렵습니다",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224287906098",
+      "readerState": "홍조·불면·피로·기분 저하가 겹쳐 무엇을 선택해야 할지 지친 상태",
+      "titleMechanism": {
+        "primaryId": "knowledge-gap-with-consequence",
+        "allowedIds": ["knowledge-gap-with-consequence", "multiple-symptoms-choice-order"],
+        "readerPsychology": "알지 못한 선택 기준이 해결을 늦출 수 있다는 지식 공백을 만들어 궁금증을 높인다.",
+        "goldhandAdaptation": "특정 치료를 금손에서 실제 시행한다는 근거가 없으면 치료명을 제목에 넣지 않는다. 강한 경고는 증상별 선택 순서를 놓치기 쉽다는 안전한 표현으로 바꾼다."
+      },
+      "openingMechanism": {
+        "primaryDeviceId": "knowledge-gap-warning-with-daily-burden",
+        "allowedDeviceIds": ["knowledge-gap-warning-with-daily-burden", "specific-number-low-friction-topic-payoff"],
+        "attentionLogic": "홍조와 수면처럼 서로 다른 일상 피해를 보여 준 뒤 한 가지 해결책으로 묶기 어려운 이유를 예고한다.",
+        "topicPayoff": "여러 증상이 겹칠 때 원인과 치료 선택을 보는 순서",
+        "whyItWorks": "강한 문제의식 뒤에 선택 순서를 제공해 단순 공포가 아니라 지식 욕구로 이어지게 한다."
+      },
+      "flowBeats": [
+        {"id": "show-multiple-burdens", "purpose": "홍조·불면·피로·기분 저하가 일상에 미치는 서로 다른 불편을 보여 준다.", "transition": "왜 치료 하나를 바로 고르기 어려운지로 이동한다."},
+        {"id": "explain-symptom-range", "purpose": "호르몬 변화와 신체·수면·기분 증상을 함께 설명한다.", "transition": "현재 상태와 복용약 확인으로 좁힌다."},
+        {"id": "challenge-single-solution", "purpose": "건강기능식품이나 치료 하나로 모든 증상을 설명하지 않는다.", "transition": "실제 선택 기준으로 이동한다."},
+        {"id": "set-choice-order", "purpose": "증상 강도·기간·기존 건강 상태와 금손에서 확인된 치료 범위를 기준으로 설명한다.", "transition": "증상 이름보다 현재 양상을 보라는 답으로 회수한다."}
+      ],
+      "microExpressionPatterns": [
+        {"function": "지식 공백", "shape": "놓치기 쉬운 선택 기준이 있다는 경고 뒤 바로 무엇을 볼지 예고", "adaptationRule": "해결 어렵다는 단정이나 공포를 그대로 복사하지 않는다."},
+        {"function": "생활 피해 구체화", "shape": "얼굴이 화끈거림·잠들기 어려움·다음 날 피로를 각각 보여 줌", "adaptationRule": "갱년기라는 한 단어로 뭉개지 않는다."},
+        {"function": "단일 해법 해체", "shape": "한 가지 제품이나 치료가 모든 증상에 같은 답은 아니라는 전환", "adaptationRule": "그 다음 문장에서 실제 선택 항목을 제시한다."}
+      ],
+      "trustMechanism": {
+        "sourceFactSlots": ["태반약침 시행", "25년 진료 경험"],
+        "goldhandRule": "clinic-facts.md에 확인되지 않은 치료와 경력은 쓰지 않는다. 현재 상태와 복용약을 먼저 묻는 설명 원칙으로 대체한다.",
+        "omitWhenUnsupported": true
+      },
+      "closingMechanism": {
+        "primaryId": "symptom-pattern-over-treatment-name",
+        "allowedIds": ["symptom-pattern-over-treatment-name"],
+        "readerEmotion": "치료명을 고르려는 조급함에서 내 증상 양상을 먼저 볼 수 있다는 안정감으로 이동",
+        "adaptationRule": "증상 이름만으로 치료를 고르지 말고 강도·기간·복용약·기존 건강 상태를 함께 본다는 답으로 닫는다."
+      }
+    },
+    "INFO05": {
+      "sourceTitle": "추나요법 건강보험 적용? 25년 경력 한의사가 알려주는 2가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224280621821",
+      "readerState": "보험 적용과 비용을 먼저 알고 싶지만 자신에게 추나가 맞는지도 궁금한 상태",
+      "titleMechanism": {
+        "primaryId": "practical-question-plus-two-criteria",
+        "allowedIds": ["practical-question-plus-two-criteria", "current-rule-and-clinical-fit"],
+        "readerPsychology": "비용이라는 즉각적인 질문을 전면에 두고, 단순 가격 답을 넘어 두 판단 축을 받을 수 있음을 보여 준다.",
+        "goldhandAdaptation": "보험 기준·횟수·본인부담은 발행 직전 공식 기준을 확인한다. 숫자를 기억으로 쓰지 않는다."
+      },
+      "openingMechanism": {
+        "primaryDeviceId": "practical-criteria-promise",
+        "allowedDeviceIds": ["practical-criteria-promise", "specific-number-low-friction-topic-payoff"],
+        "attentionLogic": "환자가 실제로 반복해서 묻는 보험과 부담 질문을 먼저 꺼낸 뒤 적용 기준과 치료 적합성을 나눠 답하겠다고 예고한다.",
+        "topicPayoff": "현재 보험 기준과 내 상태에서 추나를 고려할 수 있는지 나누는 기준",
+        "whyItWorks": "당장 필요한 비용 정보로 들어오되 더 중요한 치료 적합성까지 자연스럽게 읽게 한다."
+      },
+      "flowBeats": [
+        {"id": "state-current-rule", "purpose": "발행 시점의 공식 보험 기준과 변동 가능성을 먼저 밝힌다.", "transition": "보험이 된다는 사실과 치료가 맞는지는 다르다고 전환한다."},
+        {"id": "separate-clinical-fit", "purpose": "근골격계 상태와 통증이 생기는 동작을 바탕으로 적합성을 설명한다.", "transition": "가격보다 먼저 볼 실제 상태로 이동한다."},
+        {"id": "explain-value-beyond-price", "purpose": "통증 위치와 움직이는 범위가 치료 선택에 어떤 의미인지 설명한다.", "transition": "추나보다 다른 검사나 치료가 먼저인 경우로 이동한다."},
+        {"id": "set-exception", "purpose": "비적합 상태와 다른 평가 우선 경계를 밝힌다.", "transition": "일반 기준과 개인 판단을 구분해 회수한다."}
+      ],
+      "microExpressionPatterns": [
+        {"function": "실용 질문 선점", "shape": "보험이 되는지와 얼마나 부담하는지를 독자의 말처럼 먼저 제시", "adaptationRule": "동적 수치는 공식 기준을 확인한 뒤만 쓴다."},
+        {"function": "기준 먼저 공개", "shape": "장황한 배경보다 적용 기준을 먼저 말하고 대상·예외를 뒤에 설명", "adaptationRule": "독자가 답을 기다리게 하지 않는다."},
+        {"function": "가격에서 적합성으로 전환", "shape": "싸게 받을 수 있는가에서 나에게 필요한가로 질문을 한 단계 이동", "adaptationRule": "비용 질문을 무시하지 말고 답한 뒤 전환한다."}
+      ],
+      "trustMechanism": {
+        "sourceFactSlots": ["25년 경력", "보험 진료 경험"],
+        "goldhandRule": "확인된 금손 경력 사실과 필요한 치료만 설명하는 원칙만 사용한다. 보험 수치는 최신 공식 자료로 별도 확인한다.",
+        "omitWhenUnsupported": true
+      },
+      "closingMechanism": {
+        "primaryId": "general-rule-versus-personal-fit",
+        "allowedIds": ["general-rule-versus-personal-fit"],
+        "readerEmotion": "비용만 궁금한 상태에서 치료 적합성까지 판단해야 한다는 명확함으로 이동",
+        "adaptationRule": "보험 기준과 치료 적합성을 분리해 다시 묶고, 현재 상태에 따라 다른 평가가 먼저일 수 있음을 회수한다."
+      }
+    },
+    "INFO11": {
+      "sourceTitle": "광주 트라우마치료, 25년 부부한의사가 알려주는 극복방법 2가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224221217878",
+      "readerState": "오래된 경험과 몸의 반응이 계속되어 평생 나아지지 않을 것처럼 막막한 상태",
+      "titleMechanism": {
+        "primaryId": "hopeful-two-axis-recovery",
+        "allowedIds": ["hopeful-two-axis-recovery", "body-and-mind-recovery-principles"],
+        "readerPsychology": "막연한 극복 대신 두 갈래의 회복 축을 보여 주어 절망을 다룰 수 있는 단위로 바꾼다.",
+        "goldhandAdaptation": "극복이나 완치를 보장하지 않는다. 몸과 마음의 반응, 안전한 속도, 정신건강의학과 우선 경계를 함께 둔다."
+      },
+      "openingMechanism": {
+        "primaryDeviceId": "hopelessness-to-two-axis-hope",
+        "allowedDeviceIds": ["hopelessness-to-two-axis-hope", "specific-number-low-friction-topic-payoff"],
+        "attentionLogic": "평생 안고 살아야 하는지와 기존 관리로도 힘든지를 묻고, 몸과 마음을 함께 보는 두 축을 예고한다.",
+        "topicPayoff": "몸의 반응과 마음의 안전을 함께 살피는 회복 순서",
+        "whyItWorks": "고통을 축소하지 않으면서도 구체적인 두 방향을 제시해 희망을 만든다."
+      },
+      "flowBeats": [
+        {"id": "name-hopelessness", "purpose": "오래된 불편과 기존 관리 뒤에도 남은 막막함을 인정한다.", "transition": "기억과 함께 나타나는 몸의 반응으로 이동한다."},
+        {"id": "connect-mind-and-body", "purpose": "긴장·수면·호흡·통증이 함께 나타날 수 있음을 설명한다.", "transition": "평가도 몸과 마음을 나누지 않아야 한다는 원칙으로 이동한다."},
+        {"id": "protect-safe-pace", "purpose": "과거 경험을 억지로 말하게 하지 않고 안전한 속도를 지킨다.", "transition": "위험이 큰 경우의 우선 평가로 이동한다."},
+        {"id": "set-psychiatric-boundary", "purpose": "심한 불안·자해 위험·일상 붕괴가 있으면 정신건강의학과 평가가 먼저임을 밝힌다.", "transition": "두 회복 축과 안전 경계를 함께 회수한다."}
+      ],
+      "microExpressionPatterns": [
+        {"function": "절망 인정", "shape": "괜찮아질 거라는 말보다 오래 힘들었다는 사실을 먼저 인정", "adaptationRule": "감성 위로만 길게 쓰지 말고 몸의 반응으로 연결한다."},
+        {"function": "두 축 제시", "shape": "몸과 마음을 경쟁시키지 않고 서로 다른 역할을 가진 회복 축으로 설명", "adaptationRule": "추상적 균형 대신 수면·호흡·긴장·감정 장면을 쓴다."},
+        {"function": "안전한 희망", "shape": "무리하게 말하지 않아도 된다는 허용과 우선 평가 경계를 함께 제시", "adaptationRule": "희망이 의료 안전을 가리지 않게 한다."}
+      ],
+      "trustMechanism": {
+        "sourceFactSlots": ["25년 부부 진료", "트라우마 치료 경험"],
+        "goldhandRule": "확인되지 않은 경력·사례는 모두 생략하고, 몸과 마음을 함께 듣되 다른 평가를 먼저 권할 수 있다는 진료 태도로 신뢰를 만든다.",
+        "omitWhenUnsupported": true
+      },
+      "closingMechanism": {
+        "primaryId": "two-axis-recap-safe-hope-and-thanks",
+        "allowedIds": ["two-axis-recap-safe-hope-and-thanks"],
+        "readerEmotion": "막막함에서 서두르지 않고 다음 단계를 찾을 수 있다는 희망으로 이동",
+        "adaptationRule": "몸의 반응과 마음의 안전을 다시 묶고, 우선 평가 경계를 남긴 뒤 과장 없는 감사로 닫을 수 있다."
+      }
+    },
+    "INFO12": {
+      "sourceTitle": "갱년기여성 다이어트, 15년 경력 원장이 말하는 성공 조건 3가지",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224212833691",
+      "readerState": "운동과 식사를 조절해도 예전처럼 체중이 줄지 않아 노력의 방향을 의심하는 상태",
+      "titleMechanism": {
+        "primaryId": "same-effort-different-result-plus-success-conditions",
+        "allowedIds": ["same-effort-different-result-plus-success-conditions", "why-old-method-stalls"],
+        "readerPsychology": "같은 노력을 해도 결과가 다른 이유에 궁금증을 만들고, 성공 조건이라는 구체적인 답을 약속한다.",
+        "goldhandAdaptation": "경력 숫자는 확인된 금손 사실로만 바꾸고, 성공을 보장하지 않도록 조건과 개인차를 함께 제시한다."
+      },
+      "openingMechanism": {
+        "primaryDeviceId": "curiosity-gap-effort-result",
+        "allowedDeviceIds": ["curiosity-gap-effort-result", "specific-number-low-friction-topic-payoff"],
+        "attentionLogic": "노력은 같은데 결과가 달라진다는 모순을 제시하고, 왜 예전 방식이 통하지 않는지 이해하는 보상을 약속한다.",
+        "topicPayoff": "갱년기 이후 체중 관리에서 달라진 조건과 운동·회복의 우선순위",
+        "whyItWorks": "의지 부족이라는 죄책감을 줄이고 몸의 조건을 이해하려는 궁금증으로 바꾼다."
+      },
+      "flowBeats": [
+        {"id": "show-effort-result-gap", "purpose": "운동과 식사 조절에도 변화가 없는 현실을 구체적으로 보여 준다.", "transition": "예전과 달라진 몸의 조건으로 이동한다."},
+        {"id": "explain-changed-conditions", "purpose": "호르몬·근육량·수면·활동량 변화를 함께 설명한다.", "transition": "개인별 시작점을 확인하는 이유로 좁힌다."},
+        {"id": "set-personal-baseline-and-goal", "purpose": "현재 건강 상태와 식사 패턴, 지속 가능한 목표를 정리한다.", "transition": "운동 구성과 회복으로 이동한다."},
+        {"id": "balance-exercise-and-recovery", "purpose": "유산소만 반복하지 않고 근력운동과 운동 뒤 회복을 함께 설명한다.", "transition": "조건의 우선순위가 사람마다 다름을 회수한다."}
+      ],
+      "microExpressionPatterns": [
+        {"function": "죄책감 완화", "shape": "노력 부족을 탓하지 않고 같은 노력에도 결과가 달라진다는 질문", "adaptationRule": "몸의 변화가 모든 결과를 결정한다고 단정하지 않는다."},
+        {"function": "원인 궁금증", "shape": "예전 방식이 왜 더는 통하지 않는지 짧게 던진 뒤 여러 조건 공개", "adaptationRule": "조건을 나열만 하지 말고 각 조건이 생활 장면에 미치는 의미를 쓴다."},
+        {"function": "성공 재정의", "shape": "외모 숫자보다 건강과 일상 유지가 가능한 목표로 전환", "adaptationRule": "교훈처럼 말하지 말고 실제 운동과 회복 계획으로 연결한다."}
+      ],
+      "trustMechanism": {
+        "sourceFactSlots": ["15년 경력", "다이어트 진료 경험"],
+        "goldhandRule": "확인된 한의사 경력과 한방비만치료 전문가과정 수료 명칭만 정확히 쓰고 성공 수치나 사례는 만들지 않는다.",
+        "omitWhenUnsupported": true
+      },
+      "closingMechanism": {
+        "primaryId": "conditions-priority-and-understanding-payoff",
+        "allowedIds": ["conditions-priority-and-understanding-payoff"],
+        "readerEmotion": "의지 부족이라는 자책에서 내 조건에 맞게 바꿀 수 있다는 이해로 이동",
+        "adaptationRule": "달라진 조건·개인 시작점·운동과 회복을 다시 묶고 우선순위는 사람마다 다르다고 닫는다."
+      }
+    },
+    "INFO06": {
+      "sourceTitle": "무릎통증치료, 25년 경력 한의사 2명이 알려주는 회복 원칙",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224205420099",
+      "readerState": "계단에서는 계속 아픈데 검사에서는 큰 이상이 없다고 들어 답답하고, 무엇을 더 봐야 하는지 찾는 상태",
+      "titleMechanism": {
+        "primaryId": "verified-authority-plus-recovery-principle",
+        "allowedIds": ["verified-authority-plus-recovery-principle", "test-normal-but-pain-remains-question"],
+        "readerPsychology": "경력과 두 명이라는 구체성이 신뢰와 다각도 판단을 암시하고, 회복 원칙이라는 표현이 단순 치료 홍보보다 배울 답이 있음을 보여 준다.",
+        "goldhandAdaptation": "25년과 두 명은 절대 옮기지 않는다. 확인된 금손 경력이 주제에 맞으면 사용하고, 아니면 계단 통증과 검사 결과의 간극을 제목의 궁금증으로 쓴다."
+      },
+      "openingMechanism": {
+        "primaryDeviceId": "specific-number-low-friction-topic-payoff",
+        "allowedDeviceIds": ["specific-number-low-friction-topic-payoff", "test-result-versus-real-life-gap"],
+        "attentionLogic": "계단 통증과 정상에 가까운 검사 결과의 모순으로 독자를 붙잡고, 3분이라는 구체적이고 짧은 비용 뒤에 무릎 통증에서 빠져나갈 실마리라는 주제 보상을 붙인다.",
+        "topicPayoff": "아픈 무릎만 보지 않고 걷는 모습과 연결된 관절을 확인하는 두 회복 원칙",
+        "whyItWorks": "구체적인 숫자는 읽기 비용을 즉시 이해하게 하고, 짧다는 느낌은 부담을 낮춘다. 이어지는 통증 실마리 약속이 독자에게 지금 읽을 이유를 만든다.",
+        "numericPrincipleChain": [
+          "specific-number",
+          "perceived-concreteness",
+          "low-effort",
+          "attention",
+          "topic-specific-payoff"
+        ]
+      },
+      "flowBeats": [
+        {"id": "show-daily-test-gap", "purpose": "계단을 내려갈 때 아픈데 검사상 큰 이상이 없다는 두 현실을 나란히 둔다.", "transition": "정지 화면이 아니라 실제로 걷는 모습을 보는 첫 원칙으로 이동한다."},
+        {"id": "principle-one-walking", "purpose": "체중이 한쪽으로 쏠리는지와 계단에서 어떤 순간 아픈지 확인한다.", "transition": "무릎 움직임에 영향을 주는 위아래 관절로 넓힌다."},
+        {"id": "principle-two-connected-joints", "purpose": "발·발목·무릎·골반과 주변 근육이 함께 움직이는 이유를 설명한다.", "transition": "치료 뒤 실제 생활 동작을 다시 보는 이유로 이어 간다."},
+        {"id": "recheck-real-life-response", "purpose": "걷기와 계단 오르내리기가 실제로 편해졌는지 재평가한다.", "transition": "두 회복 원칙을 실제 명사로 회수한다."}
+      ],
+      "microExpressionPatterns": [
+        {"function": "생활 장면 즉시 제시", "shape": "계단을 내려갈 때처럼 독자가 바로 떠올릴 수 있는 한 동작으로 시작", "adaptationRule": "걷을 때 남는 통증 같은 압축 명사구 대신 언제·어떤 동작에서·어디가 아픈지 쓴다."},
+        {"function": "검사와 체감의 모순", "shape": "검사에서는 괜찮다고 했는데 실제 동작에서는 아프다는 두 사실을 붙임", "adaptationRule": "검사를 무시하지 말고 영상과 움직임이 보는 정보가 다르다고 설명한다."},
+        {"function": "숫자 기반 읽기 설득", "shape": "짧은 분 단위 숫자 다음에 이 글에서 얻을 무릎 통증의 구체적인 실마리를 제시", "adaptationRule": "3분을 복사하지 말고 실제 분량에 맞는 1~5분과 주제별 보상을 새로 판단한다."},
+        {"function": "원칙의 구체적 회수", "shape": "첫째는 걷는 모습, 둘째는 연결된 관절처럼 추상어를 실제 명사로 다시 말함", "adaptationRule": "좋은 치료 방향 같은 추상 결론으로 끝내지 않는다."}
+      ],
+      "trustMechanism": {
+        "sourceFactSlots": ["25년 경력", "한의사 2명", "진료 환자 수"],
+        "goldhandRule": "위석 숫자는 모두 폐기한다. clinic-facts.md의 11년차 한의사·2016년 개원 등 주제에 맞는 사실만 사용하거나, 걷는 모습과 연결된 움직임을 함께 확인하는 진료 설명으로 신뢰 기능을 대체한다.",
+        "omitWhenUnsupported": true
+      },
+      "closingMechanism": {
+        "primaryId": "concrete-two-principle-recap-trust-and-thanks",
+        "allowedIds": ["concrete-two-principle-recap-trust-and-thanks"],
+        "readerEmotion": "검사로 설명되지 않는 답답함에서 더 확인할 지점이 있다는 안도감으로 이동",
+        "adaptationRule": "걷는 모습과 연결된 관절을 다시 묶고, 확인된 금손 경험 또는 진료 태도를 짧게 회수한 뒤 독자의 시간을 존중하는 감사로 닫을 수 있다."
+      }
+    },
+    "INFO07": {
+      "sourceTitle": "오십견치료방법, 29,000명 진료한 한의사가 공개하는 핵심",
+      "sourceUrl": "https://blog.naver.com/wi-parkclinic/224134818728",
+      "readerState": "옷을 입거나 머리를 감는 동작이 어렵고 물리치료 뒤에도 팔이 잘 올라가지 않아 답을 찾는 상태",
+      "titleMechanism": {
+        "primaryId": "large-experience-signal-plus-one-core-answer",
+        "allowedIds": ["large-experience-signal-plus-one-core-answer", "daily-movement-problem-plus-core-order"],
+        "readerPsychology": "큰 경험 수치가 답변자의 신뢰를 빠르게 만들고, 핵심이라는 단어가 복잡한 정보를 압축해 줄 것처럼 느끼게 한다.",
+        "goldhandAdaptation": "29,000명은 금지한다. 확인된 금손 사실이 없으면 옷 입기·머리 감기 같은 생활 동작과 관리 순서를 제목의 핵심으로 삼는다."
+      },
+      "openingMechanism": {
+        "primaryDeviceId": "daily-life-loss-with-direct-core-payoff",
+        "allowedDeviceIds": ["daily-life-loss-with-direct-core-payoff", "specific-number-low-friction-topic-payoff"],
+        "attentionLogic": "옷 입기와 높은 선반의 물건 꺼내기처럼 잃어버린 일상 동작을 먼저 보여 주고, 통증과 움직임을 회복할 순서를 약속한다.",
+        "topicPayoff": "통증과 팔이 올라가는 범위를 함께 관리하는 순서",
+        "whyItWorks": "질환명보다 일상 손실이 먼저 보여 독자가 자신의 불편을 즉시 대입한다."
+      },
+      "flowBeats": [
+        {"id": "show-daily-movement-loss", "purpose": "옷 입기·머리 감기·물건 꺼내기에서 팔이 막히는 장면을 보여 준다.", "transition": "통증과 움직임 범위를 함께 보는 첫 문제로 이동한다."},
+        {"id": "pair-pain-and-range", "purpose": "아픈 정도와 팔이 실제로 올라가는 범위를 함께 평가한다.", "transition": "전혀 안 움직이기와 무리한 스트레칭의 두 극단으로 이동한다."},
+        {"id": "sequence-by-state", "purpose": "통증 강도·염증 상태·주변 구조에 따라 운동과 치료 순서를 정한다.", "transition": "오십견과 다른 원인을 구분한다."},
+        {"id": "differentiate-other-source", "purpose": "다른 어깨 질환과 목에서 내려오는 증상을 함께 살핀다.", "transition": "증상 이름보다 현재 제한과 원인을 회수한다."}
+      ],
+      "microExpressionPatterns": [
+        {"function": "상실 장면", "shape": "옷 소매에 팔을 넣거나 머리를 감는 동작처럼 작은 일상이 막히는 모습", "adaptationRule": "통증이 심하다는 추상 표현보다 구체적 행동을 쓴다."},
+        {"function": "양극단 경계", "shape": "아프다고 전혀 안 움직이는 것과 참고 무리하는 것을 나란히 제시", "adaptationRule": "둘 다 피하라는 말 뒤에 현재 상태별 순서를 설명한다."},
+        {"function": "핵심 공개", "shape": "복잡한 치료명보다 먼저 풀 문제와 다음에 볼 문제를 짧게 구분", "adaptationRule": "핵심이라는 말만 쓰지 말고 실제 순서를 바로 보여 준다."}
+      ],
+      "trustMechanism": {
+        "sourceFactSlots": ["29,000명 진료", "25년 경력"],
+        "goldhandRule": "모든 환자 수는 버린다. 확인된 금손 경력과 통증·체형·움직임·생활습관을 함께 본다는 고정 사실만 관련될 때 사용한다.",
+        "omitWhenUnsupported": true
+      },
+      "closingMechanism": {
+        "primaryId": "current-limitation-and-cause-recap-with-thanks",
+        "allowedIds": ["current-limitation-and-cause-recap-with-thanks"],
+        "readerEmotion": "팔을 무조건 더 움직여야 한다는 조급함에서 순서가 필요하다는 안정감으로 이동",
+        "adaptationRule": "통증과 움직임 범위, 다른 원인 구분을 다시 묶고 원장의 현실적인 한계 설명과 감사로 닫을 수 있다."
+      }
+    }
+  }
+}
