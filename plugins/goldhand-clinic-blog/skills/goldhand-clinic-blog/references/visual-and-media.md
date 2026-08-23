@@ -165,15 +165,10 @@
 `scripts/recommend_closing_trust_media.py --json`은 전수 시각 검수한 7장만 선택한다. 허용 장면은 `director-agreement-pose`, `director-community-pose`, `credential-detail`이며, 원장 또는 문서가 실제로 보여야 한다. 협약서·수료증·회원증·기부·봉사 기념촬영은 이 풀에 들어갈 수 있지만 진료 사진 1장/2장을 대신할 수 없다. 예전 글 사진은 회전해 다시 쓸 수 있으나 바로 직전 완료 글의 `trustMediaIds`·`trustMediaHashes`와 겹치는 사진은 제외한다.
 
 ```html
-<p data-reference-role="credential-trust-context" data-goldhand-role="proof"
-  data-mobile-group="true" style="text-align:center;">
-  ABC방문간호센터와<br>업무협약을 맺고<br>기념촬영을 남겼습니다.
-</p>
-<p data-preview-gap="true" aria-hidden="true">&#8288;</p>
 <figure data-reference-role="credential-trust-media" data-goldhand-role="proof"
   data-trust-photo="true" data-trust-photo-slot="closing-credential-trust"
   data-media-origin="goldhand-bundled-official-library" data-goldhand-media="GH0042"
-  data-image-placement="after-related-paragraph" data-image-anchor="업무협약"
+  data-image-placement="closing-credential-trust"
   style="margin:28px auto;text-align:center;max-width:580px;">
   <img src="https://...금손 원본" data-trust-photo="true"
     data-media-origin="goldhand-bundled-official-library" data-goldhand-media="GH0042"
@@ -183,10 +178,10 @@
 </figure>
 ```
 
-- `credential-trust-context` 문단의 보이는 문장은 자산의 `closingTrustContextText`와 같아야 한다.
-- figure anchor는 `closingTrustPlacementTerms` 중 하나, img alt는 `closingTrustApprovedAlt`와 정확히 같아야 한다.
+- 사진 앞뒤에 `credential-trust-context`, 협약·수료·기부·봉사 설명 문장, `<figcaption>`을 만들지 않는다. 사진만 배치한다.
+- figure에는 `data-image-placement="closing-credential-trust"`를 쓰고 관련 문단이나 `data-image-anchor`를 요구하지 않는다. img alt는 `closingTrustApprovedAlt`와 정확히 같아야 한다.
 - 이 블록은 `neutral-close`와 필요한 마무리 산문 뒤, `clinic-hours-heading` 앞에 둔다. 마무리 신뢰 사진 뒤에는 진료시간 안내 전까지 다른 본문·표·이미지를 두지 않는다.
-- 보이는 캡션은 만들지 않는다. 문맥 문단은 사진의 실제 장면을 설명하는 본문이며 광고성 자격 과장이나 치료 효능으로 연결하지 않는다.
+- 장면 설명과 출처는 접근성용 `alt`와 복사 때 제거되는 내부 `data-*`로만 관리한다.
 
 제외:
 
@@ -200,7 +195,7 @@
 
 무관한 사진, 미검수 사진, 개인정보 위험 사진은 최소 수량을 맞추는 용도로도 쓰지 않는다.
 
-진료 사진 1장은 바로 앞 문단이 승인 장면을 정확히 설명하는 `data-real-photo-slot="before-credential"`로 둔다. 진료 사진 2장은 본문 문맥과 무관한 `data-real-photo-slot="closing-trust"`·`data-image-placement="closing-clinical-gallery"`로 이어 배치한다. 마무리 신뢰 사진은 `data-trust-photo-slot="closing-credential-trust"`로 따로 표시한다. GPT 이미지는 `data-image-zone="early-explanatory-body"`로 구분해 원장 소개표 뒤 첫 두 개 설명 섹션 안에 3~4장 배치하고 최소 1장은 첫 섹션에 둔다. 세 번째 설명 섹션 이후에는 두지 않는다. `금손한의원 건물 외부`, `금손한의원에서 사용하는 환제`, `진료 모습`, `AI 생성 이미지`처럼 이미지 아래에 보이는 캡션·출처·장면 이름은 어떤 경우에도 쓰지 않는다. 장면 설명은 `alt`와 내부 검수용 `data-*`로만 두며, 별도 마무리 신뢰 사진에만 승인 맥락 문단을 표시한다.
+진료 사진 1장은 바로 앞 문단이 승인 장면을 정확히 설명하는 `data-real-photo-slot="before-credential"`로 둔다. 진료 사진 2장은 본문 문맥과 무관한 `data-real-photo-slot="closing-trust"`·`data-image-placement="closing-clinical-gallery"`로 이어 배치한다. 마무리 신뢰 사진은 `data-trust-photo-slot="closing-credential-trust"`·`data-image-placement="closing-credential-trust"`로 따로 표시한다. GPT 이미지는 `data-image-zone="early-explanatory-body"`로 구분해 원장 소개표 뒤 첫 두 개 설명 섹션 안에 3~4장 배치하고 최소 1장은 첫 섹션에 둔다. 세 번째 설명 섹션 이후에는 두지 않는다. `금손한의원 건물 외부`, `금손한의원에서 사용하는 환제`, `진료 모습`, `AI 생성 이미지`, `업무협약을 맺고 기념촬영을 남겼습니다`처럼 사진을 소개하는 보이는 문장·캡션·출처·장면 이름은 어떤 경우에도 쓰지 않는다. 장면 설명은 `alt`와 내부 검수용 `data-*`로만 둔다.
 
 ## 글말미 종료 계약
 

@@ -927,58 +927,23 @@ def trust_figure_checks(
         add(issues, "error", "trust-photo-figure-marker-missing", f"마무리 신뢰 사진 {image_index} figure에 data-trust-photo=true가 필요합니다.")
     if attr_values(opening, "data-trust-photo-slot") != [TRUST_PHOTO_SLOT]:
         add(issues, "error", "trust-photo-slot-invalid", f"마무리 신뢰 사진 {image_index}는 {TRUST_PHOTO_SLOT} 슬롯이어야 합니다.")
-    if attr_values(opening, "data-image-placement") != ["after-related-paragraph"]:
-        add(issues, "error", "trust-photo-placement-marker", f"마무리 신뢰 사진 {image_index}는 관련 신뢰 문단 바로 뒤에 배치합니다.")
+    if attr_values(opening, "data-image-placement") != ["closing-credential-trust"]:
+        add(issues, "error", "trust-photo-placement-marker", f"마무리 신뢰 사진 {image_index}는 별도 설명 문장 없이 closing-credential-trust 위치에 배치합니다.")
     if not re.search(r"\btext-align\s*:\s*center", opening, flags=re.I):
         add(issues, "error", "trust-photo-not-centered", f"마무리 신뢰 사진 {image_index} figure가 중앙 정렬이 아닙니다.")
 
-    anchor_values = attr_values(opening, "data-image-anchor")
-    anchors = [item.strip() for item in anchor_values[0].split("|") if item.strip()] if len(anchor_values) == 1 else []
-    if not anchors:
-        add(issues, "error", "trust-photo-anchor-missing", f"마무리 신뢰 사진 {image_index}에 장면 핵심어가 없습니다.")
-
-    prefix = article[:figure_match.start()]
-    while True:
-        before = prefix
-        prefix = re.sub(
-            r"\s*<p\b(?=[^>]*\bdata-preview-gap\s*=\s*['\"]true['\"])[^>]*>(?:(?!</p>).)*</p>\s*$",
-            "",
-            prefix,
-            flags=re.I | re.S,
-        )
-        prefix = re.sub(r"\s*</(?:section|div)>\s*$", "", prefix, flags=re.I | re.S)
-        if prefix == before:
-            break
-    prior = list(re.finditer(r"<p\b(?P<attrs>[^>]*)>(?P<body>.*?)</p>", prefix, flags=re.I | re.S))
-    previous = prior[-1] if prior and not prefix[prior[-1].end():].strip() else None
-    previous_text = ""
-    if previous is None:
-        add(issues, "error", "trust-photo-context-missing", f"마무리 신뢰 사진 {image_index} 바로 앞에 신뢰 맥락 문단이 없습니다.")
-    else:
-        attrs = previous.group("attrs")
-        previous_text = visible_text(previous.group("body"))
-        if not re.search(r"\bdata-reference-role\s*=\s*['\"]credential-trust-context['\"]", attrs, flags=re.I):
-            add(issues, "error", "trust-photo-context-role-missing", f"마무리 신뢰 사진 {image_index} 앞 문단의 역할 표시가 없습니다.")
-        if not re.search(r"\bdata-goldhand-role\s*=\s*['\"]proof['\"]", attrs, flags=re.I):
-            add(issues, "error", "trust-photo-context-proof-missing", f"마무리 신뢰 사진 {image_index} 앞 문단은 proof로 표시해야 합니다.")
-        if not re.search(r"\bdata-mobile-group\s*=\s*['\"]true['\"]", attrs, flags=re.I):
-            add(issues, "error", "trust-photo-context-mobile-group", f"마무리 신뢰 사진 {image_index} 앞 문단은 모바일 문단이어야 합니다.")
-        if anchors and not any(compact(anchor) in compact(previous_text) for anchor in anchors):
-            add(issues, "error", "trust-photo-anchor-mismatch", f"마무리 신뢰 사진 {image_index}의 핵심어가 바로 앞 신뢰 문단에 없습니다.")
+    if attr_values(opening, "data-image-anchor"):
+        add(issues, "error", "trust-photo-anchor-forbidden", f"마무리 신뢰 사진 {image_index}에는 관련 문단용 anchor를 만들지 않습니다.")
 
     if asset is not None:
-        placement_terms = [str(value).strip() for value in asset.get("closingTrustPlacementTerms", []) if str(value).strip()]
         approved_alt = str(asset.get("closingTrustApprovedAlt", "")).strip()
         context_text = str(asset.get("closingTrustContextText", "")).strip()
-        if not placement_terms or not approved_alt or not context_text:
-            add(issues, "error", "trust-photo-context-metadata-missing", f"마무리 신뢰 사진 {image_index} 자산의 승인 문맥·alt 메타데이터가 비어 있습니다.")
-        else:
-            if not any(any(compact(anchor) == compact(term) for term in placement_terms) for anchor in anchors):
-                add(issues, "error", "trust-photo-anchor-not-approved", f"마무리 신뢰 사진 {image_index}의 anchor가 승인 장면 핵심어와 다릅니다.")
-            if compact(previous_text) != compact(context_text):
-                add(issues, "error", "trust-photo-context-mismatch", f"마무리 신뢰 사진 {image_index} 앞 문단은 검수된 장면 설명과 정확히 같아야 합니다.")
-            if attr_values(image_tag, "alt") != [approved_alt]:
-                add(issues, "error", "trust-photo-alt-mismatch", f"마무리 신뢰 사진 {image_index}의 alt는 승인 장면 설명과 정확히 같아야 합니다.")
+        if not approved_alt:
+            add(issues, "error", "trust-photo-alt-metadata-missing", f"마무리 신뢰 사진 {image_index} 자산의 승인 alt 메타데이터가 비어 있습니다.")
+        elif attr_values(image_tag, "alt") != [approved_alt]:
+            add(issues, "error", "trust-photo-alt-mismatch", f"마무리 신뢰 사진 {image_index}의 alt는 승인 장면 설명과 정확히 같아야 합니다.")
+        if context_text and compact(context_text) in compact(visible_text(article)):
+            add(issues, "error", "visible-trust-photo-context-forbidden", f"마무리 신뢰 사진 {image_index}의 장면 설명 문장은 보이는 본문에 출력하지 않습니다.")
     if re.search(r"<figcaption\b", figure, flags=re.I):
         add(issues, "error", "visible-image-caption-forbidden", f"마무리 신뢰 사진 {image_index} 아래에 보이는 캡션을 쓰면 안 됩니다.")
 
@@ -996,16 +961,14 @@ def trust_layout_checks(article: str, issues: list[dict[str, object]]) -> None:
     contexts = reference_role_matches(article, ("credential-trust-context",))
     neutral = reference_role_matches(article, ("neutral-close",))
     clinic = reference_role_matches(article, ("clinic-hours-heading",))
-    if len(figures) != 1 or len(contexts) != 1:
+    if contexts:
+        add(issues, "error", "visible-trust-photo-context-forbidden", "마무리 신뢰 사진 앞뒤에 협약·수료·기부·봉사 장면을 설명하는 문단을 출력하지 않습니다.")
+    if len(figures) != 1:
         return
     figure = figures[0]
-    context = contexts[0]
     if len(neutral) == 1 and len(clinic) == 1:
-        if not (neutral[0].end() <= context.start() < context.end() <= figure.start() < figure.end() <= clinic[0].start()):
+        if not (neutral[0].end() <= figure.start() < figure.end() <= clinic[0].start()):
             add(issues, "error", "trust-photo-position", "마무리 신뢰 사진은 neutral-close 뒤, 진료시간 안내 앞의 마지막 이미지로 둡니다.")
-        bridge = article[context.end():figure.start()]
-        if not contains_only_preview_gaps(bridge):
-            add(issues, "error", "trust-photo-context-not-adjacent", "신뢰 맥락 문단과 마무리 신뢰 사진 사이에는 preview-gap만 둘 수 있습니다.")
         tail = article[figure.end():clinic[0].start()]
         tail = re.sub(r"<p\b(?=[^>]*\bdata-preview-gap\s*=\s*['\"]true['\"])[^>]*>.*?</p>", "", tail, flags=re.I | re.S)
         tail = re.sub(r"<hr\b(?=[^>]*\bdata-naver-native-component\s*=\s*['\"]divider['\"])[^>]*>", "", tail, flags=re.I | re.S)
@@ -1031,7 +994,13 @@ def media_layout_checks(article: str, issues: list[dict[str, object]]) -> None:
     credential_matches = credential_table_matches(article)
     neutral_matches = reference_role_matches(article, ("neutral-close",))
     clinic_heading_matches = reference_role_matches(article, ("clinic-hours-heading",))
-    trust_context_matches = reference_role_matches(article, ("credential-trust-context",))
+    trust_figure_matches = list(
+        re.finditer(
+            r"<figure\b(?=[^>]*\bdata-trust-photo\s*=\s*['\"]true['\"])[^>]*>.*?</figure>",
+            article,
+            flags=re.I | re.S,
+        )
+    )
     section_heading_matches = explanatory_heading_candidates(article)
 
     if len(real_figures) == 1:
@@ -1079,7 +1048,7 @@ def media_layout_checks(article: str, issues: list[dict[str, object]]) -> None:
         elif len(neutral_matches) == 1 and len(clinic_heading_matches) == 1:
             neutral = neutral_matches[0]
             clinic_heading = clinic_heading_matches[0]
-            clinical_tail_end = trust_context_matches[0].start() if len(trust_context_matches) == 1 else clinic_heading.start()
+            clinical_tail_end = trust_figure_matches[0].start() if len(trust_figure_matches) == 1 else clinic_heading.start()
             if not all(neutral.end() <= figure.start() < figure.end() <= clinical_tail_end for figure in real_figures):
                 add(
                     issues,

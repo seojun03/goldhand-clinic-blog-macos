@@ -654,19 +654,12 @@ def editorial_close_article(*, include_summary: bool = True, one_question: bool 
     article = article[:solution.end()] + figure + article[solution.end():]
     trust_id = "GH0042"
     trust_asset = media_by_id[trust_id]
-    trust_anchor = trust_asset["closingTrustPlacementTerms"][0]
-    trust_context = trust_asset["closingTrustContextText"]
-    trust_context_markup = trust_context.replace("와 업무협약", "와<br>업무협약").replace("맺고 기념촬영", "맺고<br>기념촬영")
     trust_block = (
-        '<p data-reference-role="credential-trust-context" data-goldhand-role="proof" '
-        'data-mobile-group="true" style="margin:0;text-align:center;color:#4D4D4D;'
-        f'font-size:16px;line-height:1.9;word-break:keep-all;">{trust_context_markup}</p>'
-        '<p data-preview-gap="true" aria-hidden="true" style="margin:0;text-align:center;color:transparent;">&#8288;</p>'
         '<figure data-reference-role="credential-trust-media" data-goldhand-role="proof" '
         'data-trust-photo="true" data-trust-photo-slot="closing-credential-trust" '
         'data-media-origin="goldhand-bundled-official-library" '
-        f'data-goldhand-media="{trust_id}" data-image-placement="after-related-paragraph" '
-        f'data-image-anchor="{trust_anchor}" style="margin:28px auto;text-align:center;max-width:580px;">'
+        f'data-goldhand-media="{trust_id}" data-image-placement="closing-credential-trust" '
+        'style="margin:28px auto;text-align:center;max-width:580px;">'
         f'<img src="{trust_asset["url"]}" data-trust-photo="true" '
         'data-media-origin="goldhand-bundled-official-library" '
         f'data-goldhand-media="{trust_id}" data-media-sha256="{trust_asset["sha256"]}" '
@@ -1400,6 +1393,32 @@ class ArticleTests(unittest.TestCase):
         self.assertIn("trust-photo-count", {item["code"] for item in result["issues"]})
         self.assertEqual(result["metrics"]["realPhotos"], 1)
 
+    def test_editorial_close_rejects_visible_trust_photo_intro_sentence(self) -> None:
+        article = editorial_close_article().replace(
+            '<figure data-reference-role="credential-trust-media"',
+            (
+                '<p data-reference-role="credential-trust-context" data-goldhand-role="proof" '
+                'data-mobile-group="true" style="text-align:center;">'
+                'ABC방문간호센터와 업무협약을 맺고 기념촬영을 남겼습니다.</p>'
+                '<figure data-reference-role="credential-trust-media"'
+            ),
+            1,
+        )
+        result = ARTICLE_VALIDATOR.validate_article(
+            article, EDITORIAL_TITLE, KEYWORD, editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertIn("visible-trust-photo-context-forbidden", {item["code"] for item in result["issues"]})
+
+    def test_editorial_close_accepts_trust_photo_without_visible_intro_sentence(self) -> None:
+        result = ARTICLE_VALIDATOR.validate_article(
+            editorial_close_article(), EDITORIAL_TITLE, KEYWORD, editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        codes = {item["code"] for item in result["issues"]}
+        self.assertNotIn("visible-trust-photo-context-forbidden", codes, result)
+        self.assertNotIn("trust-photo-placement-marker", codes, result)
+
     def test_editorial_close_rejects_real_photo_without_related_placement(self) -> None:
         article = editorial_close_article().replace(
             'data-real-photo="true" data-real-photo-slot="before-credential" '
@@ -1440,8 +1459,8 @@ class ArticleTests(unittest.TestCase):
                 f'style="display:block;width:100%;height:auto;margin:0 auto;"></figure>'
             )
         article = article.replace(
-            '<p data-reference-role="credential-trust-context"',
-            "".join(figures) + '<p data-reference-role="credential-trust-context"',
+            '<figure data-reference-role="credential-trust-media"',
+            "".join(figures) + '<figure data-reference-role="credential-trust-media"',
             1,
         )
         result = ARTICLE_VALIDATOR.validate_article(
@@ -1948,6 +1967,24 @@ class BuilderTests(unittest.TestCase):
         cleaned = PAGE_BUILDER.strip_visible_image_captions(article)
         self.assertNotIn("<figcaption", cleaned)
         self.assertNotIn("금손한의원 건물 외부", cleaned)
+
+    def test_builder_strips_legacy_visible_trust_photo_context(self) -> None:
+        article = editorial_close_article().replace(
+            '<figure data-reference-role="credential-trust-media"',
+            (
+                '<p data-reference-role="credential-trust-context" data-goldhand-role="proof" '
+                'data-mobile-group="true" style="text-align:center;">'
+                'ABC방문간호센터와 업무협약을 맺고 기념촬영을 남겼습니다.</p>'
+                '<p data-preview-gap="true" aria-hidden="true">&#8288;</p>'
+                '<figure data-reference-role="credential-trust-media"'
+            ),
+            1,
+        )
+        cleaned = PAGE_BUILDER.strip_visible_trust_photo_context(article)
+        self.assertNotIn('data-reference-role="credential-trust-context"', cleaned)
+        self.assertNotIn("업무협약을 맺고 기념촬영을 남겼습니다", cleaned)
+        page = PAGE_BUILDER.build_page(EDITORIAL_TITLE, article)
+        self.assertNotIn("업무협약을 맺고 기념촬영을 남겼습니다", page)
 
     def test_builder_preflight_blocks_wrong_credential_position(self) -> None:
         PAGE_BUILDER.validate_credential_placement(valid_article())
@@ -2620,6 +2657,10 @@ class StateAndMediaTests(unittest.TestCase):
         self.assertEqual(first["selectedCount"], 1)
         self.assertEqual(first["selected"][0]["id"], "GH0042")
         self.assertEqual(first["selected"][0]["figureAttributes"]["data-trust-photo-slot"], "closing-credential-trust")
+        self.assertEqual(first["selected"][0]["figureAttributes"]["data-image-placement"], "closing-credential-trust")
+        self.assertFalse(first["selected"][0]["visibleContextAllowed"])
+        self.assertNotIn("contextText", first["selected"][0])
+        self.assertNotIn("placementTerms", first["selected"][0])
         rotated = CLOSING_TRUST_RECOMMENDER.recommend(
             library,
             recent_ids={first["selected"][0]["id"]},
@@ -3166,6 +3207,10 @@ class SkillPackageTests(unittest.TestCase):
         self.assertTrue(design["closingCredentialTrustMedia"]["separateFromClinicalMedia"])
         self.assertFalse(design["closingCredentialTrustMedia"]["countsTowardRealGoldhandMedia"])
         self.assertEqual(design["closingCredentialTrustMedia"]["requiredSlot"], "closing-credential-trust")
+        self.assertIsNone(design["closingCredentialTrustMedia"]["requiredContextRole"])
+        self.assertFalse(design["closingCredentialTrustMedia"]["contextTextRequired"])
+        self.assertFalse(design["closingCredentialTrustMedia"]["visibleContextAllowed"])
+        self.assertEqual(design["closingCredentialTrustMedia"]["requiredFigurePlacement"], "closing-credential-trust")
         self.assertTrue(design["closingCredentialTrustMedia"]["mustBeLastImageBeforeClinicHours"])
         self.assertFalse(design["closingCredentialTrustMedia"]["immediatelyPreviousArticleReuseAllowed"])
         self.assertFalse(design["fixedClosingLinks"]["enabled"])

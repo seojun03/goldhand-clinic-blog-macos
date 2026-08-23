@@ -120,9 +120,9 @@ def public_item(asset: dict[str, Any]) -> dict[str, Any]:
         "directorVisible": bool(asset.get("closingTrustDirectorVisible")),
         "documentVisible": bool(asset.get("closingTrustDocumentVisible")),
         "priority": int(asset.get("closingTrustPriority", 0) or 0),
-        "placementTerms": asset.get("closingTrustPlacementTerms", []),
         "approvedAlt": asset.get("closingTrustApprovedAlt", ""),
-        "contextText": asset.get("closingTrustContextText", ""),
+        "visibleContextAllowed": False,
+        "visibleCaptionAllowed": False,
         "htmlAttributes": {
             "data-trust-photo": "true",
             "data-media-origin": "goldhand-bundled-official-library",
@@ -136,7 +136,7 @@ def public_item(asset: dict[str, Any]) -> dict[str, Any]:
         "figureAttributes": {
             "data-trust-photo": "true",
             "data-trust-photo-slot": "closing-credential-trust",
-            "data-image-placement": "after-related-paragraph",
+            "data-image-placement": "closing-credential-trust",
         },
     }
 
@@ -176,7 +176,7 @@ def recommend(
         "missingToRequested": 0 if selected else 1,
         "decisionRequired": not selected,
         "immediatelyPreviousReuseLimit": 0,
-        "policy": "마무리 신뢰 사진은 진료 사진과 별도로 1장 사용하며, 공식 블로그에서 시각 검수된 원장·협약·수료증·기부·봉사 사진만 선택하고 바로 직전 완료 글의 ID·해시는 제외한다.",
+        "policy": "마무리 신뢰 사진은 진료 사진과 별도로 1장 사용하며, 공식 블로그에서 시각 검수된 원장·협약·수료증·기부·봉사 사진만 선택하고 바로 직전 완료 글의 ID·해시는 제외한다. 사진 앞뒤에는 소개·맥락·장면 설명·출처·캡션을 출력하지 않는다.",
         "selected": selected,
     }
 

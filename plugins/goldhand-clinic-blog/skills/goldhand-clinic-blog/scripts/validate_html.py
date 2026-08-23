@@ -377,7 +377,7 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
                 ):
                     add(issues, "error", "real-photo-layout-invalid", "실제 사진 2장 구성은 글마무리 closing-trust 슬롯 두 장만 허용합니다.")
                 elif len(neutral_matches) == 1 and len(clinic_heading_matches) == 1:
-                    clinical_tail_end = trust_context_matches[0].start() if len(trust_context_matches) == 1 else clinic_heading_matches[0].start()
+                    clinical_tail_end = trust_figures[0].start() if len(trust_figures) == 1 else clinic_heading_matches[0].start()
                     if not all(
                         neutral_matches[0].end() <= figure.start() < figure.end() <= clinical_tail_end
                         for figure in real_figures
@@ -393,19 +393,19 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
             elif real_figures:
                 add(issues, "error", "real-photo-layout-invalid", "실제 사진은 원장 소개표 위 1장 또는 글마무리 2장 중 한 구성만 허용합니다.")
 
-            if len(trust_figures) == 1 and len(trust_context_matches) == 1 and len(neutral_matches) == 1 and len(clinic_heading_matches) == 1:
+            if trust_context_matches:
+                add(issues, "error", "visible-trust-photo-context-forbidden", "복사용 HTML에는 마무리 신뢰 사진을 설명하는 별도 문단을 출력하지 않습니다.")
+            if len(trust_figures) == 1 and len(neutral_matches) == 1 and len(clinic_heading_matches) == 1:
                 trust_figure = trust_figures[0]
-                trust_context = trust_context_matches[0]
                 if not (
-                    neutral_matches[0].end() <= trust_context.start() < trust_context.end()
-                    <= trust_figure.start() < trust_figure.end() <= clinic_heading_matches[0].start()
+                    neutral_matches[0].end() <= trust_figure.start()
+                    < trust_figure.end() <= clinic_heading_matches[0].start()
                 ):
                     add(issues, "error", "trust-photo-position", "마무리 신뢰 사진은 neutral-close 뒤, 진료시간 안내 앞의 마지막 이미지로 둡니다.")
                 if not re.search(r"\bdata-trust-photo-slot\s*=\s*['\"]closing-credential-trust['\"]", trust_figure.group(0), flags=re.I):
                     add(issues, "error", "trust-photo-slot-invalid", "마무리 신뢰 사진은 closing-credential-trust 슬롯이어야 합니다.")
-                bridge = article_html[trust_context.end():trust_figure.start()]
-                if not contains_only_preview_gaps(bridge):
-                    add(issues, "error", "trust-photo-context-not-adjacent", "신뢰 맥락 문단과 마무리 신뢰 사진 사이에는 preview-gap만 둘 수 있습니다.")
+                if not re.search(r"\bdata-image-placement\s*=\s*['\"]closing-credential-trust['\"]", trust_figure.group(0), flags=re.I):
+                    add(issues, "error", "trust-photo-placement-marker", "마무리 신뢰 사진은 별도 설명 문장 없이 closing-credential-trust 위치에 둡니다.")
                 trust_tail = article_html[trust_figure.end():clinic_heading_matches[0].start()]
                 trust_tail = re.sub(r"<p\b(?=[^>]*\bdata-preview-gap\s*=\s*['\"]true['\"])[^>]*>.*?</p>", "", trust_tail, flags=re.I | re.S)
                 trust_tail = re.sub(r"<hr\b(?=[^>]*\bdata-naver-native-component\s*=\s*['\"]divider['\"])[^>]*>", "", trust_tail, flags=re.I | re.S)

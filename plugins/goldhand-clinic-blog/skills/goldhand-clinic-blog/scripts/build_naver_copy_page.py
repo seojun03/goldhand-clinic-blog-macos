@@ -110,6 +110,23 @@ def strip_visible_image_captions(article: str) -> str:
     return re.sub(r"\s*<figcaption\b[^>]*>.*?</figcaption>\s*", "", article, flags=re.I | re.S)
 
 
+def strip_visible_trust_photo_context(article: str) -> str:
+    """Remove legacy trust-photo lead-in prose from preview and rich copy output."""
+
+    cleaned = re.sub(
+        r"\s*<(?P<tag>[a-z][\w:-]*)\b(?=[^>]*\bdata-reference-role\s*=\s*['\"]credential-trust-context['\"])[^>]*>.*?</(?P=tag)>\s*",
+        "",
+        article,
+        flags=re.I | re.S,
+    )
+    return re.sub(
+        r"\s*<p\b(?=[^>]*\bdata-preview-gap\s*=\s*['\"]true['\"])[^>]*>.*?</p>(?=\s*<figure\b(?=[^>]*\bdata-trust-photo\s*=\s*['\"]true['\"]))",
+        "",
+        cleaned,
+        flags=re.I | re.S,
+    )
+
+
 def validate_credential_placement(article: str) -> None:
     """Fail closed when the fixed clinic credential table is not before the body."""
 
@@ -464,6 +481,7 @@ def build_page(
     article: str,
     platform_name: str | None = None,
 ) -> str:
+    article = strip_visible_trust_photo_context(article)
     validate_person_media_policy(article)
     article = strip_legacy_closing_links(article)
     escaped_title = html.escape(title, quote=True)
