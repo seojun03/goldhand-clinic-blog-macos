@@ -185,7 +185,7 @@ class AutomationVersionTests(unittest.TestCase):
             skill_text.index("## 운영체제별 실행기"),
         )
 
-    def test_current_skill_uses_topic_first_fixed_automatic_flow(self) -> None:
+    def test_current_skill_starts_with_ten_topic_recommendations_and_accepts_direct_input(self) -> None:
         skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
         readme_text = (PLUGIN_ROOT / "README.md").read_text(encoding="utf-8")
         agent_text = (SKILL_DIR / "agents" / "openai.yaml").read_text(encoding="utf-8")
@@ -194,9 +194,24 @@ class AutomationVersionTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        topic_question = "작성할 글의 주제를 입력해 주세요."
+        topic_question = "1~10번 중 작성할 주제를 선택하거나, 원하는 주제를 직접 입력해 주세요."
         keyword_question = "메인키워드를 입력해 주세요."
         title_question = "1~5번 중 사용할 제목을 선택하거나, 원하는 제목을 직접 입력해 주세요."
+        topic_contract = json.loads(
+            (SKILL_DIR / "assets" / "topic-recommendation-contract.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        topic_library = json.loads(
+            (SKILL_DIR / "assets" / topic_contract["sourceAsset"]).read_text(
+                encoding="utf-8"
+            )
+        )
+        eligible_topics = [
+            item
+            for item in topic_library[topic_contract["sourceCollection"]]
+            if item.get("autoEligible") is True and item.get("topicIdea")
+        ]
 
         self.assertIn(topic_question, skill_text)
         self.assertIn(keyword_question, skill_text)
@@ -206,6 +221,7 @@ class AutomationVersionTests(unittest.TestCase):
         self.assertIn('--topic "{사용자 입력 주제}"', skill_text)
         self.assertIn("사용자가 입력한 글 주제를 실제 글의 주제로 고정", skill_text)
         self.assertIn("제목 후보 5개", skill_text)
+        self.assertIn("주제를 정확히 10개", skill_text)
         self.assertIn("공백 제외 30자", skill_text)
         self.assertIn("select_general_information.py", skill_text)
         self.assertIn("search_naver_background.py", skill_text)
@@ -219,7 +235,33 @@ class AutomationVersionTests(unittest.TestCase):
         self.assertIn(topic_question, agent_text)
         self.assertIn(keyword_question, agent_text)
         self.assertIn(title_question, agent_text)
+        self.assertIn("주제 10개", readme_text)
         self.assertIn("제목 5개", readme_text)
+        self.assertEqual(topic_contract["candidateCount"], 10)
+        self.assertTrue(topic_contract["numberedOutputRequired"])
+        self.assertEqual(topic_contract["displayFormat"], "{number}. {topicIdea}")
+        self.assertEqual(topic_contract["numberingStart"], 1)
+        self.assertEqual(topic_contract["numberingEnd"], 10)
+        self.assertEqual(topic_contract["selectionPrompt"], topic_question)
+        self.assertTrue(topic_contract["customTopic"]["allowed"])
+        self.assertTrue(topic_contract["customTopic"]["preserveExactUserWording"])
+        self.assertFalse(topic_contract["recentArticleHistoryReadBeforeRecommendations"])
+        self.assertFalse(topic_contract["recentArticleHistoryMayBlockOrReplace"])
+        self.assertGreaterEqual(len(eligible_topics), topic_contract["candidateCount"])
+        self.assertEqual(
+            len({item["topicIdea"] for item in eligible_topics}),
+            len(eligible_topics),
+        )
+        self.assertGreaterEqual(
+            len({item["topicCluster"] for item in eligible_topics}),
+            5,
+        )
+        self.assertTrue(
+            any(
+                "주제 10개" in prompt and "직접 입력" in prompt
+                for prompt in manifest["interface"]["defaultPrompt"]
+            )
+        )
         self.assertTrue(
             all(
                 "정밀작성모드" not in prompt

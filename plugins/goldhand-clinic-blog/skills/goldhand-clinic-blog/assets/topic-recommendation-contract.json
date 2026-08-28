@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "contractId": "goldhand-topic-recommendations-v1",
+  "defaultWorkflowStage": "topic-recommendation-first",
+  "candidateCount": 10,
+  "numberedOutputRequired": true,
+  "displayFormat": "{number}. {topicIdea}",
+  "numberingStart": 1,
+  "numberingEnd": 10,
+  "sourceAsset": "beomeo-topic-idea-library.json",
+  "sourceCollection": "topicIdeas",
+  "sourceTextField": "topicIdea",
+  "autoEligibleRequired": true,
+  "informationTopicOnly": true,
+  "distinctTopicTextRequired": true,
+  "maximizeTopicClusterDiversity": true,
+  "researchRequiredBeforeRecommendations": false,
+  "referenceMasterRequiredBeforeRecommendations": false,
+  "recentArticleHistoryReadBeforeRecommendations": false,
+  "recentArticleHistoryMayBlockOrReplace": false,
+  "displaySourceMetadata": false,
+  "selectionPrompt": "1~10번 중 작성할 주제를 선택하거나, 원하는 주제를 직접 입력해 주세요.",
+  "numberSelection": {
+    "minimum": 1,
+    "maximum": 10,
+    "preserveExactCandidateText": true
+  },
+  "customTopic": {
+    "allowed": true,
+    "preserveExactUserWording": true,
+    "directTopicSkipsRecommendations": true,
+    "recentArticleOverlapMayBlock": false,
+    "silentRewriteAllowed": false
+  }
+}
