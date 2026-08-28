@@ -16,7 +16,8 @@
 - 레퍼런스의 색상·카드·형광·표 프리셋을 가져오지 않음
 - 레퍼런스 업체의 네이버 내부 `se-*` 클래스·로고·사진·지도·연락처를 복사하지 않음. 단, 금손 전용 고정 글말미 묶음은 네이버 붙여넣기 호환을 위해 빌더가 자체 생성한 `se-image`·`se-placesMap` 구조만 사용
 - 본문 첫머리의 별도 표지, 영문 브랜드 띠, 중복 제목을 만들지 않음
-- 생성한 이미지는 최종 article 안에 넣고, 그림이 직접 설명하는 모바일 문단 바로 뒤에 한 장씩 배치. 별도 첨부로 끝내거나 글 끝에 몰아넣지 않음
+- `full-media`에서는 생성한 이미지를 최종 article 안에 넣고, 그림이 직접 설명하는 모바일 문단 바로 뒤에 한 장씩 배치. 별도 첨부로 끝내거나 글 끝에 몰아넣지 않음
+- 이미지 생성·사용 한도·HTTPS 게시 중 하나가 실패하면 이미지 문제만 제거한 `text-only-fallback` HTML을 같은 작업에서 완성
 
 ## article 구조
 
@@ -43,6 +44,7 @@
 
 - `<article>` 정확히 하나
 - `data-goldhand-design-system="goldhand-naver-native-v4"` 정확히 하나
+- 이미지 정상 경로는 `data-image-output-mode` 생략 또는 `full-media`, 이미지 실패 경로는 `data-image-output-mode="text-only-fallback"`와 허용된 `data-image-fallback-reason` 정확히 하나
 - `data-editorial-master-id`와 `data-editorial-reference-source`는 선택한 한 편의 프로필과 동일
 - 기존 `data-master-reference-id`·`data-decoration-master-reference-id`·`data-reference-source`를 쓰면 레이아웃 호환값으로만 사용하고 편집 마스터와 다른 말투를 적용하지 않음
 - 최대 본문 폭 580px
@@ -105,7 +107,37 @@
 - 빨간 글씨: `<span data-goldhand-emphasis="red" style="color:#E53935;font-weight:700;">짧은 안전 경계</span>` 1~2개
 - 전체 6~8개, 각 문구 공백 제외 22자 이하, 중첩 금지. 빨간 글씨는 중단·검사·주의 문구에만 사용
 
-## 실제 진료 사진 1~2장, 마무리 신뢰 사진 1장, GPT Image 3~4장
+## 이미지 출력 방식
+
+기본값은 `full-media`다. 이미지 생성 도구가 없거나, 생성 호출 실패, 사용 한도 도달, 생성본 HTTPS 게시 실패가 발생하면 원고·HTML을 중단하지 않고 즉시 `text-only-fallback`으로 전환한다. 사용자는 재시도하거나 API 키·작품 링크·수동 게시 주소를 제공할 필요가 없다.
+
+허용 사유는 다음 네 값뿐이다.
+
+- `image-generation-unavailable`
+- `image-generation-failed`
+- `image-generation-limit`
+- `image-publication-failed`
+
+fallback article의 루트에는 아래 두 속성을 정확히 한 번 둔다.
+
+```html
+<article
+  data-image-output-mode="text-only-fallback"
+  data-image-fallback-reason="image-generation-unavailable">
+```
+
+fallback에서는 성공한 일부 생성본과 공식 진료·신뢰 사진까지 전부 제거한다. `<figure>`·`<img>`·`data-local-image`·`<figcaption>`·빈 사진 자리표시자는 모두 0개여야 한다. 검수된 제목·산문·표·강조·운영정보는 유지하고, 아래처럼 같은 빌더로 네이버 복사용 HTML을 저장한다.
+
+```bash
+python3 scripts/build_naver_copy_page.py \
+  --title "확정 제목" \
+  --article-html article.html \
+  --text-only-fallback-reason image-generation-unavailable
+```
+
+`validate_article.py --editorial-close`와 `validate_html.py`는 명시된 fallback 사유와 이미지 요소 0개를 함께 확인한다. fallback 표시가 없으면 아래 정상 이미지 수량·배치 계약을 그대로 엄격하게 적용한다.
+
+## 정상 full-media: 실제 진료 사진 1~2장, 마무리 신뢰 사진 1장, GPT Image 3~4장
 
 초반 설명 본문에는 GPT Image 3~4장을 넣는다. 여기서 초반은 원장 소개표 뒤 첫 두 개 설명 섹션이며, 최소 1장은 첫 섹션에 있어야 한다. 실제 **진료 사진**은 `before-credential` 1장 또는 `closing-trust` 2장 가운데 한 배치만 사용한다. 여기에 원장·협약·수료증·기부·봉사 장면을 담은 **마무리 신뢰 사진** 1장을 별도로 더한다. 이 1장은 진료 사진 수량에 포함하지 않고 진료시간 안내 전 마지막 이미지로 둔다. 공식 블로그에서 인덱싱한 113장 전부를 `assets/official-media/GH....jpg|png`로 플러그인에 내장한다. 현재 시각 검수 풀은 진료 사진 6장과 별도 마무리 신뢰 사진 7장이다. 사용자 바탕화면이나 개인별 로컬 사진 폴더는 사용하지 않는다.
 
@@ -142,7 +174,7 @@
 5. `closing-trust`에서는 주제·질환·부위·본문 문맥을 비교하지 않고, 직전 글 미사용 사진을 먼저 선택
 6. `closing-trust` 미사용 사진이 두 장보다 적으면 직전 글의 시각 검수 승인 사진을 재사용해 정확히 두 장 배치
 
-각 후보는 `directorVisible: true`, `sceneType: director-patient-*`, 승인된 사실 묘사 `approvedAlt`를 반드시 충족한다. 금손 로고·간판·건물 외부·약·환제·탕약·장비·제품·빈 원내 공간은 수량이 부족해도 절대 사용하지 않는다. `before-credential`의 문맥 일치 사진 1장 또는 전체 승인 진료 사진 풀의 절대 수량 2장을 채우지 못할 때만 부족을 보고한다.
+각 후보는 `directorVisible: true`, `sceneType: director-patient-*`, 승인된 사실 묘사 `approvedAlt`를 반드시 충족한다. 금손 로고·간판·건물 외부·약·환제·탕약·장비·제품·빈 원내 공간은 수량이 부족해도 절대 사용하지 않는다. `before-credential`의 문맥 일치 사진 1장 또는 전체 승인 진료 사진 풀의 절대 수량 2장을 채우지 못하면 무관한 사진을 쓰거나 멈추지 않고 모든 이미지를 제거한 `text-only-fallback`으로 전환한다.
 
 실제 사진 수는 선택 배치에 따라 1장 또는 2장으로 고정된다. `closing-trust`를 선택했다면 사진을 넣기 위해 무관한 장면 단어를 본문에 추가하지도, 문맥이 다르다는 이유로 사진을 빼지도 않는다.
 
@@ -219,6 +251,7 @@
 5. GPT Image 생성 결과를 `~/Desktop/금손한의원 블로그/이미지/{주제}-GPT이미지/`에 저장한다.
 6. article 원고에는 OGQ 미리보기나 원본을 넣지 않고 생성본의 절대 경로만 넣는다. 생성본은 관련 핵심어가 실제로 들어간 모바일 문단 바로 뒤의 `<figure>`로 삽입하며 보이는 캡션은 넣지 않는다. 복사용 HTML 빌드에서는 금손 전용 호스트에 생성본을 게시하고 공개 HTTPS 주소로 치환한다.
 7. 구매·가격·라이선스 선택은 묻지 않는다. 사용자의 본인 소유 확인이 이 전용 워크플로의 사용 권한 입력이다.
+8. 이미지 생성 도구가 없거나 호출·사용 한도가 실패하면 성공한 일부 결과도 사용하지 않고 위 `text-only-fallback`으로 전환해 글과 HTML을 완성한다.
 
 ```html
 <figure data-reference-role="evidence-media"
@@ -265,7 +298,7 @@ data-generation-variation-mode="callilife-style-original-composition"
 ### 네이버 사진 복사 계약
 
 - 공개 HTTPS `img src`만으로는 충분하지 않다. 복사 시 각 사진을 네이버 순정 `se-image`로 바꾸고, `se-module-image-loaded` 안에 `a[data-linktype="img"][data-linkdata]`와 `img.se-image-resource`를 중첩한다.
-- `data-linkdata`에는 컴포넌트 고유 ID, HTTPS 원본 주소, 실제 로드한 원본 가로·세로를 넣는다. 복사 버튼은 모든 이미지의 로드와 크기 확인이 끝난 뒤에만 활성화하고 하나라도 실패하면 사진 없는 원고를 복사하지 않는다.
+- `full-media`의 `data-linkdata`에는 컴포넌트 고유 ID, HTTPS 원본 주소, 실제 로드한 원본 가로·세로를 넣는다. 복사 버튼은 모든 이미지의 로드와 크기 확인이 끝난 뒤에만 활성화한다. 게시 또는 로드 검증이 실패하면 해당 결과를 배포하지 않고 `image-publication-failed`인 이미지 요소 0개 HTML을 다시 만들어 복사 버튼을 정상 활성화한다.
 - `file:`에서 선택 영역으로 복사할 때와 HTTP에서 `ClipboardItem`으로 복사할 때 모두 입력 버퍼와 같은 순정 이미지 HTML을 사용한다. 어느 경로에서도 미리보기용 일반 `<figure>`를 대신 복사하지 않는다.
 - 사진 캡션을 쓰지 않는 글에는 `사진 설명을 입력하세요.`나 빈 `se-caption`을 생성하지 않는다. 복사 미리보기는 `images == imageDataLinks`, `orphanImageCaptions == 0`이어야 한다.
 
@@ -279,6 +312,8 @@ data-generation-variation-mode="callilife-style-original-composition"
 - 운동 강도를 오해시킬 수 있는 동작 이미지를 설명 없이 삽입
 - 위석 블로그에 표시된 이미지 URL을 그대로 복사
 - 주제 일치 callilife 작품이 부족하거나 목록·미리보기 조회가 실패했다는 이유로 원고·HTML을 중단하거나 사용자에게 작품 링크를 요구
+- 이미지 생성 도구 부재·호출 실패·사용 한도·게시 실패를 이유로 원고·HTML을 중단하거나 재시도·API 키·수동 링크를 요구
+- `text-only-fallback`에 일부 이미지·캡션·깨진 자리표시자·로컬 경로를 남김
 - `callilife-style-original` 경로에서 무관한 개별 작품의 내용·구도·문구를 복제
 
 ## 그 밖의 사용자 제공 이미지
@@ -299,7 +334,7 @@ data-generation-variation-mode="callilife-style-original-composition"
 - `blockquote`, `hr`, `table` 등 네이버가 순정 컴포넌트로 변환할 구조 태그는 유지
 - 원격 이미지는 `data-reference-source-url` 값을 `src`로 복원
 - 로컬 이미지는 빌드 단계에서 금손 전용 호스트에 게시한 뒤 HTTPS URL로 변환
-- HTTPS 게시나 원격 이미지 확인이 실패하면 base64로 우회하지 않고 빌드 중단
+- HTTPS 게시나 원격 이미지 확인이 실패하면 base64로 우회하지 않고 `image-publication-failed`인 이미지 요소 0개 HTML로 자동 전환
 - 빈 줄은 U+2060으로 보존
 - `ClipboardItem`에 `text/html`과 `text/plain`을 함께 제공
 - 금손 고정 글말미의 `se-image`·`se-placesMap`과 `data-module-v2` 두 개는 검수용 속성 제거 대상에서 제외

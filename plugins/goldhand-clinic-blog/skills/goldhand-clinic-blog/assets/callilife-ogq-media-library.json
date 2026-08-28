@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "creator": "callilife",
   "creatorUrl": "https://ogqmarket.naver.com/creators/callilife?type=STOCK_IMAGE",
   "ownershipBasis": "user-confirmed-2026-08-21",
@@ -45,6 +45,30 @@
         "decorative-copy",
         "unsupported-medical-claim"
       ]
+    }
+  },
+  "imageGenerationFailureFallback": {
+    "mode": "text-only-fallback",
+    "triggerConditions": [
+      "built-in-image-tool-unavailable",
+      "image-generation-call-failed",
+      "image-generation-limit-reached",
+      "generated-image-publication-failed"
+    ],
+    "mustContinueArticle": true,
+    "mustProduceHtml": true,
+    "retryOrApiKeyRequired": false,
+    "removeAllFigureAndImageElements": true,
+    "visiblePlaceholderAllowed": false,
+    "allowedReasons": [
+      "image-generation-unavailable",
+      "image-generation-failed",
+      "image-generation-limit",
+      "image-publication-failed"
+    ],
+    "requiredArticleAttributes": {
+      "data-image-output-mode": "text-only-fallback",
+      "data-image-fallback-reason": "one-approved-trigger-reason"
     }
   },
   "publicationPolicy": "OGQ 작품은 GPT Image 입력 레퍼런스로만 사용하고 완성 글에는 로컬 생성본만 삽입",

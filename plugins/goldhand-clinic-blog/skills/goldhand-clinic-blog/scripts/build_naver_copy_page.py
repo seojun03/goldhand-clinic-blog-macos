@@ -30,6 +30,13 @@ ALLOWED_CLOSING_TRUST_SCENES = {
     "credential-detail",
 }
 LOGO_DESCRIPTOR = re.compile(r"(?:로고|logo)", re.I)
+IMAGE_OUTPUT_MODE_TEXT_ONLY = "text-only-fallback"
+ALLOWED_IMAGE_FALLBACK_REASONS = (
+    "image-generation-unavailable",
+    "image-generation-failed",
+    "image-generation-limit",
+    "image-publication-failed",
+)
 
 
 def codex_home_dir() -> Path:
@@ -46,6 +53,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--title", required=True)
     parser.add_argument("--article-html", required=True, type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--text-only-fallback-reason",
+        choices=ALLOWED_IMAGE_FALLBACK_REASONS,
+        help="이미지 파이프라인 실패 시 모든 이미지 요소를 제거하고 텍스트 중심 HTML을 완성합니다.",
+    )
     return parser.parse_args()
 
 
@@ -125,6 +137,22 @@ def strip_visible_trust_photo_context(article: str) -> str:
         cleaned,
         flags=re.I | re.S,
     )
+
+
+def make_text_only_fallback(article: str, reason: str) -> str:
+    """Remove the whole image layer so a failed image run still yields clean HTML."""
+
+    if reason not in ALLOWED_IMAGE_FALLBACK_REASONS:
+        raise ValueError(f"허용되지 않은 이미지 fallback 사유입니다: {reason}")
+    cleaned = strip_visible_image_captions(strip_visible_trust_photo_context(article))
+    cleaned = re.sub(r"\s*<figure\b[^>]*>.*?</figure>\s*", "\n", cleaned, flags=re.I | re.S)
+    cleaned = re.sub(r"\s*<img\b[^>]*>\s*", "\n", cleaned, flags=re.I | re.S)
+    opening_match = re.search(r"<article\b[^>]*>", cleaned, flags=re.I | re.S)
+    if opening_match is None:
+        raise ValueError("텍스트 전용 fallback을 적용할 article이 없습니다.")
+    opening = set_attribute(opening_match.group(0), "data-image-output-mode", IMAGE_OUTPUT_MODE_TEXT_ONLY)
+    opening = set_attribute(opening, "data-image-fallback-reason", reason)
+    return cleaned[:opening_match.start()] + opening + cleaned[opening_match.end():]
 
 
 def validate_credential_placement(article: str) -> None:
@@ -321,6 +349,20 @@ def rewrite_img_tags(article: str, published_local_images: dict[Path, str] | Non
         return tag
 
     return re.sub(r"<img\b[^>]*>", rewrite, article, flags=re.I | re.S)
+
+
+def publish_or_text_only_fallback(article: str) -> tuple[str, str]:
+    """Publish local images, or remove the complete image layer when publishing fails."""
+
+    if "data-local-image=" not in article:
+        return rewrite_img_tags(article), ""
+    try:
+        project_dir, public_base_url = image_host_config()
+        published_local_images = publish_local_images(article, project_dir, public_base_url)
+    except (OSError, UnicodeError, ValueError):
+        reason = "image-publication-failed"
+        return make_text_only_fallback(article, reason), reason
+    return rewrite_img_tags(article, published_local_images), ""
 
 
 def set_attribute(tag: str, name: str, value: str) -> str:
@@ -628,6 +670,7 @@ def build_page(
             const name = attribute.name.toLowerCase();
             if (name.startsWith('data-goldhand-') || name.startsWith('data-reference-') ||
                 name.startsWith('data-editorial-') ||
+                name.startsWith('data-image-') ||
                 name === 'data-question-source' || name === 'data-mobile-group' ||
                 name === 'data-naver-native-component' || name.startsWith('data-native-table-')) {{
               element.removeAttribute(attribute.name);
@@ -855,18 +898,21 @@ def main() -> int:
     args = parse_args()
     try:
         article = strip_visible_image_captions(article_fragment(args.article_html.read_text(encoding="utf-8")))
+        if args.text_only_fallback_reason:
+            article = make_text_only_fallback(article, args.text_only_fallback_reason)
         validate_credential_placement(article)
-        published_local_images: dict[Path, str] = {}
-        if "data-local-image=" in article:
-            project_dir, public_base_url = image_host_config()
-            published_local_images = publish_local_images(article, project_dir, public_base_url)
-        article = rewrite_img_tags(article, published_local_images)
+        article, automatic_fallback_reason = publish_or_text_only_fallback(article)
         target = output_path(args.title, args.output)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(build_page(args.title, article), encoding="utf-8")
     except (OSError, UnicodeError, ValueError) as exc:
         print(f"HTML 저장 실패: {exc}", file=sys.stderr)
         return 1
+    if automatic_fallback_reason:
+        print(
+            "이미지 게시를 완료하지 못해 이미지 요소를 모두 제거한 텍스트 중심 HTML로 전환했습니다.",
+            file=sys.stderr,
+        )
     print(target.resolve())
     return 0
 

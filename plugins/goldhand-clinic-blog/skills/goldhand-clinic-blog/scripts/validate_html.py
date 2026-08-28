@@ -54,6 +54,14 @@ REQUIRED_SNIPPETS = {
     "copy-image-preview": "imageDataLinks:",
     "copy-caption-preview": "orphanImageCaptions:",
 }
+IMAGE_OUTPUT_MODE_FULL = "full-media"
+IMAGE_OUTPUT_MODE_TEXT_ONLY = "text-only-fallback"
+ALLOWED_IMAGE_FALLBACK_REASONS = {
+    "image-generation-unavailable",
+    "image-generation-failed",
+    "image-generation-limit",
+    "image-publication-failed",
+}
 
 
 def add(issues: list[dict[str, str]], severity: str, code: str, detail: str) -> None:
@@ -63,6 +71,66 @@ def add(issues: list[dict[str, str]], severity: str, code: str, detail: str) -> 
 def attr_values(fragment: str, attribute: str) -> list[str]:
     pattern = re.compile(rf"\b{re.escape(attribute)}\s*=\s*(['\"])(.*?)\1", re.I | re.S)
     return [match.group(2).strip() for match in pattern.finditer(fragment)]
+
+
+def image_output_contract(
+    article: str,
+    issues: list[dict[str, str]],
+) -> tuple[str, str]:
+    opening_match = re.match(r"<article\b[^>]*>", article, flags=re.I | re.S)
+    opening = opening_match.group(0) if opening_match else ""
+    mode_values = attr_values(opening, "data-image-output-mode")
+    reason_values = attr_values(opening, "data-image-fallback-reason")
+
+    if not mode_values:
+        mode = IMAGE_OUTPUT_MODE_FULL
+    elif len(mode_values) == 1 and mode_values[0] in {
+        IMAGE_OUTPUT_MODE_FULL,
+        IMAGE_OUTPUT_MODE_TEXT_ONLY,
+    }:
+        mode = mode_values[0]
+    else:
+        mode = ""
+        add(
+            issues,
+            "error",
+            "image-output-mode-invalid",
+            "이미지 출력 방식은 full-media 또는 text-only-fallback 중 정확히 하나여야 합니다.",
+        )
+
+    if mode == IMAGE_OUTPUT_MODE_TEXT_ONLY:
+        reason = reason_values[0] if len(reason_values) == 1 else ""
+        if reason not in ALLOWED_IMAGE_FALLBACK_REASONS:
+            add(
+                issues,
+                "error",
+                "image-fallback-reason-invalid",
+                "텍스트 전용 HTML에는 허용된 이미지 실패 사유를 정확히 하나 기록해야 합니다.",
+            )
+        if re.search(r"<(?:figure|img)\b", article, flags=re.I):
+            add(
+                issues,
+                "error",
+                "text-only-fallback-image-present",
+                "텍스트 전용 HTML에는 일부 사진이나 깨진 이미지 자리를 남길 수 없습니다.",
+            )
+        if re.search(r"\bdata-local-image\s*=", article, flags=re.I):
+            add(
+                issues,
+                "error",
+                "text-only-fallback-local-image-present",
+                "텍스트 전용 HTML에는 로컬 이미지 경로를 남길 수 없습니다.",
+            )
+        return mode, reason
+
+    if reason_values:
+        add(
+            issues,
+            "error",
+            "image-fallback-reason-unexpected",
+            "일반 이미지 출력 경로에는 fallback 실패 사유를 기록하지 않습니다.",
+        )
+    return mode or IMAGE_OUTPUT_MODE_FULL, ""
 
 
 def explanatory_heading_candidates(article: str) -> list[re.Match[str]]:
@@ -173,6 +241,8 @@ def contains_only_preview_gaps_and_before_credential_photo(fragment: str) -> boo
 
 def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]:
     issues: list[dict[str, str]] = []
+    image_output_mode = IMAGE_OUTPUT_MODE_FULL
+    image_fallback_reason = ""
     editorial_close = bool(
         re.search(
             r"<article\b[^>]*(?:\bdata-editorial-mode\s*=\s*['\"]close-adaptation['\"]|"
@@ -202,6 +272,8 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
         add(issues, "error", "custom-box-marker", "CSS 카드용 data-goldhand-box가 남아 있습니다.")
     if article_match:
         article_html = article_match.group(0)
+        image_output_mode, image_fallback_reason = image_output_contract(article_html, issues)
+        text_only_fallback = image_output_mode == IMAGE_OUTPUT_MODE_TEXT_ONLY
         forbidden_closing_patterns = (
             r"data-goldhand-closing-links\s*=",
             r"(?:&lt;|<)함께 보면 좋은 글(?:&gt;|>)",
@@ -228,11 +300,11 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
         generated_image_count = len(
             re.findall(r"<img\b(?=[^>]*\bdata-media-provider\s*=\s*['\"]gpt-image['\"])[^>]*>", article_html, flags=re.I | re.S)
         )
-        if editorial_close and not 1 <= real_photo_count <= 2:
+        if editorial_close and not text_only_fallback and not 1 <= real_photo_count <= 2:
             add(issues, "error", "real-photo-count", f"복사용 HTML의 실제 금손 사진은 1~2장이어야 합니다. 현재 {real_photo_count}장입니다.")
-        if editorial_close and trust_photo_count != 1:
+        if editorial_close and not text_only_fallback and trust_photo_count != 1:
             add(issues, "error", "trust-photo-count", f"복사용 HTML의 마무리 신뢰 사진은 실제 진료 사진과 별도로 정확히 1장이어야 합니다. 현재 {trust_photo_count}장입니다.")
-        if editorial_close and not 3 <= generated_image_count <= 4:
+        if editorial_close and not text_only_fallback and not 3 <= generated_image_count <= 4:
             add(issues, "error", "generated-image-count", f"복사용 HTML의 GPT Image는 3~4장이어야 합니다. 현재 {generated_image_count}장입니다.")
         solution_matches: list[re.Match[str]] = []
         credential_matches = list(
@@ -724,6 +796,8 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
             "articleCount": article_count,
             "copyRootCount": copy_root_count,
             "sizeBytes": size_bytes,
+            "imageOutputMode": image_output_mode,
+            "imageFallbackReason": image_fallback_reason,
             "realPhotos": real_photo_count,
             "trustPhotos": trust_photo_count,
             "generatedImages": generated_image_count,

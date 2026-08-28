@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 12,
+  "schemaVersion": 13,
   "id": "goldhand-naver-native-v4",
   "name": "금손한의원 네이버 스마트에디터 중앙 정렬·노란 강조·순정 표 시스템",
   "editorEvidence": {
@@ -351,6 +351,20 @@
       "requiredStyleSourceUrl": "https://ogqmarket.naver.com/creators/callilife?type=STOCK_IMAGE",
       "requiredContentPreservation": "article-context-original-composition",
       "requiredVariationMode": "callilife-style-original-composition"
+    },
+    "imageGenerationFailureFallback": {
+      "requiredMode": "text-only-fallback",
+      "mustContinueArticle": true,
+      "mustProduceHtml": true,
+      "allowedReasons": [
+        "image-generation-unavailable",
+        "image-generation-failed",
+        "image-generation-limit",
+        "image-publication-failed"
+      ],
+      "removeAllFigureAndImageElements": true,
+      "visiblePlaceholderAllowed": false,
+      "standardMediaCountsRemainStrictOutsideFallback": true
     },
     "personCenteredRule": "그림체·동작·구도·정보는 유지하고 얼굴·헤어·피부색·체형·의상 중 2~3개만 미세 변경",
     "nonPersonCenteredRule": "핵심 사물·정보·구도·표기는 유지하고 선·채색·명암·질감 중 1~2개만 미세 변경",

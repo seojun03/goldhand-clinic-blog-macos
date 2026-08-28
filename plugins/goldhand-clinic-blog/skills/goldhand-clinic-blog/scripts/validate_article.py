@@ -105,6 +105,14 @@ ALLOWED_CLOSING_TRUST_SCENES = {
     "director-community-pose",
     "credential-detail",
 }
+IMAGE_OUTPUT_MODE_FULL = "full-media"
+IMAGE_OUTPUT_MODE_TEXT_ONLY = "text-only-fallback"
+ALLOWED_IMAGE_FALLBACK_REASONS = {
+    "image-generation-unavailable",
+    "image-generation-failed",
+    "image-generation-limit",
+    "image-publication-failed",
+}
 
 
 def default_state_path() -> Path:
@@ -147,6 +155,68 @@ def article_fragment(raw: str) -> str:
 def attr_values(fragment: str, attribute: str) -> list[str]:
     pattern = re.compile(rf"\b{re.escape(attribute)}\s*=\s*(['\"])(.*?)\1", re.I | re.S)
     return [html.unescape(match.group(2)).strip() for match in pattern.finditer(fragment)]
+
+
+def image_output_contract(
+    article: str,
+    issues: list[dict[str, object]],
+) -> tuple[str, str]:
+    """Validate the explicit no-image escape hatch without weakening full-media articles."""
+
+    article_tag_match = re.search(r"<article\b[^>]*>", article, flags=re.I | re.S)
+    article_tag = article_tag_match.group(0) if article_tag_match else ""
+    mode_values = attr_values(article_tag, "data-image-output-mode")
+    reason_values = attr_values(article_tag, "data-image-fallback-reason")
+
+    if not mode_values:
+        mode = IMAGE_OUTPUT_MODE_FULL
+    elif len(mode_values) == 1 and mode_values[0] in {
+        IMAGE_OUTPUT_MODE_FULL,
+        IMAGE_OUTPUT_MODE_TEXT_ONLY,
+    }:
+        mode = mode_values[0]
+    else:
+        mode = ""
+        add(
+            issues,
+            "error",
+            "image-output-mode-invalid",
+            "이미지 출력 방식은 full-media 또는 text-only-fallback 중 정확히 하나여야 합니다.",
+        )
+
+    if mode == IMAGE_OUTPUT_MODE_TEXT_ONLY:
+        reason = reason_values[0] if len(reason_values) == 1 else ""
+        if reason not in ALLOWED_IMAGE_FALLBACK_REASONS:
+            add(
+                issues,
+                "error",
+                "image-fallback-reason-invalid",
+                "텍스트 전용 HTML에는 허용된 이미지 실패 사유를 정확히 하나 기록해야 합니다.",
+            )
+        if re.search(r"<(?:figure|img)\b", article, flags=re.I):
+            add(
+                issues,
+                "error",
+                "text-only-fallback-image-present",
+                "텍스트 전용 fallback에는 깨진 자리나 일부 사진을 남기지 않고 모든 figure와 img를 제거해야 합니다.",
+            )
+        if re.search(r"\bdata-local-image\s*=", article, flags=re.I):
+            add(
+                issues,
+                "error",
+                "text-only-fallback-local-image-present",
+                "텍스트 전용 fallback에는 로컬 이미지 경로를 남길 수 없습니다.",
+            )
+        return mode, reason
+
+    if reason_values:
+        add(
+            issues,
+            "error",
+            "image-fallback-reason-unexpected",
+            "일반 이미지 출력 경로에는 fallback 실패 사유를 기록하지 않습니다.",
+        )
+    return mode or IMAGE_OUTPUT_MODE_FULL, ""
 
 
 def without_editorial_reference_source(fragment: str) -> str:
@@ -1693,6 +1763,9 @@ def validate_article(
     if article_type not in ALLOWED_TYPES:
         add(issues, "error", "invalid-type", f"허용되지 않은 글 유형: {article_type or '없음'}")
 
+    image_output_mode, image_fallback_reason = image_output_contract(article, issues)
+    text_only_fallback = image_output_mode == IMAGE_OUTPUT_MODE_TEXT_ONLY
+
     if editorial_close and writing_intelligence is None:
         try:
             writing_intelligence = json.loads(DEFAULT_WRITING_INTELLIGENCE.read_text(encoding="utf-8"))
@@ -2211,11 +2284,11 @@ def validate_article(
             article,
             issues,
             official_assets,
-            require_generated=editorial_close,
-            require_real=editorial_close,
-            require_trust=editorial_close,
+            require_generated=editorial_close and not text_only_fallback,
+            require_real=editorial_close and not text_only_fallback,
+            require_trust=editorial_close and not text_only_fallback,
         )
-        if editorial_close:
+        if editorial_close and not text_only_fallback:
             media_layout_checks(article, issues)
             trust_layout_checks(article, issues)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
@@ -2271,6 +2344,8 @@ def validate_article(
         "metrics": {
             "editorialClose": editorial_close,
             "type": article_type,
+            "imageOutputMode": image_output_mode,
+            "imageFallbackReason": image_fallback_reason,
             "nonWhitespaceChars": combined_chars,
             "titleKeywordCount": title_keyword_count,
             "bodyKeywordCount": body_keyword_count,

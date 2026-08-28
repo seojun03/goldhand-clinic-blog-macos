@@ -893,6 +893,10 @@ def callilife_style_original_article() -> str:
     )
 
 
+def text_only_fallback_article(reason: str = "image-generation-unavailable") -> str:
+    return PAGE_BUILDER.make_text_only_fallback(editorial_close_article(), reason)
+
+
 def editorial_fixture_media_library() -> dict[str, dict[str, object]]:
     """Keep generic article tests focused while production assets stay scene-specific."""
     payload = json.loads((SKILL_DIR / "assets" / "media-library.json").read_text(encoding="utf-8"))
@@ -1522,6 +1526,53 @@ class ArticleTests(unittest.TestCase):
             media_library=editorial_fixture_media_library(),
         )
         self.assertEqual(result["status"], "pass", result)
+
+    def test_editorial_close_accepts_text_only_fallback_when_image_generation_fails(self) -> None:
+        article = text_only_fallback_article()
+        result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertEqual(result["status"], "pass", result)
+        self.assertEqual(result["metrics"]["imageOutputMode"], "text-only-fallback")
+        self.assertEqual(result["metrics"]["imageFallbackReason"], "image-generation-unavailable")
+        self.assertEqual(result["metrics"]["images"], 0)
+        self.assertEqual(result["metrics"]["generatedImages"], 0)
+        self.assertEqual(result["metrics"]["realPhotos"], 0)
+        self.assertEqual(result["metrics"]["trustPhotos"], 0)
+
+    def test_text_only_fallback_requires_a_supported_failure_reason(self) -> None:
+        article = text_only_fallback_article().replace(
+            'data-image-fallback-reason="image-generation-unavailable"',
+            'data-image-fallback-reason="unknown"',
+            1,
+        )
+        result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertIn("image-fallback-reason-invalid", {item["code"] for item in result["issues"]})
+
+    def test_text_only_fallback_rejects_residual_image_elements(self) -> None:
+        article = text_only_fallback_article().replace(
+            "</article>",
+            '<img src="https://example.com/residual.png" alt="남은 이미지"></article>',
+            1,
+        )
+        result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertIn("text-only-fallback-image-present", {item["code"] for item in result["issues"]})
 
     def test_editorial_close_rejects_style_original_without_creator_source(self) -> None:
         article = callilife_style_original_article().replace(
@@ -2470,6 +2521,59 @@ class BuilderTests(unittest.TestCase):
         self.assertNotIn('<div class="se-caption', page)
         result = HTML_VALIDATOR.validate_html(page)
         self.assertEqual(result["status"], "pass", result)
+
+    def test_copy_page_builds_valid_text_only_html_after_image_generation_failure(self) -> None:
+        article = text_only_fallback_article("image-generation-failed")
+        self.assertNotRegex(article, r"<(?:figure|img)\b")
+        page = PAGE_BUILDER.build_page(EDITORIAL_TITLE, article)
+        result = HTML_VALIDATOR.validate_html(page)
+        self.assertEqual(result["status"], "pass", result)
+        self.assertEqual(result["metrics"]["imageOutputMode"], "text-only-fallback")
+        self.assertEqual(result["metrics"]["imageFallbackReason"], "image-generation-failed")
+        self.assertEqual(result["metrics"]["generatedImages"], 0)
+        self.assertEqual(result["metrics"]["realPhotos"], 0)
+        self.assertEqual(result["metrics"]["trustPhotos"], 0)
+        self.assertIn("expectedImageCount > 0 ? 'pending' : 'ready'", page)
+
+    def test_copy_page_rejects_residual_image_in_text_only_fallback(self) -> None:
+        article = text_only_fallback_article().replace(
+            "</article>",
+            '<img src="https://example.com/residual.png" alt="남은 이미지"></article>',
+            1,
+        )
+        result = HTML_VALIDATOR.validate_html(PAGE_BUILDER.build_page(EDITORIAL_TITLE, article))
+        self.assertIn("text-only-fallback-image-present", {item["code"] for item in result["issues"]})
+
+    def test_builder_automatically_falls_back_when_image_publication_is_unavailable(self) -> None:
+        article = editorial_close_article()
+        self.assertIn("data-local-image=", article)
+        with mock.patch.object(
+            PAGE_BUILDER,
+            "image_host_config",
+            side_effect=ValueError("이미지 호스트를 사용할 수 없음"),
+        ):
+            rewritten, reason = PAGE_BUILDER.publish_or_text_only_fallback(article)
+        self.assertEqual(reason, "image-publication-failed")
+        self.assertIn('data-image-output-mode="text-only-fallback"', rewritten)
+        self.assertIn('data-image-fallback-reason="image-publication-failed"', rewritten)
+        self.assertNotRegex(rewritten, r"<(?:figure|img)\b")
+        self.assertNotIn("data-local-image", rewritten)
+        validation = ARTICLE_VALIDATOR.validate_article(
+            rewritten,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertEqual(validation["status"], "pass", validation)
+        page_validation = HTML_VALIDATOR.validate_html(
+            PAGE_BUILDER.build_page(EDITORIAL_TITLE, rewritten)
+        )
+        self.assertEqual(page_validation["status"], "pass", page_validation)
+        self.assertEqual(page_validation["metrics"]["imageOutputMode"], "text-only-fallback")
+        self.assertEqual(page_validation["metrics"]["generatedImages"], 0)
+        self.assertEqual(page_validation["metrics"]["realPhotos"], 0)
+        self.assertEqual(page_validation["metrics"]["trustPhotos"], 0)
 
     def test_build_page_publishes_local_image_as_https(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -3882,7 +3986,7 @@ class SkillPackageTests(unittest.TestCase):
         self.assertTrue(style_fallback["requiredWhenCreatorOrArtworkPageUnavailable"])
         self.assertTrue(style_fallback["mustContinueArticle"])
         self.assertFalse(style_fallback["userArtworkLinksRequired"])
-        self.assertEqual(callilife["schemaVersion"], 4)
+        self.assertEqual(callilife["schemaVersion"], 5)
         self.assertEqual(callilife["styleOriginalFallback"]["mode"], "callilife-style-original")
         self.assertTrue(callilife["styleOriginalFallback"]["mustContinueArticle"])
         self.assertFalse(callilife["styleOriginalFallback"]["userArtworkLinksRequired"])
@@ -3890,6 +3994,21 @@ class SkillPackageTests(unittest.TestCase):
             callilife["styleOriginalFallback"]["compositionSource"],
             "article-context-only",
         )
+        generation_failure = callilife["imageGenerationFailureFallback"]
+        self.assertEqual(generation_failure["mode"], "text-only-fallback")
+        self.assertTrue(generation_failure["mustContinueArticle"])
+        self.assertTrue(generation_failure["mustProduceHtml"])
+        self.assertFalse(generation_failure["retryOrApiKeyRequired"])
+        self.assertTrue(generation_failure["removeAllFigureAndImageElements"])
+        design_generation_failure = design["generatedReferenceMedia"]["imageGenerationFailureFallback"]
+        self.assertEqual(
+            generation_failure["allowedReasons"],
+            design_generation_failure["allowedReasons"],
+        )
+        self.assertEqual(design_generation_failure["requiredMode"], "text-only-fallback")
+        self.assertTrue(design_generation_failure["mustContinueArticle"])
+        self.assertTrue(design_generation_failure["mustProduceHtml"])
+        self.assertTrue(design_generation_failure["standardMediaCountsRemainStrictOutsideFallback"])
         self.assertEqual(design["tablePurposes"]["clinic-hours"]["columnWidths"], ["24%", "38%", "38%"])
         self.assertEqual(design["tablePurposes"]["clinic-hours"]["minimumRows"], 4)
         self.assertEqual(design["tablePurposes"]["clinic-hours"]["maximumRows"], 4)

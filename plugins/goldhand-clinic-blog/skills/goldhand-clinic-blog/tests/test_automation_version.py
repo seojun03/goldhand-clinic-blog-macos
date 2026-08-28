@@ -279,6 +279,8 @@ class AutomationVersionTests(unittest.TestCase):
         self.assertIn("callilife 개별 작품을 찾지 못하거나", briefing_line)
         self.assertIn("링크를 요구하지 않고", briefing_line)
         self.assertIn("callilife 그림체로 생성해 끝까지 완성", briefing_line)
+        self.assertIn("텍스트 중심 HTML로 자동 전환", briefing_line)
+        self.assertIn("복사용 HTML을 끝까지 완성", briefing_line)
 
 
 if __name__ == "__main__":
