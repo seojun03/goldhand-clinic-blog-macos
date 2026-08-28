@@ -15,7 +15,8 @@ PLUGIN_ROOT = ROOT / "plugins" / PLUGIN_NAME
 MARKETPLACE_NAME = "goldhand-clinic-macos"
 REPOSITORY = "seojun03/goldhand-clinic-blog-macos"
 PUBLIC_VERSION_RE = re.compile(
-    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\+codex\.\d{14}$"
+    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\+codex\."
+    r"(?:\d{14}|managed\.macos\.\d{14}\.\d+)$"
 )
 
 
