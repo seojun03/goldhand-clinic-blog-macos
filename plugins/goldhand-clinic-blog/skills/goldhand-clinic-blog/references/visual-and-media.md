@@ -205,19 +205,20 @@
 
 ## 사용자 소유 callilife 작품을 GPT Image로 재생성
 
-의료 개념과 운동 동작을 눈으로 설명할 때는 사용자가 본인 소유라고 확인한 [callilife 크리에이터 페이지](https://ogqmarket.naver.com/creators/callilife?type=STOCK_IMAGE)를 시각 레퍼런스 라이브러리로 사용한다. 현재 주제와 직접 일치하는 작품을 검색하고 후보·레퍼런스·생성본 경로는 `assets/callilife-ogq-media-library.json`에 기록한다.
+의료 개념과 운동 동작을 눈으로 설명할 때는 사용자가 본인 소유라고 확인한 [callilife 크리에이터 페이지](https://ogqmarket.naver.com/creators/callilife?type=STOCK_IMAGE)를 시각 레퍼런스 라이브러리로 우선 사용한다. 현재 주제와 직접 일치하는 작품을 검색하고 후보·레퍼런스·생성본 경로는 `assets/callilife-ogq-media-library.json`에 기록한다. 주제 일치 작품이 3개 미만이거나 크리에이터 페이지·작품 목록·상세 미리보기를 불러오지 못해도 이미지 단계와 글 작성을 중단하지 않는다. 개별 작품 링크를 사용자에게 요청하지 않고 `styleOriginalFallback`의 callilife 그림체 프로필과 글의 관련 문단을 이용해 새 구도의 원본 이미지를 만든다.
 
 고정 절차:
 
-1. 글의 증상명·부위·운동명을 검색해 초반 설명 본문의 서로 다른 내용을 실제로 설명하는 작품 3~4개를 고른다.
-2. 작품 상세 페이지의 미리보기를 GPT Image 입력용 레퍼런스로만 내려받는다.
-3. 작품마다 인물 중심과 비인물 중심을 먼저 분류한 뒤 내장 GPT Image를 한 번씩 별도로 호출한다.
+1. 글의 증상명·부위·운동명을 검색해 초반 설명 본문의 서로 다른 내용을 실제로 설명하는 `safeAuto=true` 작품을 우선 고른다.
+2. 주제 일치 작품과 상세 미리보기를 3~4개 확보하면 작품 재현 경로를 쓴다. 작품이 3개 미만이거나 페이지·목록·미리보기 조회가 실패하면 부족한 수량 또는 전체 수량을 `callilife-style-original` 경로로 즉시 전환한다. 이 전환은 사용자 확인·작품 링크·재시도를 요구하지 않는다.
+3. 작품 재현 경로에서는 작품마다 인물 중심과 비인물 중심을 먼저 분류한 뒤 내장 GPT Image를 한 번씩 별도로 호출한다.
    - 인물 중심: 동작·자세·구도·화살표·각도·표기·원래 그림체는 그대로 유지한다. 얼굴형·이목구비·헤어·피부색·체형·의상 색이나 디테일 가운데 2~3개만 미세하게 바꿔 다른 인물로 보이게 한다.
    - 비인물 중심: 핵심 사물·의학 정보·구도·화살표·각도·표기 위치는 그대로 유지한다. 선 굵기·채색 방식·명암·질감 가운데 1~2개만 살짝 바꿔 같은 내용을 다른 그림체로 표현한다.
    - 워터마크만 제거하고 새 장식·추가 문구·추가 의료 주장은 만들지 않는다.
-4. GPT Image 생성 결과를 `~/Desktop/금손한의원 블로그/이미지/{주제}-GPT이미지/`에 저장한다.
-5. article 원고에는 OGQ 미리보기나 원본을 넣지 않고 생성본의 절대 경로만 넣는다. 생성본은 관련 핵심어가 실제로 들어간 모바일 문단 바로 뒤의 `<figure>`로 삽입하며 보이는 캡션은 넣지 않는다. 복사용 HTML 빌드에서는 금손 전용 호스트에 생성본을 게시하고 공개 HTTPS 주소로 치환한다.
-6. 구매·가격·라이선스 선택은 묻지 않는다. 사용자의 본인 소유 확인이 이 전용 워크플로의 사용 권한 입력이다.
+4. 그림체 원본 생성 경로에서는 개별 OGQ 작품을 입력하지 않는다. 확정 주제와 이미지 바로 앞 문단의 증상·동작·생활 장면을 한 이미지의 유일한 내용으로 삼고, `styleOriginalFallback.promptStyleProfile`의 따뜻한 저채도 파스텔, 부드러운 손그림 선, 여백이 있는 건강정보 삽화 구성을 적용한다. 사진풍·3D·광택 효과·의료 혐오 표현·로고·워터마크·장식 문구·새 의료 주장은 넣지 않는다.
+5. GPT Image 생성 결과를 `~/Desktop/금손한의원 블로그/이미지/{주제}-GPT이미지/`에 저장한다.
+6. article 원고에는 OGQ 미리보기나 원본을 넣지 않고 생성본의 절대 경로만 넣는다. 생성본은 관련 핵심어가 실제로 들어간 모바일 문단 바로 뒤의 `<figure>`로 삽입하며 보이는 캡션은 넣지 않는다. 복사용 HTML 빌드에서는 금손 전용 호스트에 생성본을 게시하고 공개 HTTPS 주소로 치환한다.
+7. 구매·가격·라이선스 선택은 묻지 않는다. 사용자의 본인 소유 확인이 이 전용 워크플로의 사용 권한 입력이다.
 
 ```html
 <figure data-reference-role="evidence-media"
@@ -240,6 +241,15 @@
     alt="어깨 관절을 움직일 수 있는 범위를 보여주는 그림"
     style="display:block;width:100%;height:auto;margin:0 auto;" />
 </figure>
+```
+
+개별 작품을 확보하지 못한 그림체 원본 생성 경로의 `<img>`에는 작품 상세 URL 대신 다음 네 속성을 둔다.
+
+```html
+data-generation-mode="callilife-style-original"
+data-generation-style-source-url="https://ogqmarket.naver.com/creators/callilife?type=STOCK_IMAGE"
+data-generation-content-preservation="article-context-original-composition"
+data-generation-variation-mode="callilife-style-original-composition"
 ```
 
 ### 생성 이미지 배치
@@ -268,6 +278,8 @@
 - 비인물 중심 그림에서 그림체뿐 아니라 핵심 사물·의학 정보·구도·표기까지 변경
 - 운동 강도를 오해시킬 수 있는 동작 이미지를 설명 없이 삽입
 - 위석 블로그에 표시된 이미지 URL을 그대로 복사
+- 주제 일치 callilife 작품이 부족하거나 목록·미리보기 조회가 실패했다는 이유로 원고·HTML을 중단하거나 사용자에게 작품 링크를 요구
+- `callilife-style-original` 경로에서 무관한 개별 작품의 내용·구도·문구를 복제
 
 ## 그 밖의 사용자 제공 이미지
 

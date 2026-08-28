@@ -218,6 +218,7 @@ class AutomationVersionTests(unittest.TestCase):
         self.assertIn(title_question, skill_text)
         self.assertLess(skill_text.index(topic_question), skill_text.index(keyword_question))
         self.assertLess(skill_text.index(keyword_question), skill_text.index(title_question))
+
         self.assertIn('--topic "{사용자 입력 주제}"', skill_text)
         self.assertIn("사용자가 입력한 글 주제를 실제 글의 주제로 고정", skill_text)
         self.assertIn("제목 후보 5개", skill_text)
@@ -268,6 +269,16 @@ class AutomationVersionTests(unittest.TestCase):
                 for prompt in manifest["interface"]["defaultPrompt"]
             )
         )
+
+    def test_current_skill_continues_with_callilife_style_original_when_artwork_is_missing(self) -> None:
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        briefing_line = next(
+            line for line in skill_text.splitlines()
+            if line.startswith("- 현재 버전 브리핑:")
+        )
+        self.assertIn("callilife 개별 작품을 찾지 못하거나", briefing_line)
+        self.assertIn("링크를 요구하지 않고", briefing_line)
+        self.assertIn("callilife 그림체로 생성해 끝까지 완성", briefing_line)
 
 
 if __name__ == "__main__":

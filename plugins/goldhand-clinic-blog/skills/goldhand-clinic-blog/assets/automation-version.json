@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "automationVersion": "1.27",
-  "sourceFingerprint": "7e5195f8fa387e27fdbcf42e6a17a176855e9bba820e4b665c6149eb71aab183",
-  "packageVersion": "1.27.0+codex.20260828093221",
-  "updatedAt": "2026-08-28T09:32:21+00:00",
-  "packageUpdatedAt": "2026-08-28T09:32:21+00:00"
+  "automationVersion": "1.28",
+  "sourceFingerprint": "cdbf7743e59b9c0cb0b692ac4cf9627bcb1b488f9509f394002e408dfdd19ef9",
+  "packageVersion": "1.28.0+codex.20260828102627",
+  "updatedAt": "2026-08-28T10:26:27+00:00",
+  "packageUpdatedAt": "2026-08-28T10:26:27+00:00"
 }

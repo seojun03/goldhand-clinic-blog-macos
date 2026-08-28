@@ -329,10 +329,29 @@
     "minimumCountInFirstSection": 1,
     "ownerAuthorization": "user-confirmed",
     "contentPreservation": "medical-information-layout",
+    "allowedGenerationModes": [
+      "artwork-reference",
+      "callilife-style-original"
+    ],
+    "allowedContentPreservationModes": [
+      "medical-information-layout",
+      "article-context-original-composition"
+    ],
     "allowedVariationModes": [
       "person-identity-subtle-variation",
-      "nonperson-style-subtle-variation"
+      "nonperson-style-subtle-variation",
+      "callilife-style-original-composition"
     ],
+    "styleOriginalFallback": {
+      "requiredWhenTopicMatchedReferencesBelowMinimum": true,
+      "requiredWhenCreatorOrArtworkPageUnavailable": true,
+      "mustContinueArticle": true,
+      "userArtworkLinksRequired": false,
+      "requiredGenerationMode": "callilife-style-original",
+      "requiredStyleSourceUrl": "https://ogqmarket.naver.com/creators/callilife?type=STOCK_IMAGE",
+      "requiredContentPreservation": "article-context-original-composition",
+      "requiredVariationMode": "callilife-style-original-composition"
+    },
     "personCenteredRule": "그림체·동작·구도·정보는 유지하고 얼굴·헤어·피부색·체형·의상 중 2~3개만 미세 변경",
     "nonPersonCenteredRule": "핵심 사물·정보·구도·표기는 유지하고 선·채색·명암·질감 중 1~2개만 미세 변경",
     "visibleCaptionAllowed": false,

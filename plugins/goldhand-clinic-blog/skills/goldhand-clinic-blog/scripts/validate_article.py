@@ -1431,6 +1431,20 @@ def image_checks(
         if provider == ["gpt-image"]:
             generated += 1
             reference_urls = attr_values(tag, "data-generation-reference-url")
+            style_source_urls = attr_values(tag, "data-generation-style-source-url")
+            generation_modes = attr_values(tag, "data-generation-mode")
+            if not generation_modes and reference_urls:
+                generation_mode = "artwork-reference"
+            elif len(generation_modes) == 1:
+                generation_mode = generation_modes[0]
+            else:
+                generation_mode = ""
+                add(
+                    issues,
+                    "error",
+                    "generated-mode-invalid",
+                    f"GPT 이미지 {index}의 생성 방식이 정확히 하나가 아닙니다.",
+                )
             if not local_path:
                 add(issues, "error", "generated-image-local-path-missing", f"GPT 이미지 {index}의 로컬 생성본 경로가 없습니다.")
             else:
@@ -1440,32 +1454,50 @@ def image_checks(
                     add(issues, "error", "generated-image-file-missing", f"GPT 생성 이미지 파일을 읽을 수 없습니다: {path}")
             if attr_values(tag, "data-generation-reference-creator") != ["callilife"]:
                 add(issues, "error", "generated-reference-creator-invalid", f"GPT 이미지 {index}의 레퍼런스 크리에이터가 callilife가 아닙니다.")
-            if len(reference_urls) != 1 or not re.fullmatch(
-                r"https://ogqmarket\.naver\.com/artworks/stockImage/detail\?artworkId=[0-9a-f]+",
-                reference_urls[0] if reference_urls else "",
-                flags=re.I,
-            ):
-                add(issues, "error", "generated-reference-url-invalid", f"GPT 이미지 {index}의 OGQ 레퍼런스 작품 링크가 정확하지 않습니다.")
+            if generation_mode == "artwork-reference":
+                if len(reference_urls) != 1 or not re.fullmatch(
+                    r"https://ogqmarket\.naver\.com/artworks/stockImage/detail\?artworkId=[0-9a-f]+",
+                    reference_urls[0] if reference_urls else "",
+                    flags=re.I,
+                ):
+                    add(issues, "error", "generated-reference-url-invalid", f"GPT 이미지 {index}의 OGQ 레퍼런스 작품 링크가 정확하지 않습니다.")
+                if style_source_urls:
+                    add(issues, "error", "generated-style-source-unexpected", f"GPT 이미지 {index}의 작품 재현 경로에 그림체 전용 출처가 함께 들어 있습니다.")
+                expected_content_preservation = "medical-information-layout"
+                allowed_variation_modes = {
+                    "person-identity-subtle-variation",
+                    "nonperson-style-subtle-variation",
+                }
+            elif generation_mode == "callilife-style-original":
+                if reference_urls:
+                    add(issues, "error", "generated-reference-url-unexpected", f"GPT 이미지 {index}의 그림체 원본 생성 경로에 개별 작품 링크가 들어 있습니다.")
+                if style_source_urls != [
+                    "https://ogqmarket.naver.com/creators/callilife?type=STOCK_IMAGE"
+                ]:
+                    add(issues, "error", "generated-style-source-url-invalid", f"GPT 이미지 {index}의 callilife 그림체 출처가 정확하지 않습니다.")
+                expected_content_preservation = "article-context-original-composition"
+                allowed_variation_modes = {"callilife-style-original-composition"}
+            else:
+                if generation_mode:
+                    add(issues, "error", "generated-mode-invalid", f"GPT 이미지 {index}의 생성 방식이 허용되지 않습니다: {generation_mode}")
+                expected_content_preservation = ""
+                allowed_variation_modes = set()
             if attr_values(tag, "data-generation-owner-authorization") != ["user-confirmed"]:
                 add(issues, "error", "generated-owner-authorization-missing", f"GPT 이미지 {index}에 사용자 소유 확인 표시가 없습니다.")
-            if attr_values(tag, "data-generation-content-preservation") != ["medical-information-layout"]:
+            if not expected_content_preservation or attr_values(tag, "data-generation-content-preservation") != [expected_content_preservation]:
                 add(
                     issues,
                     "error",
                     "generated-content-preservation-missing",
-                    f"GPT 이미지 {index}에 의학 정보와 구도 보존 표시가 없습니다.",
+                    f"GPT 이미지 {index}의 생성 방식에 맞는 내용 구성 표시가 없습니다.",
                 )
             variation_modes = attr_values(tag, "data-generation-variation-mode")
-            allowed_variation_modes = {
-                "person-identity-subtle-variation",
-                "nonperson-style-subtle-variation",
-            }
             if len(variation_modes) != 1 or variation_modes[0] not in allowed_variation_modes:
                 add(
                     issues,
                     "error",
                     "generated-variation-mode-invalid",
-                    f"GPT 이미지 {index}의 미세 변경 방식이 허용된 두 유형 중 하나가 아닙니다.",
+                    f"GPT 이미지 {index}의 생성 방식과 변경 방식이 일치하지 않습니다.",
                 )
             if attr_values(tag, "data-generation-similarity-target"):
                 add(
@@ -1606,7 +1638,7 @@ def image_checks(
     if require_trust and trust_photos != 1:
         add(issues, "error", "trust-photo-count", f"마무리 신뢰 사진이 {trust_photos}장입니다. 진료 사진과 별도로 정확히 1장이 필요합니다.")
     if require_generated and not 3 <= generated <= 4:
-        add(issues, "error", "generated-image-count", f"callilife 레퍼런스로 만든 GPT 이미지가 {generated}장입니다. 3~4장이 필요합니다.")
+        add(issues, "error", "generated-image-count", f"callilife 그림체로 만든 GPT 이미지가 {generated}장입니다. 3~4장이 필요합니다.")
     real_photo_slots: list[str] = []
     for figure_match in re.finditer(r"<figure\b[^>]*>.*?</figure>", article, flags=re.I | re.S):
         figure = figure_match.group(0)

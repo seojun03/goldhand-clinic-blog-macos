@@ -869,6 +869,30 @@ def editorial_close_article(*, include_summary: bool = True, one_question: bool 
     return article
 
 
+def callilife_style_original_article() -> str:
+    article = editorial_close_article()
+    article = re.sub(
+        r'\sdata-generation-reference-url="https://ogqmarket\.naver\.com/artworks/stockImage/detail\?artworkId=[0-9a-f]+"',
+        "",
+        article,
+        flags=re.I,
+    )
+    article = article.replace(
+        'data-generation-reference-creator="callilife" ',
+        'data-generation-reference-creator="callilife" '
+        'data-generation-mode="callilife-style-original" '
+        'data-generation-style-source-url="https://ogqmarket.naver.com/creators/callilife?type=STOCK_IMAGE" ',
+    )
+    article = article.replace(
+        'data-generation-content-preservation="medical-information-layout"',
+        'data-generation-content-preservation="article-context-original-composition"',
+    )
+    return article.replace(
+        'data-generation-variation-mode="person-identity-subtle-variation"',
+        'data-generation-variation-mode="callilife-style-original-composition"',
+    )
+
+
 def editorial_fixture_media_library() -> dict[str, dict[str, object]]:
     """Keep generic article tests focused while production assets stay scene-specific."""
     payload = json.loads((SKILL_DIR / "assets" / "media-library.json").read_text(encoding="utf-8"))
@@ -1488,6 +1512,34 @@ class ArticleTests(unittest.TestCase):
         self.assertIn("generated-owner-authorization-missing", codes)
         self.assertIn("generated-content-preservation-missing", codes)
         self.assertIn("generated-variation-mode-invalid", codes)
+
+    def test_editorial_close_accepts_callilife_style_original_fallback(self) -> None:
+        result = ARTICLE_VALIDATOR.validate_article(
+            callilife_style_original_article(),
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertEqual(result["status"], "pass", result)
+
+    def test_editorial_close_rejects_style_original_without_creator_source(self) -> None:
+        article = callilife_style_original_article().replace(
+            'data-generation-style-source-url="https://ogqmarket.naver.com/creators/callilife?type=STOCK_IMAGE" ',
+            "",
+        )
+        result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertIn(
+            "generated-style-source-url-invalid",
+            {item["code"] for item in result["issues"]},
+            result,
+        )
 
     def test_editorial_close_rejects_generated_image_without_related_placement(self) -> None:
         article = editorial_close_article().replace(
@@ -3743,6 +3795,7 @@ class SkillPackageTests(unittest.TestCase):
         skill = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
         proof = json.loads((SKILL_DIR / "assets" / "goldhand-value-proof-library.json").read_text(encoding="utf-8"))
         design = json.loads((SKILL_DIR / "assets" / "goldhand-naver-native-design-system.json").read_text(encoding="utf-8"))
+        callilife = json.loads((SKILL_DIR / "assets" / "callilife-ogq-media-library.json").read_text(encoding="utf-8"))
         openai_yaml = (SKILL_DIR / "agents" / "openai.yaml").read_text(encoding="utf-8")
         self.assertFalse(proof["selectionAllowed"])
         self.assertEqual(len(proof["fixedRows"]), 6)
@@ -3814,7 +3867,28 @@ class SkillPackageTests(unittest.TestCase):
         self.assertEqual(design["generatedReferenceMedia"]["contentPreservation"], "medical-information-layout")
         self.assertEqual(
             design["generatedReferenceMedia"]["allowedVariationModes"],
-            ["person-identity-subtle-variation", "nonperson-style-subtle-variation"],
+            [
+                "person-identity-subtle-variation",
+                "nonperson-style-subtle-variation",
+                "callilife-style-original-composition",
+            ],
+        )
+        self.assertEqual(
+            design["generatedReferenceMedia"]["allowedGenerationModes"],
+            ["artwork-reference", "callilife-style-original"],
+        )
+        style_fallback = design["generatedReferenceMedia"]["styleOriginalFallback"]
+        self.assertTrue(style_fallback["requiredWhenTopicMatchedReferencesBelowMinimum"])
+        self.assertTrue(style_fallback["requiredWhenCreatorOrArtworkPageUnavailable"])
+        self.assertTrue(style_fallback["mustContinueArticle"])
+        self.assertFalse(style_fallback["userArtworkLinksRequired"])
+        self.assertEqual(callilife["schemaVersion"], 4)
+        self.assertEqual(callilife["styleOriginalFallback"]["mode"], "callilife-style-original")
+        self.assertTrue(callilife["styleOriginalFallback"]["mustContinueArticle"])
+        self.assertFalse(callilife["styleOriginalFallback"]["userArtworkLinksRequired"])
+        self.assertEqual(
+            callilife["styleOriginalFallback"]["compositionSource"],
+            "article-context-only",
         )
         self.assertEqual(design["tablePurposes"]["clinic-hours"]["columnWidths"], ["24%", "38%", "38%"])
         self.assertEqual(design["tablePurposes"]["clinic-hours"]["minimumRows"], 4)
@@ -3863,6 +3937,8 @@ class SkillPackageTests(unittest.TestCase):
         self.assertIn("내장 `image_gen` 모드로만", skill)
         self.assertIn("`scripts/image_gen.py`·CLI/API 대체 경로", skill)
         self.assertIn("`OPENAI_API_KEY`를 묻거나 확인하거나 저장하지 않는다", skill)
+        self.assertIn("어떤 경우에도 사용자에게 작품 링크를 요구하거나 글 작성을 중단하지 않는다", skill)
+        self.assertIn('data-generation-mode="callilife-style-original"', skill)
         self.assertIn("placementTerms", skill)
         self.assertIn("approvedAlt", skill)
         self.assertIn("assets/official-media", skill)
@@ -3924,6 +4000,8 @@ class SkillPackageTests(unittest.TestCase):
         self.assertIn("use only its built-in image_gen mode", openai_yaml)
         self.assertIn("Never invoke scripts/image_gen.py or any CLI/API fallback", openai_yaml)
         self.assertIn("never ask for, inspect, or store OPENAI_API_KEY", openai_yaml)
+        self.assertIn("Missing topic-matched callilife artwork is never a reason to stop", openai_yaml)
+        self.assertIn("Continue through article and Naver-copy HTML completion", openai_yaml)
         self.assertIn("same-draft A/B finalizer test", openai_yaml)
         self.assertIn("data-mobile-group", skill)
         self.assertNotIn("Notion TOP 5", skill)
