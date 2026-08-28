@@ -12,6 +12,11 @@
     "attentionAllocationReviewed",
     "unsupportedPolishReviewed",
     "distinctiveGrainPreserved",
+    "directSubjectActionPurposeReviewed",
+    "vagueNounWrappersReviewed",
+    "softenedOrAbstractConclusionReviewed",
+    "userApprovedDirectVoiceExamplesApplied",
+    "directVoiceSentenceAuditCrossChecked",
     "wholeDraftReheardAfterEdits"
   ],
   "requiredFrozenMaterialChecks": [

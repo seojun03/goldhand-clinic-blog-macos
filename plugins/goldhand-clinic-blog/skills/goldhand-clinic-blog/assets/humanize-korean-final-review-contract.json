@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "humanize-korean-final-pass-v1",
+  "sourceSkill": "humanize-korean",
+  "stage": "after-complete-visible-prose-and-seo-before-production-assembly",
+  "purpose": "같은 금손한의원 완성 산문에서 내용과 구조를 동결한 채 humanize-korean의 quick-rules에 매핑되는 AI 문체만 제거한다.",
+  "maxChangeRatePercent": 30,
+  "passingGrades": [
+    "A",
+    "B"
+  ],
+  "requiredSelfChecks": [
+    "contentAnchorsPreserved",
+    "changeRateWithinLimit",
+    "genrePreserved",
+    "registerPreserved",
+    "s1PatternsCleared",
+    "noInventedRhetoric"
+  ],
+  "requiredFrozenMaterialChecks": [
+    "contentAndOrderPreserved",
+    "factsAndMedicalBoundariesPreserved",
+    "claimStrengthPreserved",
+    "referenceMechanismsPreserved",
+    "keywordAndTitlePromisePreserved",
+    "htmlComponentsAndLinksPreserved"
+  ],
+  "allowedDecisions": [
+    "revised",
+    "no-change-needed"
+  ],
+  "ruleIdPattern": "^[A-J]-[0-9]+$",
+  "mustNot": [
+    "invoke-writing-voice-in-humanize-variant",
+    "add-remove-or-reorder-material",
+    "invent-fact-event-memory-reaction-certainty-or-intention",
+    "change-medical-boundary-or-claim-strength",
+    "change-reference-title-opening-flow-or-closing-mechanism",
+    "change-seo-keyword-promise-or-fixed-html-components",
+    "exceed-thirty-percent-change-rate"
+  ]
+}

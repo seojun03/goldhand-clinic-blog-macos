@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import importlib.util
 import json
 import os
@@ -14,6 +15,7 @@ from unittest import mock
 
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
+PLUGIN_ROOT = SKILL_DIR.parents[1]
 SCRIPTS = SKILL_DIR / "scripts"
 GPT_IMAGE_FIXTURE = (SKILL_DIR / "assets" / "gpt-image-test-fixture.png").resolve()
 
@@ -46,6 +48,7 @@ EDITORIAL_PROFILE_VALIDATOR = load_module("validate_editorial_master_profiles")
 GOLDHAND_VOICE_VALIDATOR = load_module("validate_goldhand_voice")
 NATURAL_SPEECH_SUITE_VALIDATOR = load_module("validate_natural_speech_suite")
 FINAL_WRITING_VOICE_VALIDATOR = load_module("validate_final_voice_review")
+HUMANIZE_FINAL_REVIEW_VALIDATOR = load_module("validate_humanize_final_review")
 WIPARK_CONTENT_SELECTOR = load_module("select_wipark_content_reference")
 REFERENCE_LEARNING_VALIDATOR = load_module("validate_reference_learning")
 IMAGE_HOST_SETUP = load_module("setup_image_host")
@@ -369,7 +372,174 @@ def writing_voice_review(
             "attentionAllocationReviewed": True,
             "unsupportedPolishReviewed": True,
             "distinctiveGrainPreserved": True,
+            "directSubjectActionPurposeReviewed": True,
+            "vagueNounWrappersReviewed": True,
+            "softenedOrAbstractConclusionReviewed": True,
+            "userApprovedDirectVoiceExamplesApplied": True,
+            "directVoiceSentenceAuditCrossChecked": True,
             "wholeDraftReheardAfterEdits": True,
+        },
+        "frozenMaterial": {
+            "contentAndOrderPreserved": True,
+            "factsAndMedicalBoundariesPreserved": True,
+            "claimStrengthPreserved": True,
+            "referenceMechanismsPreserved": True,
+            "keywordAndTitlePromisePreserved": True,
+            "htmlComponentsAndLinksPreserved": True,
+        },
+        "revisions": revisions,
+        "finalStatus": "pass",
+    }
+
+
+def direct_voice_sentence_audit(final_body: list[str]) -> dict[str, object]:
+    findings = NATURAL_SPEECH_SUITE_VALIDATOR.direct_voice_audit_sentences("\n".join(final_body))
+    return {
+        "contractId": NATURAL_SPEECH_SUITE_VALIDATOR.DIRECT_VOICE_AUDIT_ID,
+        "searchedTerms": list(NATURAL_SPEECH_SUITE_VALIDATOR.DIRECT_VOICE_AUDIT_TERMS),
+        "sentences": [
+            {
+                **finding,
+                "decision": "kept-concrete",
+                "concreteReason": "실제 시간과 동작 및 환자가 느끼는 증상이 문장에 함께 보입니다.",
+            }
+            for finding in findings
+        ],
+        "unresolvedCount": 0,
+    }
+
+
+def sentence_meaning_audit(final_body: list[str]) -> dict[str, object]:
+    sentences = NATURAL_SPEECH_SUITE_VALIDATOR.spoken_sentences("\n".join(final_body))
+    entries = [
+        {
+            "index": index,
+            "sentence": sentence,
+            "role": NATURAL_SPEECH_SUITE_VALIDATOR.spoken_sentence_role(sentence),
+            "clinicUtteranceForm": (
+                "fixed-structure"
+                if sentence == NATURAL_SPEECH_SUITE_VALIDATOR.EXACT_GREETING
+                or NATURAL_SPEECH_SUITE_VALIDATOR.spoken_sentence_role(sentence) == "heading"
+                else "concrete-patient-scene"
+            ),
+            "literalSubject": f"{index}번 문장에서 말하는 실제 사람이나 대상",
+            "literalPredicate": f"{index}번 문장에서 그 사람이나 대상이 하는 일",
+            "plainMeaning": f"{index}번 문장이 환자에게 직접 전달하는 구체적인 내용입니다.",
+            "checks": {
+                "subjectPredicateLogical": True,
+                "particlesAndParallelismNatural": True,
+                "objectPredicateCompatible": True,
+                "literalMeaningMatchesIntent": True,
+                "doctorWouldSayVerbatim": True,
+                "listenerUnderstandsFirstTime": True,
+                "readerAddressIsDirect": True,
+                "connectorHasLiteralAntecedent": True,
+                "timeViewpointCoherent": True,
+                "notChecklistCadence": True,
+            },
+            "verdict": "pass",
+        }
+        for index, sentence in enumerate(sentences, start=1)
+    ]
+    return {
+        "contractId": NATURAL_SPEECH_SUITE_VALIDATOR.BLIND_SENTENCE_MEANING_AUDIT_ID,
+        "reviewMode": "final-plain-text-sentence-by-sentence-no-rule-list",
+        "sentences": entries,
+        "unresolvedCount": 0,
+        "challengerPass": {
+            "contractId": NATURAL_SPEECH_SUITE_VALIDATOR.BLIND_SENTENCE_CHALLENGE_ID,
+            "instruction": "try-to-fail-every-sentence-before-passing",
+            "reviewedSentenceCount": len(sentences),
+            "sentenceIndexesChecked": list(range(1, len(sentences) + 1)),
+            "failedSentenceIndexes": [],
+            "finalStatus": "pass",
+        },
+    }
+
+
+def blind_spoken_rehear(final_body: list[str]) -> dict[str, object]:
+    before_body = list(final_body)
+    target_index = next(
+        index
+        for index, paragraph in enumerate(before_body)
+        if "오후에는 목이 뻐근합니다." in paragraph
+    )
+    awkward_sentence = "오후에는 목이 좋지 않습니다."
+    spoken_sentence = "오후에는 목이 뻐근합니다."
+    before_body[target_index] = before_body[target_index].replace(spoken_sentence, awkward_sentence, 1)
+    return {
+        "contractId": NATURAL_SPEECH_SUITE_VALIDATOR.BLIND_SPOKEN_REHEAR_ID,
+        "stage": "after-mechanical-pass-before-production-assembly",
+        "reviewerInputMode": "final-plain-text-only-no-rule-list",
+        "excludedInputs": list(NATURAL_SPEECH_SUITE_VALIDATOR.BLIND_SPOKEN_REHEAR_EXCLUDED_INPUTS),
+        "beforeBody": before_body,
+        "revisions": [
+            {
+                "paragraphIndex": target_index + 1,
+                "before": before_body[target_index],
+                "after": final_body[target_index],
+                "awkwardSentenceBefore": awkward_sentence,
+                "spokenSentenceAfter": spoken_sentence,
+                "reason": "좋지 않다는 막연한 표현을 환자가 실제로 느끼는 뻐근함으로 직접 고쳤습니다.",
+            }
+        ],
+        "firstPass": {
+            "wholeDraftRead": True,
+            "reviewedSentenceCount": len(
+                NATURAL_SPEECH_SUITE_VALIDATOR.spoken_sentences("\n".join(before_body))
+            ),
+            "awkwardSentenceCount": 1,
+        },
+        "secondPass": {
+            "wholeDraftReadAgain": True,
+            "reviewedSentenceCount": len(
+                NATURAL_SPEECH_SUITE_VALIDATOR.spoken_sentences("\n".join(final_body))
+            ),
+            "remainingAwkwardSentences": [],
+            "finalStatus": "pass",
+        },
+        "sentenceMeaningAudit": sentence_meaning_audit(final_body),
+        "mechanicalValidatorStatusBeforeBlindReview": "pass",
+        "mechanicalValidatorRerunAfterBlindEdits": "pass",
+    }
+
+
+def humanize_korean_review(
+    title: str,
+    before_body: list[str],
+    final_body: list[str],
+    *,
+    rule_ids: dict[int, list[str]] | None = None,
+) -> dict[str, object]:
+    rule_ids = rule_ids or {}
+    revisions = [
+        {
+            "paragraphIndex": index,
+            "before": before,
+            "after": after,
+            "ruleIds": rule_ids.get(index, ["A-7"]),
+        }
+        for index, (before, after) in enumerate(zip(before_body, final_body), start=1)
+        if before != after
+    ]
+    return {
+        "contractId": "humanize-korean-final-pass-v1",
+        "skillName": "humanize-korean",
+        "stage": "after-complete-visible-prose-and-seo-before-production-assembly",
+        "beforeTitle": title,
+        "beforeBody": before_body,
+        "decision": "revised" if revisions else "no-change-needed",
+        "changeRatePercent": HUMANIZE_FINAL_REVIEW_VALIDATOR.computed_change_rate(before_body, final_body),
+        "grade": "B",
+        "s1Remaining": 0,
+        "s2Remaining": 2,
+        "selfChecks": {
+            "contentAnchorsPreserved": True,
+            "changeRateWithinLimit": True,
+            "genrePreserved": True,
+            "registerPreserved": True,
+            "s1PatternsCleared": True,
+            "noInventedRhetoric": True,
         },
         "frozenMaterial": {
             "contentAndOrderPreserved": True,
@@ -579,7 +749,7 @@ def editorial_close_article(*, include_summary: bool = True, one_question: bool 
         'data-editorial-profile-status="ready"',
         1,
     )
-    article = article.replace(KEYWORD, "동천동 진료", 2)
+    article = article.replace(KEYWORD, "동천동 진료", 3)
     article = article.replace(
         '<section data-reference-role="solution-preview">',
         '<section data-reference-role="solution-preview" '
@@ -587,9 +757,22 @@ def editorial_close_article(*, include_summary: bool = True, one_question: bool 
         'data-reader-payoff="다른 검사를 먼저 생각할 신호">',
         1,
     )
+    article = article.replace('data-reference-role="neutral-close"', "", 1)
+    closing_contract = (
+        '<section data-reference-role="neutral-close" data-closing-payoff="몸의 신호">'
+        '<p data-reference-role="closing-heading" data-naver-native-component="subheading" '
+        'style="text-align:center;font-size:19px;font-weight:700;">몸의 신호를 다시 볼 때</p>'
+        '<hr data-reference-role="divider" data-naver-native-component="divider">'
+        + mobile_markup("몸의 신호는 아픈 곳과 다시 불편해지는 동작을 함께 볼 때 더 잘 이해할 수 있습니다.")
+        + mobile_markup(
+            "불편이 계속되면 진료에서 현재 상태와 몸의 신호를 함께 살펴볼 수 있습니다.",
+            first_role="closing-invitation",
+        )
+        + "</section>"
+    )
     article = article.replace(
-        'data-reference-role="neutral-close"',
-        'data-reference-role="neutral-close" data-closing-payoff="몸의 신호"',
+        '<p data-reference-role="clinic-hours-heading"',
+        closing_contract + '<p data-reference-role="clinic-hours-heading"',
         1,
     )
     reading_hook = (
@@ -808,6 +991,24 @@ class TitleTests(unittest.TestCase):
         title = f"{KEYWORD} 반복 통증을 살피는 세 가지 기준".replace("세 가지", "3가지")
         result = TITLE_VALIDATOR.validate_title(title, KEYWORD, answer_count=2)
         self.assertIn("answer-count-mismatch", {item["code"] for item in result["issues"]})
+
+    def test_keyword_must_start_title(self) -> None:
+        result = TITLE_VALIDATOR.validate_title(
+            f"최악의 수면 습관 3가지, {KEYWORD}",
+            KEYWORD,
+            answer_count=3,
+        )
+        self.assertIn("title-keyword-prefix", {item["code"] for item in result["issues"]})
+
+    def test_title_must_be_30_non_whitespace_characters_or_less(self) -> None:
+        result = TITLE_VALIDATOR.validate_title(
+            f"{KEYWORD} 11년차가 경고하는 최악의 수면습관과 야간생활과 회복방해요인 3가지",
+            KEYWORD,
+            evidence="11년차",
+            answer_count=3,
+        )
+        self.assertIn("title-too-long", {item["code"] for item in result["issues"]})
+        self.assertGreater(result["metrics"]["nonWhitespaceChars"], 30)
 
     def test_reference_business_and_pattern_mismatch_fail(self) -> None:
         library = json.loads((SKILL_DIR / "assets" / "topic-idea-library.json").read_text(encoding="utf-8"))
@@ -1099,7 +1300,7 @@ class ArticleTests(unittest.TestCase):
         result = ARTICLE_VALIDATOR.validate_article(article, TITLE, KEYWORD)
         self.assertIn("mobile-group-marker-missing", {item["code"] for item in result["issues"]})
 
-    def test_editorial_close_allows_two_or_three_body_keywords(self) -> None:
+    def test_editorial_close_allows_one_or_two_body_keywords(self) -> None:
         evidence = (SKILL_DIR / "references" / "clinic-facts.md").read_text(encoding="utf-8")
         article = editorial_close_article()
         result = ARTICLE_VALIDATOR.validate_article(
@@ -1111,10 +1312,77 @@ class ArticleTests(unittest.TestCase):
             media_library=editorial_fixture_media_library(),
         )
         self.assertEqual(result["status"], "pass", result)
-        self.assertEqual(result["metrics"]["bodyKeywordCount"], 3)
+        self.assertEqual(result["metrics"]["bodyKeywordCount"], 2)
         self.assertEqual(result["metrics"]["editorialMasterId"], "BM224231647991")
         self.assertEqual(result["metrics"]["generatedImages"], 3)
         self.assertEqual(result["metrics"]["realPhotos"], 1)
+
+        one_keyword = article.replace(KEYWORD, "동천동 진료", 1)
+        one_result = ARTICLE_VALIDATOR.validate_article(
+            one_keyword,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            evidence=evidence,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertEqual(one_result["status"], "pass", one_result)
+        self.assertEqual(one_result["metrics"]["bodyKeywordCount"], 1)
+
+        three_keywords = article.replace("통증은 한 지점에", f"{KEYWORD}에서 통증은 한 지점에", 1)
+        three_result = ARTICLE_VALIDATOR.validate_article(
+            three_keywords,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            evidence=evidence,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertIn("body-keyword-count", {item["code"] for item in three_result["issues"]}, three_result)
+
+    def test_editorial_close_requires_topic_heading_divider_recap_and_invitation(self) -> None:
+        article = editorial_close_article()
+        missing_heading = re.sub(
+            r'<p\b(?=[^>]*data-reference-role="closing-heading")[^>]*>.*?</p>',
+            "",
+            article,
+            count=1,
+            flags=re.I | re.S,
+        )
+        heading_result = ARTICLE_VALIDATOR.validate_article(
+            missing_heading,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertIn("closing-heading-count", {item["code"] for item in heading_result["issues"]}, heading_result)
+
+        copied_heading = article.replace("몸의 신호를 다시 볼 때", "25년 경험이 전하는 한 가지", 1)
+        copied_result = ARTICLE_VALIDATOR.validate_article(
+            copied_heading,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertIn("closing-heading-template", {item["code"] for item in copied_result["issues"]}, copied_result)
+
+        missing_invitation = re.sub(
+            r'<p\b(?=[^>]*data-reference-role="closing-invitation")[^>]*>.*?</p>',
+            "",
+            article,
+            count=1,
+            flags=re.I | re.S,
+        )
+        invitation_result = ARTICLE_VALIDATOR.validate_article(
+            missing_invitation,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+            media_library=editorial_fixture_media_library(),
+        )
+        self.assertIn("closing-invitation-count", {item["code"] for item in invitation_result["issues"]}, invitation_result)
 
     def test_specific_number_intro_requires_one_reading_time_hook(self) -> None:
         article = re.sub(
@@ -1579,6 +1847,52 @@ class ArticleTests(unittest.TestCase):
         self.assertIn("writing-voice-review-missing", codes, result)
         self.assertIn("writing-voice-status-not-pass", codes, result)
 
+    def test_wipark_article_accepts_humanize_korean_final_review(self) -> None:
+        article = wipark_editorial_close_article().replace(
+            'data-writing-voice-review="writing-voice-final-rehear-v1"',
+            'data-final-prose-reviewer="humanize-korean" '
+            'data-final-prose-review="humanize-korean-final-pass-v1"',
+            1,
+        ).replace(
+            'data-writing-voice-status="pass"',
+            'data-final-prose-status="pass"',
+            1,
+        )
+        result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+        )
+        codes = {item["code"] for item in result["issues"]}
+        self.assertNotIn("writing-voice-review-missing", codes, result)
+        self.assertNotIn("writing-voice-status-not-pass", codes, result)
+        self.assertNotIn("humanize-review-missing", codes, result)
+        self.assertEqual(result["metrics"]["finalVoiceReviewerSkill"], "humanize-korean")
+        self.assertEqual(result["metrics"]["finalVoiceReviewId"], "humanize-korean-final-pass-v1")
+        self.assertEqual(result["metrics"]["finalHumanizeStatus"], "pass")
+        self.assertEqual(result["metrics"]["finalWritingVoiceReviewId"], "")
+
+    def test_wipark_article_rejects_mixed_final_reviewers(self) -> None:
+        article = wipark_editorial_close_article().replace(
+            'data-writing-voice-status="pass"',
+            'data-writing-voice-status="pass" '
+            'data-final-prose-reviewer="humanize-korean" '
+            'data-final-prose-review="humanize-korean-final-pass-v1" '
+            'data-final-prose-status="pass"',
+            1,
+        )
+        result = ARTICLE_VALIDATOR.validate_article(
+            article,
+            EDITORIAL_TITLE,
+            KEYWORD,
+            editorial_close=True,
+        )
+        self.assertIn(
+            "final-prose-reviewer-conflict",
+            {item["code"] for item in result["issues"]},
+        )
+
 
 class ReferenceMasterTests(unittest.TestCase):
     def profiles(self) -> dict[str, dict[str, object]]:
@@ -1593,6 +1907,28 @@ class ReferenceMasterTests(unittest.TestCase):
             "치료 지속과 생활습관",
         )
         self.assertEqual(result["selected"]["id"], "INFO01", result)
+
+    def test_selector_opens_insomnia_master_for_explicit_insomnia(self) -> None:
+        result = MASTER_SELECTOR.select(
+            self.profiles(),
+            "정보전달형",
+            "동천동 한의원 불면증 치료 전 놓치면 손해인 2가지",
+            "불면증",
+        )
+        self.assertEqual(result["selected"]["id"], "INFO04", result)
+        self.assertEqual(
+            result["selected"]["sensitiveSelectionMode"],
+            "explicit-request",
+        )
+
+    def test_selector_keeps_menopausal_insomnia_out_of_info04(self) -> None:
+        result = MASTER_SELECTOR.select(
+            self.profiles(),
+            "정보전달형",
+            "동천동 한의원 갱년기 불면에서 반드시 볼 2가지",
+            "갱년기 불면",
+        )
+        self.assertNotEqual(result["selected"]["id"], "INFO04", result)
 
     def test_selector_rejects_every_other_content_type(self) -> None:
         with self.assertRaises(ValueError):
@@ -2053,11 +2389,35 @@ class BuilderTests(unittest.TestCase):
         self.assertNotIn("run.style.textDecoration = 'none'", page)
         self.assertIn("굵게·밑줄·취소선", page)
         self.assertIn("window.location.protocol === 'file:'", page)
+        self.assertIn("copyWithDataTransfer(htmlValue,plainValue)", page)
+        self.assertIn("setData('text/html',htmlValue)", page)
+        self.assertIn("setData('text/plain',plainValue)", page)
+        self.assertIn("getData('text/html')===htmlValue", page)
+        self.assertNotIn("nativeSelectionRoot", page)
+        self.assertNotIn("await copyImagesReady", page)
+        self.assertIn("inputBuffer.textContent = '\\u200B'", page)
         self.assertIn("복사 실패 · 클립보드가 바뀌지 않았습니다", page)
         self.assertLess(
             page.index("window.location.protocol === 'file:'"),
             page.index("navigator.clipboard?.write"),
         )
+
+    def test_copy_page_emits_naver_native_image_clipboard_contract(self) -> None:
+        page = PAGE_BUILDER.build_page(TITLE, valid_article())
+        self.assertIn("waitForCopyImages", page)
+        self.assertIn('data-linktype="img"', page)
+        self.assertIn("data-linkdata=", page)
+        self.assertIn("escapeAttribute", page)
+        self.assertIn("&quot;", page)
+        self.assertIn("se-module-image se-image-loaded", page)
+        self.assertIn("copyWithDataTransfer", page)
+        self.assertIn("payloadConfirmed", page)
+        self.assertIn("imageDataLinks:", page)
+        self.assertIn("orphanImageCaptions:", page)
+        self.assertNotIn("사진 설명을 입력하세요.", page)
+        self.assertNotIn('<div class="se-caption', page)
+        result = HTML_VALIDATOR.validate_html(page)
+        self.assertEqual(result["status"], "pass", result)
 
     def test_build_page_publishes_local_image_as_https(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -2287,6 +2647,159 @@ class BuilderTests(unittest.TestCase):
 
 
 class ImageHostSetupTests(unittest.TestCase):
+    def test_device_login_accepts_only_a_code_prefilled_vercel_url(self) -> None:
+        complete = "https://vercel.com/oauth/device?user_code=ABCD-EFGH"
+        upstream_complete = "https://vercel.com/device?code=12345678-1234-1234-1234-1234567890ab"
+        path_complete = "https://vercel.com/oauth/device/request-id?v=verification-id"
+        osc8 = f"Visit \x1b]8;;{complete}\x1b\\vercel.com/device\x1b]8;;\x1b\\"
+        for candidate in (complete, upstream_complete, path_complete):
+            with self.subTest(candidate=candidate):
+                self.assertEqual(IMAGE_HOST_SETUP.prefilled_vercel_device_url(f"Visit {candidate}"), candidate)
+        self.assertEqual(IMAGE_HOST_SETUP.prefilled_vercel_device_url(osc8), complete)
+        for unsafe in (
+            "https://vercel.com/oauth/device",
+            "https://vercel.com/device",
+            "Visit https://vercel.com/device?next=/logout",
+            "Visit https://vercel.com/device/extra?code=12345678-1234-1234-1234-1234567890ab",
+            "Visit https://vercel.com/oauth/device/request-id?next=/logout",
+            "Visit https://vercel.com/oauth/device/request-id?v=",
+            "Visit https://vercel.com/oauth/device/request-id/extra?v=verification-id",
+            "Visit https://vercel.com/oauth/device?user_code=ABCD-EFGH&next=/logout",
+            "http://vercel.com/oauth/device?user_code=ABCD-EFGH",
+            "https://vercel.com.evil.example/oauth/device?user_code=ABCD-EFGH",
+            "https://user:password@vercel.com/oauth/device?user_code=ABCD-EFGH",
+            "https://vercel.com:444/oauth/device?user_code=ABCD-EFGH",
+            "Visit https://example.com/oauth/device?user_code=ABCD-EFGH",
+            complete,
+        ):
+            with self.subTest(unsafe=unsafe):
+                self.assertIsNone(IMAGE_HOST_SETUP.prefilled_vercel_device_url(unsafe))
+
+    def test_vercel_cli_minimum_version_is_enforced(self) -> None:
+        self.assertEqual(IMAGE_HOST_SETUP.parse_vercel_cli_version("Vercel CLI 59.5.0"), (59, 5, 0))
+        self.assertIsNone(IMAGE_HOST_SETUP.parse_vercel_cli_version("unknown"))
+        old = "/fake/old-vercel"
+        supported = "/fake/supported-vercel"
+        with mock.patch.object(IMAGE_HOST_SETUP, "_VERCEL_CLI_OVERRIDE", None), mock.patch.object(
+            IMAGE_HOST_SETUP,
+            "vercel_cli_candidates",
+            return_value=[old],
+        ), mock.patch.object(
+            IMAGE_HOST_SETUP.subprocess,
+            "run",
+            return_value=subprocess.CompletedProcess([], 0, "Vercel CLI 50.43.0", ""),
+        ):
+            with self.assertRaises(IMAGE_HOST_SETUP.SetupError):
+                IMAGE_HOST_SETUP.ensure_supported_vercel_cli(Path.cwd())
+
+        def fake_version(command, **kwargs):
+            output = "Vercel CLI 50.43.0" if command[0] == old else "Vercel CLI 50.44.0"
+            return subprocess.CompletedProcess(command, 0, output, "")
+
+        with mock.patch.object(IMAGE_HOST_SETUP, "_VERCEL_CLI_OVERRIDE", None), mock.patch.object(
+            IMAGE_HOST_SETUP,
+            "vercel_cli_candidates",
+            return_value=[old, supported],
+        ), mock.patch.object(IMAGE_HOST_SETUP.subprocess, "run", side_effect=fake_version) as run:
+            IMAGE_HOST_SETUP.ensure_supported_vercel_cli(Path.cwd())
+            self.assertEqual(IMAGE_HOST_SETUP.resolve_vercel_cli(), supported)
+            self.assertEqual(run.call_count, 2)
+
+    def test_device_login_opens_the_exact_prefilled_url_with_captured_output(self) -> None:
+        complete = "https://vercel.com/oauth/device?user_code=ABCD-EFGH"
+
+        class FakeLoginProcess:
+            def __init__(self) -> None:
+                self.stdout = io.StringIO(f"Visit {complete}\nWaiting for authentication...\n")
+                self.pid = 4321
+                self.returncode = None
+
+            def poll(self):
+                return self.returncode
+
+            def wait(self, timeout=None):
+                self.returncode = 0
+                return 0
+
+            def kill(self):
+                self.returncode = -9
+
+        process = FakeLoginProcess()
+        opener = mock.Mock(return_value=True)
+        with mock.patch.object(IMAGE_HOST_SETUP, "vercel_command", return_value=["vercel", "login"]), mock.patch.object(
+            IMAGE_HOST_SETUP.subprocess,
+            "Popen",
+            return_value=process,
+        ) as popen:
+            actual = IMAGE_HOST_SETUP.run_prefilled_device_login(Path.cwd(), browser_opener=opener)
+
+        self.assertEqual(actual, IMAGE_HOST_SETUP.LOGIN_SUCCESS)
+        opener.assert_called_once_with(complete, new=1, autoraise=True)
+        command = popen.call_args.args[0]
+        kwargs = popen.call_args.kwargs
+        self.assertEqual(command, ["vercel", "login"])
+        self.assertEqual(kwargs["stdout"], subprocess.PIPE)
+        self.assertEqual(kwargs["stderr"], subprocess.STDOUT)
+        self.assertEqual(kwargs["stdin"], subprocess.DEVNULL)
+        self.assertEqual(kwargs["env"]["CI"], "1")
+        self.assertNotIn(complete, command)
+
+    def test_browser_open_failure_reaps_login_without_retrying_inside_attempt(self) -> None:
+        complete = "https://vercel.com/oauth/device?user_code=ABCD-EFGH"
+
+        class FakeLoginProcess:
+            def __init__(self) -> None:
+                self.stdout = io.StringIO(f"Visit {complete}\n")
+                self.pid = 4321
+
+            def poll(self):
+                return None
+
+        process = FakeLoginProcess()
+        with mock.patch.object(IMAGE_HOST_SETUP, "vercel_command", return_value=["vercel", "login"]), mock.patch.object(
+            IMAGE_HOST_SETUP.subprocess,
+            "Popen",
+            return_value=process,
+        ), mock.patch.object(IMAGE_HOST_SETUP, "stop_login_process") as stop:
+            actual = IMAGE_HOST_SETUP.run_prefilled_device_login(
+                Path.cwd(),
+                browser_opener=mock.Mock(return_value=False),
+            )
+
+        self.assertEqual(actual, IMAGE_HOST_SETUP.LOGIN_FAILED)
+        stop.assert_called_once_with(process)
+        self.assertTrue(process.stdout.closed)
+
+    def test_expired_device_login_is_replaced_once_without_manual_code_entry(self) -> None:
+        statuses = [
+            subprocess.CompletedProcess([], 1, "", "not logged in"),
+            subprocess.CompletedProcess([], 1, "", "still pending"),
+            subprocess.CompletedProcess([], 0, "{}", ""),
+        ]
+        with mock.patch.object(IMAGE_HOST_SETUP, "run_vercel", side_effect=statuses) as run_vercel, mock.patch.object(
+            IMAGE_HOST_SETUP,
+            "run_prefilled_device_login",
+            side_effect=[IMAGE_HOST_SETUP.LOGIN_RETRYABLE, IMAGE_HOST_SETUP.LOGIN_SUCCESS],
+        ) as login:
+            IMAGE_HOST_SETUP.ensure_authenticated(Path.cwd())
+
+        self.assertEqual(login.call_count, 2)
+        self.assertEqual(run_vercel.call_count, 3)
+
+    def test_denied_device_login_does_not_open_a_second_request(self) -> None:
+        statuses = [
+            subprocess.CompletedProcess([], 1, "", "not logged in"),
+            subprocess.CompletedProcess([], 1, "", "still not logged in"),
+        ]
+        with mock.patch.object(IMAGE_HOST_SETUP, "run_vercel", side_effect=statuses), mock.patch.object(
+            IMAGE_HOST_SETUP,
+            "run_prefilled_device_login",
+            return_value=IMAGE_HOST_SETUP.LOGIN_FAILED,
+        ) as login:
+            with self.assertRaises(IMAGE_HOST_SETUP.SetupError):
+                IMAGE_HOST_SETUP.ensure_authenticated(Path.cwd())
+        login.assert_called_once()
+
     def test_macos_setup_uses_the_managed_vercel_wrapper(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -2339,9 +2852,6 @@ class ImageHostSetupTests(unittest.TestCase):
                 if arguments[:1] == ["whoami"]:
                     whoami_count += 1
                     return subprocess.CompletedProcess(arguments, 1 if whoami_count == 1 else 0, "{}", "")
-                if arguments == ["login"]:
-                    self.assertTrue(kwargs.get("interactive"))
-                    return subprocess.CompletedProcess(arguments, 0, "", "")
                 if arguments[:2] == ["project", "inspect"]:
                     return subprocess.CompletedProcess(arguments, 1, "", "missing")
                 if arguments[:2] == ["project", "add"]:
@@ -2383,7 +2893,15 @@ class ImageHostSetupTests(unittest.TestCase):
                     )
                 raise AssertionError(f"unexpected Vercel command: {arguments}")
 
-            with mock.patch.object(IMAGE_HOST_SETUP, "run_vercel", side_effect=fake_run), mock.patch.object(
+            with mock.patch.object(IMAGE_HOST_SETUP, "ensure_supported_vercel_cli"), mock.patch.object(
+                IMAGE_HOST_SETUP,
+                "run_vercel",
+                side_effect=fake_run,
+            ), mock.patch.object(
+                IMAGE_HOST_SETUP,
+                "run_prefilled_device_login",
+                return_value=IMAGE_HOST_SETUP.LOGIN_SUCCESS,
+            ) as login, mock.patch.object(
                 IMAGE_HOST_SETUP,
                 "verify_public_base_url",
             ) as verify:
@@ -2395,13 +2913,43 @@ class ImageHostSetupTests(unittest.TestCase):
 
             self.assertEqual(payload["publicBaseUrl"], "https://goldhand-blog-images.vercel.app")
             self.assertEqual(json.loads(config_path.read_text(encoding="utf-8")), payload)
+            self.assertEqual(set(payload), {"projectDir", "publicBaseUrl", "projectName"})
             self.assertTrue((project_dir / "vercel.json").is_file())
             self.assertTrue((project_dir / ".vercel" / "project.json").is_file())
-            self.assertIn(("login",), calls)
+            login.assert_called_once_with(project_dir.resolve())
             self.assertIn(("project", "add", "goldhand-blog-images"), calls)
             self.assertIn(("link", "--yes", "--project", "goldhand-blog-images"), calls)
             self.assertIn(("deploy", "--prod", "--yes", "--format", "json"), calls)
             verify.assert_called_once_with("https://goldhand-blog-images.vercel.app")
+
+    def test_first_setup_creates_project_directory_before_vercel_version_probe(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            project_dir = root / "new-image-host-project"
+            config_path = root / "state" / "image-host.json"
+
+            def require_existing_project(candidate: Path) -> None:
+                self.assertEqual(candidate, project_dir.resolve())
+                self.assertTrue(candidate.is_dir())
+                self.assertTrue((candidate / "vercel.json").is_file())
+
+            with mock.patch.object(
+                IMAGE_HOST_SETUP,
+                "ensure_supported_vercel_cli",
+                side_effect=require_existing_project,
+            ) as version_probe, mock.patch.object(
+                IMAGE_HOST_SETUP,
+                "ensure_authenticated",
+                side_effect=IMAGE_HOST_SETUP.SetupError("stop after ordering check"),
+            ):
+                with self.assertRaisesRegex(IMAGE_HOST_SETUP.SetupError, "ordering check"):
+                    IMAGE_HOST_SETUP.setup_image_host(
+                        config_path,
+                        project_dir,
+                        "goldhand-blog-images",
+                    )
+
+            version_probe.assert_called_once_with(project_dir.resolve())
 
     def test_existing_valid_setup_is_reused_without_redeploy(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -2421,7 +2969,7 @@ class ImageHostSetupTests(unittest.TestCase):
                 "projectName": "goldhand-blog-images",
             }
             config_path.write_text(json.dumps(expected), encoding="utf-8")
-            with mock.patch.object(
+            with mock.patch.object(IMAGE_HOST_SETUP, "ensure_supported_vercel_cli"), mock.patch.object(
                 IMAGE_HOST_SETUP,
                 "run_vercel",
                 return_value=subprocess.CompletedProcess([], 0, "{}", ""),
@@ -2927,7 +3475,7 @@ class TopicSourceBoundaryTests(unittest.TestCase):
         errors = EDITORIAL_PROFILE_VALIDATOR.validate_profiles(runtime, topic_library)
         self.assertTrue(any("sourceAuditStatus=body-reviewed" in error for error in errors), errors)
 
-    def test_legacy_chuna_alias_blocks_chuna_topic(self) -> None:
+    def test_recent_matching_topic_does_not_block_user_topic(self) -> None:
         candidate = next(
             item
             for item in TOPIC_SELECTOR.external_topic_candidates(self.topic_library())
@@ -2943,8 +3491,10 @@ class TopicSourceBoundaryTests(unittest.TestCase):
                 }
             ]
         }
-        with self.assertRaisesRegex(ValueError, "no-semantic-fresh-topic"):
-            TOPIC_SELECTOR.choose_topic_candidates([candidate], legacy, "광주 한의원", "추나요법", 1, "alias")
+        selected = TOPIC_SELECTOR.choose_topic_candidates(
+            [candidate], legacy, "광주 한의원", "추나요법", 1, "alias"
+        )
+        self.assertEqual([item["topicSourceId"] for item in selected], ["BTI001"])
 
     def test_count_three_is_pairwise_semantically_distinct(self) -> None:
         results = TOPIC_SELECTOR.select_ideas(
@@ -3054,15 +3604,15 @@ class ReferenceCorpusTests(unittest.TestCase):
                 }
             ],
         }
-        rotated = TOPIC_SELECTOR.select_ideas(
+        reselected = TOPIC_SELECTOR.select_ideas(
             library,
             legacy_state,
             "광주 한의원",
             count=1,
             seed="legacy-state-contract",
         )[0]
-        self.assertNotEqual(rotated["ideaReferenceId"], "WP224320052203", rotated)
-        self.assertNotEqual(rotated["writingMasterId"], "INFO01", rotated)
+        self.assertEqual(reselected["ideaReferenceId"], "WP224320052203", reselected)
+        self.assertEqual(reselected["writingMasterId"], "INFO01", reselected)
 
     def test_master_profiles_are_exactly_the_eleven_allowed_information_posts(self) -> None:
         data = json.loads((SKILL_DIR / "assets" / "reference-master-profiles.json").read_text(encoding="utf-8"))
@@ -3116,6 +3666,16 @@ class ReferenceCorpusTests(unittest.TestCase):
 
 
 class SkillPackageTests(unittest.TestCase):
+    def test_owner_refresh_is_wired_to_validated_public_release(self) -> None:
+        refresh = (PLUGIN_ROOT / "scripts" / "refresh_plugin.py").read_text(encoding="utf-8")
+        skill = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("publisher.json", refresh)
+        self.assertIn('data.get("autoPublish") is not True', refresh)
+        self.assertIn("publish_update.py", refresh)
+        self.assertIn("publish_public_update_if_enabled()", refresh)
+        self.assertIn("GitHub 푸시", skill)
+        self.assertIn("공개 설치 테스트", skill)
+
     def test_required_contract_files_exist(self) -> None:
         for relative in (
             "SKILL.md",
@@ -3132,9 +3692,13 @@ class SkillPackageTests(unittest.TestCase):
             "references/beomeo-topic-source-policy.md",
             "references/wipark-reference-inventory.md",
             "references/wipark-content-source-policy.md",
+            "references/general-information-retrieval.md",
             "references/goldhand-official-voice.md",
             "references/natural-speech-rewrite-protocol.md",
+            "references/direct-clinic-voice-generation-prompt.md",
+            "references/v113-approved-writing-style.md",
             "references/final-writing-voice-review.md",
+            "references/final-humanize-korean-review.md",
             "assets/media-library.json",
             "assets/topic-idea-library.json",
             "assets/beomeo-topic-idea-library.json",
@@ -3148,17 +3712,27 @@ class SkillPackageTests(unittest.TestCase):
             "assets/goldhand-value-proof-library.json",
             "assets/two-reader-hooks-reference-family.json",
             "assets/wipark-content-briefs.json",
+            "assets/user-general-information-references.json",
             "assets/goldhand-official-voice-profile.json",
             "assets/writing-voice-final-review-contract.json",
+            "assets/humanize-korean-final-review-contract.json",
+            "assets/title-recommendation-contract.json",
             "scripts/select_topic_idea.py",
             "scripts/validate_topic_source_library.py",
             "scripts/select_reference_master.py",
             "scripts/validate_reference_reconstruction.py",
             "scripts/select_wipark_content_reference.py",
+            "scripts/select_general_information.py",
+            "scripts/search_naver_background.py",
+            "scripts/fetch_naver_post_text.py",
+            "scripts/validate_general_information_library.py",
+            "scripts/validate_information_sources.py",
             "scripts/validate_reference_learning.py",
+            "scripts/validate_title_recommendations.py",
             "scripts/validate_goldhand_voice.py",
             "scripts/validate_natural_speech_suite.py",
             "scripts/validate_final_voice_review.py",
+            "scripts/validate_humanize_final_review.py",
             "scripts/sync_official_media_assets.py",
             "scripts/recommend_media.py",
             "scripts/recommend_closing_trust_media.py",
@@ -3176,6 +3750,15 @@ class SkillPackageTests(unittest.TestCase):
         self.assertEqual(design["textEmphasis"]["minimumTotalCount"], 6)
         self.assertEqual(design["textEmphasis"]["highlight"]["minimumCount"], 3)
         self.assertFalse(design["retentionHooks"]["titleRequiresNumericAnswerPromise"])
+        title_recommendations = design["retentionHooks"]["titleRecommendations"]
+        self.assertEqual(title_recommendations["candidateCount"], 5)
+        self.assertTrue(title_recommendations["keywordMustStartTitle"])
+        self.assertEqual(title_recommendations["maximumNonWhitespaceCharacters"], 30)
+        self.assertTrue(title_recommendations["customTitleAllowed"])
+        self.assertEqual(title_recommendations["minimumCareerCandidateCount"], 1)
+        self.assertEqual(title_recommendations["minimumNumberedCandidateCount"], 3)
+        self.assertTrue(title_recommendations["strongWordingRequired"])
+        self.assertTrue(title_recommendations["readerBenefitOrLossRequired"])
         self.assertFalse(design["retentionHooks"]["readingTime"]["requiredForEveryArticle"])
         self.assertEqual(design["retentionHooks"]["readingTime"]["minimumMinutes"], 1)
         self.assertEqual(design["retentionHooks"]["readingTime"]["maximumMinutes"], 5)
@@ -3222,6 +3805,12 @@ class SkillPackageTests(unittest.TestCase):
             design["finalWritingVoiceReview"]["contractId"],
             "writing-voice-final-rehear-v1",
         )
+        self.assertEqual(design["finalProseReview"]["defaultReviewer"], "writing-voice")
+        self.assertEqual(
+            design["finalProseReview"]["allowedReviewers"]["humanize-korean"]["contractId"],
+            "humanize-korean-final-pass-v1",
+        )
+        self.assertTrue(design["finalProseReview"]["humanizeVariantMustExcludeWritingVoice"])
         self.assertEqual(design["generatedReferenceMedia"]["contentPreservation"], "medical-information-layout")
         self.assertEqual(
             design["generatedReferenceMedia"]["allowedVariationModes"],
@@ -3244,23 +3833,36 @@ class SkillPackageTests(unittest.TestCase):
             credential_placement["requiredImmediatelyBeforeFirstInformationBodyRole"],
             ["divider", "section-heading"],
         )
-        self.assertIn("실제 고민을 금손 내용으로 바꿔 2~3개", skill)
+        self.assertIn("확정 주제·제목과 선택한 편집 마스터의 질문 기능을 금손 내용으로 바꿔 2~3개", skill)
         self.assertIn("일상글", skill)
         self.assertIn("fallback 어디에도 넣지 않는다", skill)
         self.assertIn("wipark-content-briefs.json", skill)
         self.assertIn("최근 3개", skill)
+        self.assertIn("최근 완료 글과 주제·대상·검색 의도·동의어가 같거나 비슷해도", skill)
+        self.assertIn("최근 글 이력은 공식 사진 순환과 완료 기록에만 사용", skill)
+        self.assertNotIn(
+            "최근 3개 글 중 하나와 `semanticTopicId` 또는 핵심 대상이 같거나",
+            skill,
+        )
         self.assertIn("goldhand-official-voice-v1", skill)
-        self.assertIn("위석 원문의 완성 문장", skill)
+        self.assertIn("모든 출처의 완성 문장", skill)
         self.assertIn("referenceWritingIntelligence", skill)
         self.assertIn("validate_goldhand_voice.py", skill)
         self.assertIn("validate_natural_speech_suite.py", skill)
         self.assertIn("validate_final_voice_review.py", skill)
+        self.assertIn("validate_humanize_final_review.py", skill)
         self.assertIn("final-writing-voice-review.md", skill)
+        self.assertIn("final-humanize-korean-review.md", skill)
         self.assertIn("writing-voice-final-rehear-v1", skill)
+        self.assertIn("humanize-korean-final-pass-v1", skill)
         self.assertIn("`before-credential`은 해결 방향 예고 뒤", skill)
         self.assertIn("`closing-trust`는 다른 사진을 우선하되", skill)
         self.assertIn("질환·부위·본문 문맥과 맞지 않아도", skill)
         self.assertIn("GPT Image 3~4장", skill)
+        self.assertIn("시스템 `$imagegen`", skill)
+        self.assertIn("내장 `image_gen` 모드로만", skill)
+        self.assertIn("`scripts/image_gen.py`·CLI/API 대체 경로", skill)
+        self.assertIn("`OPENAI_API_KEY`를 묻거나 확인하거나 저장하지 않는다", skill)
         self.assertIn("placementTerms", skill)
         self.assertIn("approvedAlt", skill)
         self.assertIn("assets/official-media", skill)
@@ -3271,15 +3873,37 @@ class SkillPackageTests(unittest.TestCase):
         self.assertNotIn("Desktop/" + "금손한의원 사진", skill)
         self.assertIn("진료실 발화 가능성 검사", skill)
         self.assertIn("natural-speech-rewrite-protocol.md", skill)
+        self.assertIn("direct-clinic-voice-generation-prompt.md", skill)
+        direct_prompt = (SKILL_DIR / "references" / "direct-clinic-voice-generation-prompt.md").read_text(
+            encoding="utf-8"
+        )
+        v113_style = (SKILL_DIR / "references" / "v113-approved-writing-style.md").read_text(encoding="utf-8")
+        self.assertIn("v1.13 승인 원고", direct_prompt)
+        self.assertIn("두 문단·네 문장으로 자르지 않는다", direct_prompt)
+        self.assertNotIn("공백 제외 75자 이하", direct_prompt)
+        self.assertIn("사용하지 않는 후기 버전식 강제 규칙", v113_style)
+        self.assertIn("한 문장씩 먼저 통과시킬 다섯 칸", direct_prompt)
+        self.assertIn("비교하는 두 대상은 같은 종류", direct_prompt)
+        self.assertIn("저희 {정확 메인키워드} 금손한의원에서는", direct_prompt)
+        self.assertIn("정확 메인키워드가 이미 `한의원`으로 끝나더라도", direct_prompt)
+        self.assertIn("한의 치료를 적용할지", direct_prompt)
+        self.assertIn("침 치료가 필요한지 진찰합니다", direct_prompt)
+        self.assertIn("영상검사는 계단에서 체중을 실을 때 생기는 통증까지 대신 말해 주지는 않습니다", direct_prompt)
+        self.assertIn("두 답을 들은 뒤", direct_prompt)
+        self.assertIn("몇 시간 동안 아팠는지", direct_prompt)
+        self.assertIn("진통제 이름뿐 아니라", direct_prompt)
+        self.assertIn("저장된 최종 평문에서 다시 검색", direct_prompt)
         self.assertIn("orderedContentAtoms", skill)
         self.assertIn("sourceProseWithheld=true", skill)
         self.assertIn("별도 발화 편집", skill)
-        self.assertIn("질문의 기능·구체성·리듬·설득 심리", skill)
+        self.assertIn("편집 마스터의 질문 기능·구체성·리듬·설득 심리", skill)
         self.assertIn("data-question-source", skill)
         self.assertIn("solution-preview", skill)
         self.assertIn("goldhand-naver-native-v4", skill)
         self.assertIn("첫 정보 본문의 구분선·소제목·설명보다 앞", skill)
         self.assertIn("reference-editorial-reasoning.md", openai_yaml)
+        self.assertIn("direct-clinic-voice-generation-prompt.md", openai_yaml)
+        self.assertIn("v113-approved-writing-style.md", openai_yaml)
         self.assertIn("specific number -> perceived concreteness -> low effort -> attention -> topic-specific payoff", openai_yaml)
         self.assertIn("Preserve the fixed Goldhand credential table after the complete introduction", openai_yaml)
         self.assertIn("Never use a logo, sign, building", openai_yaml)
@@ -3287,11 +3911,20 @@ class SkillPackageTests(unittest.TestCase):
         self.assertNotIn("clickable Goldhand director-consultation photo", openai_yaml)
         self.assertIn("Keep the fixed clinic information table unchanged as the final article component", openai_yaml)
         self.assertIn("Do not append a related-reading label", openai_yaml)
-        self.assertIn("Use orderedContentAtoms as the factual skeleton and flowBeats as the editorial sequence", openai_yaml)
+        self.assertIn("Use mergedInformationAtoms as the factual skeleton", openai_yaml)
+        self.assertIn("search Naver in Korean", openai_yaml)
+        self.assertIn("without browser GUI, browser login", openai_yaml)
+        self.assertIn("Goldhand clinic, doctor, treatment, and operational facts may come only from references/clinic-facts.md", openai_yaml)
         self.assertIn("naturalize the adapted reasoning without erasing it", openai_yaml)
         self.assertIn("separate spoken-editor pass", openai_yaml)
         self.assertIn("final writing-voice rehear pass", openai_yaml)
         self.assertIn("$writing-voice", openai_yaml)
+        self.assertIn("$humanize-korean", openai_yaml)
+        self.assertIn("system $imagegen skill", openai_yaml)
+        self.assertIn("use only its built-in image_gen mode", openai_yaml)
+        self.assertIn("Never invoke scripts/image_gen.py or any CLI/API fallback", openai_yaml)
+        self.assertIn("never ask for, inspect, or store OPENAI_API_KEY", openai_yaml)
+        self.assertIn("same-draft A/B finalizer test", openai_yaml)
         self.assertIn("data-mobile-group", skill)
         self.assertNotIn("Notion TOP 5", skill)
 
@@ -3328,7 +3961,10 @@ class SkillPackageTests(unittest.TestCase):
         example = (SKILL_DIR / "examples" / "광주-한의원-네이버-순정-원고.html").read_text(encoding="utf-8")
         passed = GOLDHAND_VOICE_VALIDATOR.validate(example, profile)
         self.assertEqual(passed["status"], "pass", passed)
-        failed = GOLDHAND_VOICE_VALIDATOR.validate(example.replace("그런데", "ㅎㅎ 그런데", 1), profile)
+        failed = GOLDHAND_VOICE_VALIDATOR.validate(
+            example.replace("저는 아픈 곳만 보지 않습니다.", "ㅎㅎ 저는 아픈 곳만 보지 않습니다.", 1),
+            profile,
+        )
         self.assertEqual(failed["status"], "fail", failed)
         self.assertIn("emoticon", {item["code"] for item in failed["issues"]})
 
@@ -3388,7 +4024,7 @@ class SkillPackageTests(unittest.TestCase):
         hook_result = GOLDHAND_VOICE_VALIDATOR.validate(bad_hooks, profile)
         hook_codes = {item["code"] for item in hook_result["issues"]}
         self.assertIn("parallel-because-hook-template", hook_codes, hook_result)
-        self.assertIn("stacked-symptom-summary-question", hook_codes, hook_result)
+        self.assertNotIn("stacked-symptom-summary-question", hook_codes, hook_result)
 
         abstract_transition = example.replace(
             "자주 겪는 장면 하나면 충분합니다.",
@@ -3396,11 +4032,487 @@ class SkillPackageTests(unittest.TestCase):
             1,
         )
         transition_result = GOLDHAND_VOICE_VALIDATOR.validate(abstract_transition, profile)
-        self.assertIn(
+        self.assertNotIn(
             "abstract-symptom-ranking-transition",
             {item["code"] for item in transition_result["issues"]},
             transition_result,
         )
+
+    def test_user_approved_direct_voice_gate_rejects_vague_wrappers(self) -> None:
+        profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
+        all_pattern_profile = json.loads(json.dumps(profile, ensure_ascii=False))
+        all_pattern_profile["forbidden"].pop("activeAiRegisterPatternCount", None)
+        example = (SKILL_DIR / "examples" / "광주-한의원-네이버-순정-원고.html").read_text(encoding="utf-8")
+        anchor = "진료할 때 같이 말씀해 주세요."
+        cases = {
+            "over-softened-conclusion": "취침시간만 봐서는 왜 자꾸 깨는지 알기 어렵습니다.",
+            "vague-clinic-state-action": "현재 상태와 일상 움직임을 함께 살펴보겠습니다.",
+            "abstract-clinical-sequencing": "운동보다 진료 순서가 앞서는 신호입니다.",
+            "vague-deictic-clinic-action": "그 변화를 다시 확인합니다.",
+            "abstract-body-agency": "허리가 허용하는 움직임을 정합니다.",
+            "abstract-lifestyle-wrapper": "통증을 참고 일상을 밀지 마세요.",
+            "soft-vague-closing": "현재 상태를 함께 살펴보겠습니다.",
+            "vague-symptom-wrapper": "치료 뒤 실제 변화를 봅니다.",
+            "abstract-recap-wrapper": "피해야 할 세 가지는 결국 순서의 문제입니다.",
+            "literary-clinical-metaphor": "어떤 자세에서 통증이 시작되는지가 더 많은 이야기를 해 줍니다.",
+            "reportlike-clinical-wrapper": "통증 단계를 먼저 나눕니다.",
+            "vague-comparison-without-observable": "사고 순간과 다음 날에 목과 허리가 어떻게 달랐는지 묻습니다.",
+            "deictic-abstract-followup": "이 차이를 함께 봅니다.",
+            "vague-accident-association": "통증이 늦게 생겼더라도 사고와 함께 말해야 합니다.",
+            "empty-clinical-variability": "검사가 필요한지는 증상에 따라 달라집니다.",
+            "vague-needed-scope": "침으로 충분하다고 보면 필요한 범위만 설명합니다.",
+            "vague-diagnostic-location": "같은 목 통증이라도 살펴볼 곳이 달라집니다.",
+            "reader-observation-without-action": "움직인 뒤 더 아픈지 꼭 보세요.",
+            "vague-joint-linking": "저희는 발목과 무릎, 골반을 이어서 진찰합니다.",
+            "vague-needed-explanation": "발목 상태에 따라 필요한 설명은 달라집니다.",
+            "rhetorical-answer-metaphor": "치료 이름을 많이 붙인다고 답이 생기는 것은 아닙니다.",
+            "blog-recap-meta": "두 가지를 다시 보면 간단합니다.",
+            "abstract-care-life-balance": "치료와 하루의 발 사용량을 함께 조절해야 합니다.",
+            "vague-treatment-continuation": "주된 증상과 먹는 습관에 맞춰 진료를 이어갑니다.",
+            "awkward-prescription-verb": "같은 처방을 내놓지 않습니다.",
+            "wrong-comparison-predicate": "많이 먹은 날과 적게 먹은 날부터 달라야 합니다.",
+            "abstract-symptom-opening": "두통은 아픈 느낌과 함께 오는 증상부터 다릅니다.",
+            "permission-treatment-wrapper": "한의원에서 통증을 줄이는 치료를 해도 되는지 설명합니다.",
+            "anthropomorphic-force-allocation": "발목과 골반이 한쪽 무릎에 힘을 몰아주는지 봅니다.",
+            "joint-function-report": "걸음을 진찰해 인대와 주변 관절 기능을 봅니다.",
+            "abstract-clinical-separation": "줄일 것과 병원 검사가 먼저인 증상을 나눕니다.",
+            "illogical-accident-ended-conclusion": "아프지 않아도 사고가 끝났다고 단정하지 마세요.",
+            "translated-fast-force": "목과 허리 근육에는 빠른 힘이 걸립니다.",
+            "unnatural-gerund-equivalence": "걷는 것과 인대가 다치지 않았다는 뜻은 같지 않습니다.",
+            "vague-count-endurance-wrapper": "아래 두 가지는 집에서 더 버티시면 안 됩니다.",
+            "mixed-noun-clause-coordinate": "붓기와 체중을 실을 때 통증이 계속됩니다.",
+            "seo-keyword-reader-address": "광주 발목 한의원을 찾는 분께 설명합니다.",
+            "abstract-scene-examination": "계단에서 체중이 쏠리는 장면을 따로 진찰합니다.",
+            "awkward-problem-ending": "단순히 많이 먹어서 생긴 문제로 끝낼 수 없습니다.",
+            "awkward-medication-restart-idiom": "소화제부터 다시 드실 일이 아닙니다.",
+            "symptom-presence-heard": "말이나 팔다리에 이상이 없는지까지 들어야 합니다.",
+            "unbalanced-sleep-meal-parallelism": "잠을 못 잤거나 끼니를 거르고 머리가 아팠는지 묻습니다.",
+            "mixed-treatment-examination-choice": "무릎만 치료할지 발목까지 진찰할지 이유를 설명합니다.",
+            "unnatural-stair-use": "계단을 다시 썼을 때 통증이 줄었는지 묻습니다.",
+            "missing-subject-test-priority": "검사부터 필요하면 다른 병원을 권합니다.",
+            "generic-reader-thanks": "시간 내서 읽어주셔서 감사합니다.",
+            "patient-selects-treatment": "계단 통증만 보고 치료를 고르시면 안 됩니다.",
+            "abstract-function-examination": "발목 근력과 균형 감각을 진찰해야 합니다.",
+            "parallel-particle-mismatch": "발목이 굽혀지는지와 골반이 기우는지 봅니다.",
+            "nominalized-actions-examination": "고개 돌리기와 허리 숙이기를 직접 진찰합니다.",
+            "abstract-test-needed-symptom-seen": "병원 검사가 먼저인 증상이 보이면 치료를 서두르지 않습니다.",
+            "vehicle-self-motion": "사고 현장에서 차도 움직인다는 이유로 바로 출근했습니다.",
+            "unnatural-side-first-pain": "계단을 내려갈 때 오른쪽부터 아픈지 묻습니다.",
+            "seo-keyword-clinic-framing": "광주 무릎 한의원 진료에서도 저는 무릎만 보지 않습니다.",
+            "unnecessary-mutual-comparison": "치료 전과 후를 서로 비교합니다.",
+            "compressed-headache-time-heading": "약 이름보다 아픈 때부터 말해 주세요.",
+            "unnatural-vomiting-time": "심한 두통과 함께 계속 토하는 때도 마찬가지입니다.",
+            "redundant-same-like-wrapper": "같은 더부룩함처럼 보여도 증상은 제각각입니다.",
+            "clinical-term-explained-as": "이런 답답함은 식후 포만감으로 설명합니다.",
+            "symptom-clause-examined": "명치와 배꼽 위쪽 중 어디가 더 아픈지도 진찰합니다.",
+            "compressed-warning-symptom": "경고할 증상은 없지만 더부룩함이 반복됩니다.",
+            "body-part-tested-metaphor": "통증이 줄기 전에는 발목을 시험하지 마세요.",
+            "opaque-dot-list-question": "잠·식사·카페인·진통제를 빠짐없이 묻습니다.",
+            "purpose-consider-wrapper": "침은 통증을 줄이는 목적으로 고려할 수 있습니다.",
+            "mixed-past-condition-parallelism": "검은 변을 보거나 피를 토했거나 심한 복통이 이어집니다.",
+            "treatment-decided-first": "이런 증상이 있는데 한의 치료부터 정하면 안 됩니다.",
+            "keyword-clinic-brand-omitted": "저희 광주 소화불량 한의원에서는 식사 시간을 묻습니다.",
+            "mismatched-comparison-types": "환자가 짚은 아픈 곳과 계단에서 체중이 실리는 무릎이 같은지 봅니다.",
+            "doctor-moves-own-body-ambiguity": "저는 통증이 시작된 시각을 듣고 고개와 허리를 직접 움직여 본 뒤 판단합니다.",
+            "vague-what-hurts-after-time": "사고 몇 시간 뒤 무엇이 아프기 시작했는지 묻습니다.",
+            "vague-which-place-after-palpation": "저는 배를 눌러 어느 곳이 아픈지 확인합니다.",
+            "administrative-treatment-apply": "진찰이 끝나면 한의 치료를 적용할지 말씀드립니다.",
+            "orphan-reason-closing": "같은 소화불량이라고 한 가지 처방을 만능처럼 드리지 않는 이유입니다.",
+            "ambiguous-eating-and-lying-time": "몇 시에 먹고 언제 누웠는지 묻습니다.",
+            "duplicated-same-body-direction": "같은 발목을 같은 쪽으로 반복해서 접질렸는지 묻습니다.",
+            "nausea-attached-metaphor": "머리가 아플 때 메스꺼움이 붙는지도 묻습니다.",
+            "ambiguous-neck-stopping-direction": "고개를 좌우로 돌리게 해서 어느 쪽에서 멈추는지 봅니다.",
+            "seo-keyword-visit-framing": "교통사고 뒤 광주 한의원에 오실 때는 어디가 아픈지만 말씀하시면 안 됩니다.",
+            "unnatural-swelling-grows": "붓기가 다시 커지면 오래 걷지 마세요.",
+            "unnatural-headache-less-arrival": "잠을 충분히 자면 두통이 덜 오는 분도 있습니다.",
+            "awkward-clinic-register": "진료에서 말씀해 주세요.",
+            "strength-balance-returns": "발목 근력과 균형이 덜 돌아오면 운동하지 마세요.",
+            "abstract-stop-time-heading": "사고 뒤에는 버티는 것보다 멈춰야 할 때를 알아야 합니다.",
+            "awkward-non-strenuous-exercise": "무리하지 않는 운동부터 시작하세요.",
+            "vague-test-not-urgent": "병원 검사가 급하지 않다면 침 치료를 시작합니다.",
+            "awkward-after-eating-when": "먹고 언제 더부룩한지부터 말씀해 주세요.",
+            "body-pain-place-ambiguity": "무릎이 언제, 어디에서 아픈지 묻습니다.",
+            "vague-paired-body-examination": "발목과 골반을 진찰해서 무릎 통증의 원인을 봅니다.",
+            "patient-changes-painkiller": "진통제만 바꿔 드시면 안 됩니다.",
+            "abstract-food-discomfort-timing": "먹고 불편한 때와 함께 나타난 증상을 말씀해 주세요.",
+            "abstract-one-cause-lumping": "식후 포만감과 명치 통증은 한 원인으로 묶을 수 없거든요.",
+            "enumerated-count-reference-mismatch": "출근·운전·운동을 계속해서는 안 되며, 이 두 행동은 피해야 합니다.",
+            "awkward-long-same-posture": "오래 같은 자세로 일해서도 안 됩니다.",
+            "malformed-structural-injury-coordinate": "골절이나 구조 손상을 먼저 확인해야 합니다.",
+            "unnatural-side-by-side-body-review": "아픈 무릎과 체중이 실리는 무릎을 나란히 봅니다.",
+            "ankle-endures-metaphor": "한 발로 섰을 때 발목이 버티는지 확인합니다.",
+            "incompatible-measure-heard": "다친 시각과 걸을 수 있는 거리를 들은 뒤 판단합니다.",
+            "cause-as-body-part": "두통의 원인을 목으로 단정하지 않습니다.",
+            "hospital-visit-said": "큰 병원 진료부터 말씀드립니다.",
+            "meal-skipping-typo": "전날 몇 시에 잤고 끼니를 거렸는지 묻습니다.",
+            "consumable-without-action-before-after": "탄산음료 뒤에 윗배가 더 답답한지 묻습니다.",
+            "stomach-too-nauseous": "머리가 아플 때 속까지 메스꺼우신가요?",
+            "generic-clinician-actor-drift": "의료진은 증상을 듣고 병원 검사를 먼저 받을지 정합니다.",
+            "duplicated-quotative-negation": "사고 직후 괜찮다고 몸에 이상이 없다고 넘기시면 안 됩니다.",
+            "subjective-sensation-seen": "통증이 생기는 부위와 목이 돌아가는 정도를 봅니다.",
+            "symptom-occurrence-heard": "트림이나 구역감이 함께 생기는지도 듣습니다.",
+            "question-listener-role-reversal": "이 질문을 듣고 저는 두통의 종류를 판단합니다.",
+            "pain-heard-compression": "저는 다친 날의 통증만 듣고 치료 방법을 정하지 않습니다.",
+            "vague-treatment-action": "침 치료가 필요하면 어느 부위에 왜 치료하는지 설명합니다.",
+            "treatment-sufficiency-compression": "침으로 충분하면 다른 치료를 더하지 않습니다.",
+            "vague-treatment-name": "치료 이름부터 고르면 계단에서 아픈 이유를 놓칩니다.",
+            "vague-same-words": "두 환자에게 같은 말을 해서는 안 됩니다.",
+            "vague-body-observation-promise": "발목과 골반은 제가 직접 보겠습니다.",
+            "ambiguous-polarity-coordinate": "발목이 굽혀지고 골반이 기울지 않는지 봅니다.",
+            "duplicate-immediate-adverb": "식사 뒤 바로 눕는 습관이 있다면 바로 눕지 마세요.",
+            "vague-start-time": "식사량과 시작 시간을 각각 묻습니다.",
+            "vague-before-recurrence-food": "반복되기 전에 먹은 음식을 묻습니다.",
+            "muscle-holds-knee-force": "허벅지 근육이 무릎을 잡는 힘을 봅니다.",
+            "knee-collapse-metaphor": "계단을 내려갈 때 무릎이 안쪽으로 무너지는지 봅니다.",
+            "unspecified-force-size": "그런데 힘이 크면 뼈도 다칠 수 있습니다.",
+            "rapid-swelling-time": "발목이 한 시간 안에 빠르게 부었다면 병원으로 가세요.",
+            "ligament-fracture-discrimination": "다친 인대와 골절 가능성을 가려야 합니다.",
+            "monitor-look-down": "모니터를 몇 시간 내려다본 날에만 머리가 아픈지 묻습니다.",
+            "age-passed-after": "50세가 지난 뒤 처음 생긴 두통은 검사받으세요.",
+            "subjective-pain-seen-after-movement": "고개를 돌리고 허리를 숙일 때 어느 동작에서 아픈지도 직접 보겠습니다.",
+            "subjective-pain-confirmed-after-palpation": "복숭아뼈 주변을 눌러 어디가 아픈지 확인합니다.",
+            "pretended-no-pain": "안 아픈 척 넘기지 말고 아픈 채로 버티지 마세요.",
+            "ankle-leg-strength-enters": "발목에 힘이 충분히 들어오기 전에 달리면 안 됩니다.",
+            "permission-treatment-only": "진찰 결과 침 치료만 권해도 된다면 다른 치료는 권하지 않습니다.",
+            "mixed-imperative-ending": "발목을 보호하세요. 얼음주머니를 대세요. 압박붕대는 발가락이 저리지 않을 정도로 감고 다친 발을 높게 올립니다.",
+            "disease-exam-predicate-mismatch": "신물이 올라오면 역류성 식도염이 있는지 진료받아야 합니다.",
+            "translated-stomach-mechanism": "위에서 음식이 천천히 내려가거나 위가 조금만 늘어나도 심하게 불편합니다.",
+            "generic-guidance-actor": "고무밴드 운동은 의료진의 안내에 따라 시작하세요.",
+            "stacked-clinical-actions": "발목이 얼마나 부었는지 보고, 복숭아뼈 주변을 눌러 아픈 곳을 확인하며, 한 발로 서게 해 발목이 흔들리는지도 봅니다.",
+            "abstract-thigh-strength-enters": "계단을 내려갈 때 허벅지에 힘이 충분히 들어가야 합니다.",
+            "mixed-time-unit-question": "사고가 난 시각과 통증이 시작된 날부터 묻습니다.",
+            "hospital-visit-priority-particle": "다리에 힘이 빠지면 병원 진료부터 권합니다.",
+            "stacked-imaging-hospital-visit": "복숭아뼈가 아프면 영상검사를 받을 수 있는 병원 진료를 권합니다.",
+            "speech-treatment-compression": "어디에 침을 놓을지와 왜 놓는지까지 말하고 침 치료합니다.",
+            "redundant-other-hospital-visit": "병원 검사가 필요하면 다른 병원 진료를 권합니다.",
+            "abstract-diagnosis-scrutiny": "환자의 답을 들은 뒤 편두통이 의심되는지 살핍니다.",
+            "omitted-question-not-left-out": "잠을 못 잔 날도 빼놓지 않습니다.",
+            "negative-hydration-command": "물을 거의 마시지 않는 일도 피하세요.",
+            "omitted-patient-speech-action": "진통소염제를 얼마나 자주 먹는지도 빠뜨리시면 안 됩니다.",
+            "calculation-style-numbered-answer": "첫째는 아픈 무릎과 체중이 실리는 무릎이 같은 쪽인지 보는 것입니다.",
+            "fragment-heading-body-motion": "발목이 굽혀지고 골반이 기우는가",
+            "fragment-heading-eating-method": "먹은 음식보다 먹는 방법까지",
+            "fragment-heading-test-time": "소화제보다 병원 검사가 먼저인 때",
+            "mixed-habit-among-when": "잠을 못 잔 날, 끼니를 거른 날, 커피를 마신 날 가운데 언제 더부룩했는지 묻습니다.",
+            "causative-diet-restriction": "모든 음식 종류를 한꺼번에 끊게 하지 않습니다.",
+            "vague-collision-size": "사고의 크기만 듣고 치료 방법을 정하지 않습니다.",
+            "circular-treatment-reason": "추나가 필요하면 왜 권하는지 설명합니다.",
+            "abstract-timing-symptom-comparison": "불편해지는 때와 함께 생기는 증상은 같지 않습니다.",
+            "overloaded-history-question-list": "몇 숟갈 먹었을 때 배가 차는지, 식사 뒤 얼마나 답답한지, 트림이 생기는지 묻습니다.",
+            "overloaded-numbered-recap": "반복되는 두통에서 먼저 확인할 세 가지는 언제부터 어디가 어떻게 아픈지, 두통 전에 잠을 못 잔 날과 끼니를 거른 날이 있었는지, 평소와 다른 응급 증상이 있는지입니다.",
+            "instrument-personified-for-symptom": "영상검사는 계단에서 생기는 통증까지 대신 말해 주지는 않습니다.",
+            "circular-treatment-examination": "침 치료가 필요한지 진찰합니다.",
+            "treatment-site-reason-noun-stack": "어느 부위에 침을 놓는지와 그 이유를 설명합니다.",
+            "counted-answer-recap": "두 답을 들은 뒤 무릎을 누릅니다.",
+            "symptom-duration-went": "오후에 시작해 몇 시간 갔는지 말씀해 주세요.",
+            "medicine-name-comparison": "진통제는 약 이름만큼 한 달에 며칠 먹었는지도 중요합니다.",
+            "abstract-emergency-symptom-sorting": "급히 병원으로 가야 할 증상도 따로 가립니다.",
+            "reported-observed-body-lean": "몸이 기우는 쪽도 말씀해 주세요.",
+            "unlike-headache-test-choice": "흔한 두통인지 다른 검사가 필요한지 가릴 수 있습니다.",
+            "stiff-neck-time-noun": "목이 심하게 뻣뻣한 때도 병원 검사가 먼저입니다.",
+            "direction-as-location-for-pulling": "어느 쪽에서 목 뒤가 당기는지 묻습니다.",
+            "mismatched-negative-command-pair": "술을 마시거나 달리지도 마세요.",
+            "drug-bag-possessive": "복용 중인 진통소염제의 약 봉투를 가져오세요.",
+            "stacked-auxiliary-negative": "운동을 평소처럼 계속해서도 안 됩니다.",
+            "same-cause-predicate-mismatch": "모두 무릎 통증이라고 같은 원인으로 보면 안 됩니다.",
+            "paired-question-jigeowa": "식사 뒤 언제부터 답답한지와 속쓰림이 함께 생기는지 묻습니다.",
+            "exam-destination-noun-stack": "검사받을 병원으로 먼저 가야 합니다.",
+            "imaging-capable-hospital-phrase": "X-ray 같은 검사를 받을 수 있는 병원으로 먼저 가세요.",
+            "vague-acupuncture-place-reason": "침이 필요한 곳과 이유를 설명한 뒤 치료합니다.",
+            "unqualified-prior-test-result": "병원에서 받은 검사 결과도 진료할 때 가져오세요.",
+            "mixed-emergency-coordinate": "정신이 흐려지거나 평소 두통과 다르게 점점 심해질 때도 참지 마세요.",
+            "painful-but-unchanged-activity": "목이 아픈데 출근과 운전도 그대로 계속하지 마세요.",
+            "abstract-discomfort-reveals": "교통사고 뒤 불편은 그날 모두 드러나지 않습니다.",
+            "question-chain-heard": "처음에는 어디가 아팠고 지금은 어디가 아픈지 각각 듣습니다.",
+            "generic-omitted-symptom": "늦게 생긴 통증이나 저림을 빼놓지 않습니다.",
+            "subjective-pain-seen-at-height": "팔을 들 때 어느 높이에서 통증이 시작되는지 봅니다.",
+            "clinic-hospital-time-comparison": "한의원보다 병원으로 먼저 가야 하는 때도 있습니다.",
+            "clinic-makes-patient-endure": "이런 증상을 한의원에서 버티게 하지는 않습니다.",
+            "vague-more-treatment": "다른 치료가 필요하지 않다면 더 받으라고 권하지 않습니다.",
+            "pain-and-observation-seen-together": "어디가 아픈지와 내려올 때 어느 다리에 힘을 싣는지 함께 봐야 합니다.",
+            "mixed-treatment-exam-scope": "무릎만 치료할지 발목과 골반까지 볼지 정합니다.",
+            "quoted-euro-particle": "걸을 수 있으니 괜찮다로 넘기면 안 됩니다.",
+            "pain-location-matched-seen": "환자가 느낀 곳과 제가 눌렀을 때 아픈 곳이 맞는지 봅니다.",
+            "stairs-test-command": "계단에서 다시 시험하지 마세요.",
+            "nested-hospital-imaging-choice": "병원 검사나 영상 촬영이 먼저일 수 있습니다.",
+            "personified-knee-bear": "무릎은 혼자 버티지 않습니다.",
+            "pelvis-falls": "한 발로 설 때 골반이 한쪽으로 떨어지는지 봅니다.",
+            "abstract-burden-repeats": "같은 부담이 되풀이될 수 있습니다.",
+            "permission-acupuncture-first": "침 치료부터 해도 되는 분인지 진찰합니다.",
+            "vague-reexamine": "통증이 그대로라면 제가 다시 살핍니다.",
+            "movement-test-home": "쪼그려 앉았다 일어나며 자꾸 시험하지 마세요.",
+            "pain-and-posture-seen-together": "아픈 곳과 계단을 내려가는 자세를 함께 봐야 합니다.",
+            "narrow-more-place": "이 질문으로 더 살필 곳을 좁힐 수 있습니다.",
+            "exam-treatment-binary": "검사가 먼저인지 바로 치료해도 되는지 정합니다.",
+            "painful-time-after-injury": "다음 날 더 붓고 아픈 때가 있습니다.",
+            "vague-bending-force": "발목이 꺾인 힘이 크면 뼈도 다칠 수 있습니다.",
+            "xray-needed-judged": "병원에서 X-ray가 필요한지 판단받아야 합니다.",
+            "test-possible-hospital": "검사가 가능한 병원으로 먼저 안내합니다.",
+            "weight-bearing-amount": "발을 디디는 양을 줄이세요.",
+            "two-actions-unstable": "두 동작에서 불안하면 운동하지 마세요.",
+            "abstract-strength-balance-regain": "발목 근력과 균형을 되찾은 뒤 달리세요.",
+            "tell-and-broad-exam": "다음 날 몇 걸음 걸었는지 들려주시면 제가 복숭아뼈와 인대를 진찰할 때 도움이 됩니다.",
+            "frequency-not-left-out": "한 달에 두세 번인지 거의 매일인지도 빼놓으면 안 됩니다.",
+            "skipped-meal-typo-variant": "전날 몇 끼를 거렸는지도 묻습니다.",
+            "question-only-again": "다음 진료에서는 그 질문만 다시 묻겠습니다.",
+            "vague-needed-treatment-speak": "진찰 뒤 필요한 치료만 말씀드리겠습니다.",
+            "defensive-mishear": "통증을 잘못 알아듣지 않습니다.",
+            "treatment-count-not-set": "처음부터 치료 횟수부터 정하지도 않습니다.",
+            "abstract-case-classification": "바로 더부룩한 경우와 한참 뒤 더부룩한 경우를 나누어 볼 수 있습니다.",
+            "belly-swells": "배가 갑자기 심하게 불러오면 병원으로 가세요.",
+            "record-does-not-end-vague": "이 기록이 있으면 소화가 안 된다는 말로 끝나지 않습니다.",
+            "bring-record-before-create": "더부룩함이 반복되면 식사 기록부터 가져오세요.",
+            "third-person-reader-exam-report": "환자에게 고개를 천천히 돌려 보게 한 뒤 어디까지 돌아가는지 봅니다.",
+            "third-person-reader-observation-report": "환자가 낮은 발판을 내려갈 때 몸이 기우는지 봅니다.",
+            "empty-next-question-connector": "오래 앉았다 일어설 때도 같은 곳이 아픈지 이어 묻습니다.",
+            "unsupported-repeat-question-connector": "그래서 저는 아침에 눈을 뜰 때 아픈지 다시 묻습니다.",
+            "awkward-photo-consultation-collocation": "먹고 있는 약이 보이는 사진을 들고 진료받으세요.",
+            "future-event-asked-in-present-visit": "치료받은 날뿐 아니라 다음 날 계단을 내려갈 때도 덜 아픈지 묻습니다.",
+            "treatment-explanation-action-report": "목 뒤가 뻣뻣하면 목 뒤에 침을 놓는다고 설명합니다.",
+            "patient-coordinate-particle-mismatch": "식사 직후 더부룩한 환자와 공복에 명치가 쓰린 환자에게 같은 한약을 처방하지 않습니다.",
+            "causative-reader-exam-report": "낮은 계단을 한 발씩 내려가 보시게 합니다.",
+            "outline-counting-preview": "이럴 때 볼 것은 두 가지입니다.",
+            "numbered-answer-recap": "아픈 곳을 말씀하는 것이 첫 번째입니다.",
+            "empty-treatment-administration": "진찰 결과에 따라 치료할 곳을 고릅니다.",
+            "deictic-fact-wrapper": "머리를 부딪혔다면 그 사실부터 말씀해 주세요.",
+            "generic-repeat-question": "사진은 괜찮다는 말을 들으면 저는 다시 묻습니다.",
+            "question-process-rationale": "식사량에 따라 제가 묻는 질문도 달라집니다.",
+            "deictic-answer-wrapper": "저는 그 답을 들은 뒤 발목을 봅니다.",
+            "vague-same-case-wrapper": "명치 통증이 심해질 때도 같습니다.",
+            "malformed-omission-command": "수면 얘기도 빼놓지 말해 주세요.",
+            "defensive-treatment-menu": "약침이 필요하지 않다면 함께 권하지 않습니다.",
+            "closing-treatment-administration": "병원 검사가 먼저인지 한방진료를 시작해도 되는지 말씀드리겠습니다.",
+        }
+        for expected_code, sentence in cases.items():
+            with self.subTest(expected_code=expected_code):
+                result = GOLDHAND_VOICE_VALIDATOR.validate(example.replace(anchor, sentence, 1), all_pattern_profile)
+                self.assertIn(expected_code, {item["code"] for item in result["issues"]}, result)
+
+        direct = example.replace(
+            anchor,
+            "저희 금손한의원에서는 취침시간만 묻지 않습니다. 잠들기까지 걸린 시간, 밤에 깬 횟수, 다시 잠드는 데 걸린 시간을 각각 묻습니다.",
+            1,
+        )
+        direct_result = GOLDHAND_VOICE_VALIDATOR.validate(direct, profile)
+        self.assertEqual(direct_result["status"], "pass", direct_result)
+
+        branded_keyword = example.replace(
+            anchor,
+            "저희 광주 소화불량 한의원 금손한의원에서는 식사 뒤 몇 분 만에 더부룩해지는지 묻습니다.",
+            1,
+        )
+        branded_result = GOLDHAND_VOICE_VALIDATOR.validate(branded_keyword, profile)
+        self.assertNotIn("keyword-clinic-brand-omitted", {item["code"] for item in branded_result["issues"]})
+
+    def test_v113_voice_gate_does_not_enforce_sentence_or_paragraph_quotas(self) -> None:
+        profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
+        example = (SKILL_DIR / "examples" / "광주-한의원-네이버-순정-원고.html").read_text(encoding="utf-8")
+        anchor = "진료할 때 같이 말씀해 주세요."
+
+        imperative_checklist = example.replace(
+            anchor,
+            "운전을 쉬세요. 무거운 짐을 들지 마세요. 계단 운동도 멈추세요.",
+            1,
+        )
+        imperative_result = GOLDHAND_VOICE_VALIDATOR.validate(imperative_checklist, profile)
+        self.assertNotIn(
+            "imperative-checklist-paragraph",
+            {item["code"] for item in imperative_result["issues"]},
+            imperative_result,
+        )
+
+        clinical_checklist = example.replace(
+            anchor,
+            "언제 아픈지 묻습니다. 고개가 얼마나 돌아가는지 봅니다. 치료 부위를 정합니다.",
+            1,
+        )
+        clinical_result = GOLDHAND_VOICE_VALIDATOR.validate(clinical_checklist, profile)
+        self.assertNotIn(
+            "clinical-report-checklist-paragraph",
+            {item["code"] for item in clinical_result["issues"]},
+            clinical_result,
+        )
+
+        overloaded = example.replace(
+            anchor,
+            "하나입니다. 둘입니다. 셋입니다. 넷입니다. 다섯입니다. 여섯입니다.",
+            1,
+        )
+        overloaded_result = GOLDHAND_VOICE_VALIDATOR.validate(overloaded, profile)
+        self.assertNotIn(
+            "overloaded-paragraph-cadence",
+            {item["code"] for item in overloaded_result["issues"]},
+            overloaded_result,
+        )
+
+        long_preview = example.replace(
+            "같은 자세로 얼마나 오래 있었는지도 확인합니다.</p>",
+            "같은 자세로 얼마나 오래 있었는지도 확인합니다. 무릎이 붓는지도 묻습니다.</p>",
+            1,
+        )
+        preview_result = GOLDHAND_VOICE_VALIDATOR.validate(long_preview, profile)
+        self.assertNotIn(
+            "answer-preview-overlong",
+            {item["code"] for item in preview_result["issues"]},
+            preview_result,
+        )
+
+    def test_v113_flat_draft_allows_full_numbered_explanations_and_useful_repetition(self) -> None:
+        profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
+        base = """<article data-goldhand-voice-profile="goldhand-official-voice-v1" data-content-reference-source="https://example.com/source">
+<p>계단을 내려갈 때 무릎이 아픈가요?</p>
+<p>한 칸마다 몸이 한쪽으로 기우나요?</p>
+<p>안녕하세요, 금손한의원 박준희 원장입니다.</p>
+<p>무릎이 붓거나 걸리면 계단 운동을 멈추세요.</p>
+<h2>1. 무릎 앞쪽과 안쪽 중 어디가 아픈지 말씀해 주세요</h2>
+<p>저희 광주 무릎 한의원 금손한의원에서는 계단을 내려갈 때 어디가 아픈지 묻습니다.</p>
+<h2>2. 몸이 한쪽으로 기우는지는 제가 직접 봅니다</h2>
+<p>낮은 계단을 한 칸 내려가 보세요. 저는 몸이 한쪽으로 기우는지 봅니다.</p>
+<h2>무릎이 붓거나 걸리면 계단 운동을 멈추세요</h2>
+<p>통증이 계속되면 진료할 때 말씀해 주세요.</p>
+</article>"""
+
+        long_preview = base.replace(
+            "무릎이 붓거나 걸리면 계단 운동을 멈추세요.",
+            "언제 아픈지, 진통제를 며칠 먹는지, 병원 검사가 필요한 증상이 있는지 말씀해 주세요.",
+            1,
+        )
+        preview_result = GOLDHAND_VOICE_VALIDATOR.validate(long_preview, profile)
+        self.assertNotIn("answer-preview-checklist", {item["code"] for item in preview_result["issues"]}, preview_result)
+
+        paragraph_sprawl = base.replace(
+            "<h2>2. 몸이 한쪽으로 기우는지는 제가 직접 봅니다</h2>",
+            "<p>오래 앉았다 일어날 때도 앞쪽이 아플 수 있습니다.</p>"
+            "<p>무릎이 붓는지는 따로 말씀해 주세요.</p>"
+            "<p>무릎이 걸리면 계단 운동을 멈추세요.</p>"
+            "<p>X-ray에서 큰 이상이 없어도 계단에서 아플 수 있습니다.</p>"
+            "<h2>2. 몸이 한쪽으로 기우는지는 제가 직접 봅니다</h2>",
+            1,
+        )
+        paragraph_result = GOLDHAND_VOICE_VALIDATOR.validate(paragraph_sprawl, profile)
+        self.assertNotIn(
+            "numbered-section-paragraph-overflow",
+            {item["code"] for item in paragraph_result["issues"]},
+            paragraph_result,
+        )
+
+        sentence_sprawl = base.replace(
+            "<p>저희 광주 무릎 한의원 금손한의원에서는 계단을 내려갈 때 어디가 아픈지 묻습니다.</p>",
+            "<p>앞쪽이 아픕니다. 안쪽도 아픕니다. 오래 앉아도 아픕니다.</p>"
+            "<p>계단에서 아픕니다. 평지에서는 덜 아픕니다. 무릎도 붓습니다.</p>"
+            "<p>아침에 아픕니다. 저녁에도 아픕니다. 오래 걸으면 아픕니다.</p>"
+            "<p>한 칸부터 아픕니다. 두 칸째 더 아픕니다.</p>",
+            1,
+        )
+        sentence_result = GOLDHAND_VOICE_VALIDATOR.validate(sentence_sprawl, profile)
+        self.assertNotIn(
+            "numbered-section-sentence-overflow",
+            {item["code"] for item in sentence_result["issues"]},
+            sentence_result,
+        )
+
+        directive_sprawl = base.replace(
+            "<p>저희 광주 무릎 한의원 금손한의원에서는 계단을 내려갈 때 어디가 아픈지 묻습니다.</p>",
+            "<p>계단 운동을 멈추세요.</p><p>무거운 짐을 들지 마세요.</p>"
+            "<p>통증이 심하면 병원에서 검사받으세요.</p><p>결과지를 가져오세요.</p>",
+            1,
+        )
+        directive_result = GOLDHAND_VOICE_VALIDATOR.validate(directive_sprawl, profile)
+        self.assertNotIn(
+            "numbered-section-directive-checklist",
+            {item["code"] for item in directive_result["issues"]},
+            directive_result,
+        )
+
+        report_sprawl = base.replace(
+            "<p>저희 광주 무릎 한의원 금손한의원에서는 계단을 내려갈 때 어디가 아픈지 묻습니다.</p>",
+            "<p>언제 아픈지 묻습니다. 어디가 아픈지 묻습니다.</p>"
+            "<p>무릎이 붓는지 묻습니다.</p><p>몸이 기우는지 봅니다.</p><p>치료 부위를 정합니다.</p>",
+            1,
+        )
+        report_result = GOLDHAND_VOICE_VALIDATOR.validate(report_sprawl, profile)
+        self.assertNotIn(
+            "numbered-section-clinical-report-checklist",
+            {item["code"] for item in report_result["issues"]},
+            report_result,
+        )
+
+        hidden_headings = base.replace(
+            "<h2>무릎이 붓거나 걸리면 계단 운동을 멈추세요</h2>",
+            "<h2>치료 뒤 계단에서 덜 아픈지 확인하세요</h2>"
+            "<p>다음 날 몇 칸부터 아픈지 적어 오세요.</p>"
+            "<h2>무릎이 붓거나 걸리면 계단 운동을 멈추세요</h2>",
+            1,
+        )
+        heading_result = GOLDHAND_VOICE_VALIDATOR.validate(hidden_headings, profile)
+        self.assertNotIn("post-numbered-heading-count", {item["code"] for item in heading_result["issues"]}, heading_result)
+
+        repeated_exam = base.replace(
+            "<p>저희 광주 무릎 한의원 금손한의원에서는 계단을 내려갈 때 어디가 아픈지 묻습니다.</p>",
+            "<p>고개를 천천히 돌려 보세요. 저는 어느 쪽이 덜 돌아가는지 봅니다.</p>",
+            1,
+        ).replace(
+            "<p>낮은 계단을 한 칸 내려가 보세요. 저는 몸이 한쪽으로 기우는지 봅니다.</p>",
+            "<p>고개를 돌릴 때 어디가 당기는지 말씀해 주세요.</p>",
+            1,
+        )
+        repeated_result = GOLDHAND_VOICE_VALIDATOR.validate(repeated_exam, profile)
+        self.assertNotIn("repeated-clinical-beat", {item["code"] for item in repeated_result["issues"]}, repeated_result)
+
+    def test_v113_flat_draft_disables_v121_scope_and_recap_quotas(self) -> None:
+        profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
+        draft = """<article data-goldhand-voice-profile="goldhand-official-voice-v1" data-content-reference-source="https://example.com/source">
+<p>진통제를 먹어도 머리가 다시 아픈가요?</p>
+<p>평소와 다른 두통이 갑자기 생겼나요?</p>
+<p>안녕하세요, 금손한의원 박준희 원장입니다.</p>
+<p>전에 없던 심한 두통은 병원에서 먼저 검사받으세요.</p>
+<h2>1. 두통이 언제 시작됐는지부터 말씀해 주세요</h2>
+<p>저희 광주 두통 한의원 금손한의원에서는 언제 시작했고 몇 시간 아팠으며 어디가 아픈지 묻습니다. 빛이 괴로운지도 묻습니다.</p>
+<p>고개를 돌려 보세요. 저는 목 뒤를 누른 뒤 침 치료를 권합니다. 병원에서 CT 검사를 받아야 합니다.</p>
+<p>진통제 복용 날짜와 시간을 달력에 표시하고 약 봉투 사진을 보여 주세요.</p>
+<p>말이 어눌하면 응급실로 가야 합니다.</p>
+<h2>2. 진통제를 자주 먹으면 복용일을 확인해야 합니다</h2>
+<p>약을 더 먹지 마세요. 신경과에서 검사받으세요.</p>
+<h2>두통이 계속되면 약만 바꾸지 마세요</h2>
+<p>언제 아픈지 다시 말씀해 주세요. 갑자기 심해지면 병원에서 검사받으세요.</p>
+</article>"""
+        result = GOLDHAND_VOICE_VALIDATOR.validate(draft, profile)
+        codes = {item["code"] for item in result["issues"]}
+        self.assertNotIn("numbered-section-intake-checklist", codes, result)
+        self.assertNotIn("numbered-section-patient-request-checklist", codes, result)
+        self.assertNotIn("numbered-section-referral-repeat", codes, result)
+        self.assertNotIn("numbered-section-scope-sprawl", codes, result)
+        self.assertNotIn("stacked-intake-items", codes, result)
+        self.assertNotIn("record-keeping-checklist", codes, result)
+        self.assertNotIn("closing-intake-recap", codes, result)
+        self.assertNotIn("closing-referral-recap", codes, result)
+
+    def test_v113_flat_draft_disables_v122_compression_quotas_but_keeps_abstract_slogan_gate(self) -> None:
+        profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
+        draft = """<article data-goldhand-voice-profile="goldhand-official-voice-v1" data-content-reference-source="https://example.com/source">
+<p>계단에서 발목을 접질렀는데도 걸을 수 있나요?</p>
+<p>저녁까지 발목이 붓고 발을 디디기 어렵나요?</p>
+<p>안녕하세요, 금손한의원 박준희 원장입니다.</p>
+<p>발을 디디기 어렵다면 골절 검사를 먼저 받으세요.</p>
+<h2>1. 복숭아뼈가 날카롭게 아프면 병원에서 검사받으세요</h2>
+<p>저희 광주 발목 한의원 금손한의원에서는 접질린 시각과 발이 꺾인 쪽을 묻고, 양쪽 발목의 붓기와 멍을 비교하며, 다친 뒤 걸은 거리와 신발을 벗기 어려워진 시점까지 듣고, 통증이 심해진 시간과 양말 자국도 기록해서 가져오라고 말합니다. 걸을 수 있었다고 골절이 아니라고 단정할 수는 없습니다. 복숭아뼈 뒤쪽이 날카롭게 아프면 기다리지 마세요.</p>
+<p>병원에서 X-ray 검사를 먼저 받으세요. 냉찜질과 압박과 마사지는 이 번호에서 설명하지 않습니다.</p>
+<h2>2. 덜 아파도 바로 달리지 마세요</h2>
+<p>한 발로 설 때 발목이 흔들리면 달리기를 미루세요. 통증이 줄어도 발목이 몸을 받치는 힘까지 바로 돌아온 것은 아닙니다.</p>
+<h2>접질린 뒤의 판단이 회복을 좌우합니다</h2>
+<p>처음에는 골절을 가리고, 그다음에는 서두르지 않는 것, 그것이 다시 걷기 위한 출발입니다. 금손한의원에서 편하게 상담받아 보셔도 좋습니다.</p>
+</article>"""
+        result = GOLDHAND_VOICE_VALIDATOR.validate(draft, profile)
+        codes = {item["code"] for item in result["issues"]}
+        self.assertNotIn("overpacked-sentence-length", codes, result)
+        self.assertNotIn("overpacked-sentence-commas", codes, result)
+        self.assertNotIn("numbered-section-paragraph-sentence-overflow", codes, result)
+        self.assertNotIn("numbered-section-sentence-overflow", codes, result)
+        self.assertIn("abstract-slogan-summary", codes, result)
+        self.assertNotIn("abstract-closing-heading", codes, result)
+        self.assertNotIn("abstract-closing-slogan", codes, result)
+        self.assertNotIn("closing-checklist-sentence", codes, result)
+        self.assertNotIn("soft-optional-closing", codes, result)
 
     def test_all_reference_profiles_force_hooks_before_greeting(self) -> None:
         family = json.loads(
@@ -3416,7 +4528,7 @@ class SkillPackageTests(unittest.TestCase):
         profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
         example = (SKILL_DIR / "examples" / "광주-한의원-네이버-순정-원고.html").read_text(encoding="utf-8")
         meta = example.replace(
-            "제가 진료할 때 여쭙는 건",
+            "통증이 시작된 시간과",
             "이번 글에서는 함께 살펴보겠습니다",
             1,
         )
@@ -3464,6 +4576,29 @@ class SkillPackageTests(unittest.TestCase):
             {item["code"] for item in abstract_predicate_result["issues"]},
         )
 
+        abstract_sleep = example.replace(
+            "진료할 때 같이 말씀해 주세요.",
+            "불면증의 원인은 잠 밖에 있습니다.",
+            1,
+        )
+        abstract_sleep_result = GOLDHAND_VOICE_VALIDATOR.validate(abstract_sleep, profile)
+        self.assertIn(
+            "ai-template-phrase",
+            {item["code"] for item in abstract_sleep_result["issues"]},
+        )
+        self.assertIn(
+            "abstract-sleep-location",
+            {item["code"] for item in abstract_sleep_result["issues"]},
+        )
+
+        direct_sleep = example.replace(
+            "자세에 따라 달라질 수 있습니다.",
+            "평소 취침시간만 파악해서는 왜 밤마다 자꾸 잠에서 깨는지 절대 알 수 없습니다.",
+            1,
+        )
+        direct_sleep_result = GOLDHAND_VOICE_VALIDATOR.validate(direct_sleep, profile)
+        self.assertEqual(direct_sleep_result["status"], "pass", direct_sleep_result)
+
         natural_gait = example.replace(
             "진료할 때 같이 말씀해 주세요.",
             "평소보다 걷기 힘들다면 진료할 때 말씀해 주세요.",
@@ -3478,7 +4613,7 @@ class SkillPackageTests(unittest.TestCase):
             1,
         )
         symmetric_result = GOLDHAND_VOICE_VALIDATOR.validate(symmetric, profile)
-        self.assertIn(
+        self.assertNotIn(
             "symmetric-caveat-chain",
             {item["code"] for item in symmetric_result["issues"]},
         )
@@ -3605,11 +4740,59 @@ class SkillPackageTests(unittest.TestCase):
         )
         self.assertIn("writing-voice-review-missing", {item["code"] for item in result["issues"]})
 
+    def test_humanize_final_review_accepts_rule_mapped_local_revision(self) -> None:
+        contract = json.loads(
+            (SKILL_DIR / "assets" / "humanize-korean-final-review-contract.json").read_text(encoding="utf-8")
+        )
+        title = "광주 한의원 팔을 들 때 아픈 이유"
+        before = [
+            "어깨는 넓은 움직임 범위를 가지고 있습니다.",
+            "통증이 심해지면 운동을 멈추셔야 합니다.",
+        ]
+        final = [
+            "어깨는 움직이는 범위가 넓습니다.",
+            "통증이 심해지면 운동을 멈추셔야 합니다.",
+        ]
+        case = {
+            "title": title,
+            "finalBody": final,
+            "finalVoiceReviewerSkill": "humanize-korean",
+            "humanizeKoreanReview": humanize_korean_review(
+                title,
+                before,
+                final,
+                rule_ids={1: ["A-7"]},
+            ),
+        }
+        result = HUMANIZE_FINAL_REVIEW_VALIDATOR.validate_case(case, contract)
+        self.assertEqual(result["status"], "pass", result)
+        self.assertEqual(result["metrics"]["changedParagraphs"], 1)
+
+    def test_humanize_final_review_rejects_writing_voice_contamination_or_unmapped_edit(self) -> None:
+        contract = json.loads(
+            (SKILL_DIR / "assets" / "humanize-korean-final-review-contract.json").read_text(encoding="utf-8")
+        )
+        title = "광주 한의원 어깨 통증"
+        before = ["어깨는 넓은 움직임 범위를 가지고 있습니다."]
+        final = ["어깨는 움직이는 범위가 넓습니다."]
+        review = humanize_korean_review(title, before, final)
+        review["revisions"][0]["ruleIds"] = []
+        case = {
+            "title": title,
+            "finalBody": final,
+            "humanizeKoreanReview": review,
+            "writingVoiceReview": writing_voice_review(title, before, final),
+        }
+        result = HUMANIZE_FINAL_REVIEW_VALIDATOR.validate_case(case, contract)
+        codes = {item["code"] for item in result["issues"]}
+        self.assertIn("humanize-writing-voice-contamination", codes, result)
+        self.assertIn("humanize-revision-rule-ids", codes, result)
+
     def test_plain_draft_suite_rejects_three_sentence_paragraph_template(self) -> None:
         profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
         briefs = json.loads((SKILL_DIR / "assets" / "wipark-content-briefs.json").read_text(encoding="utf-8"))
         atom_ids = [atom["id"] for atom in briefs["briefs"]["INFO01"]["orderedContentAtoms"]]
-        paragraph = "광주 한의원에서 모니터를 봅니다. 오후에는 목이 뻐근합니다. 어깨도 같이 올라가죠."
+        paragraph = "저희 광주 한의원 금손한의원에서는 고개를 어느 쪽으로 돌릴 때 목이 뻐근한지 묻습니다. 오후에는 목이 뻐근합니다. 저는 고개를 돌릴 때 어깨가 같이 올라가는지 봅니다."
         final_body = [
             "모니터를 오래 보고 나면 오후마다 목이 뻐근해지나요?",
             "고개를 돌릴 때 어깨까지 같이 당기시나요?",
@@ -3628,8 +4811,18 @@ class SkillPackageTests(unittest.TestCase):
                 "onePassMeaning": True,
                 "sceneIsVisible": True,
                 "noTemplateFlow": True,
+                "clinicSubjectActionPurposeVisible": True,
+                "vagueNounWrappersResolved": True,
+                "directConclusionStrengthPreserved": True,
+                "softAbstractClosingAbsent": True,
+                "readerAddressDirect": True,
+                "connectorsLogicallyEarned": True,
+                "timeViewpointCoherent": True,
+                "noChecklistCadence": True,
+                "directVoiceSentenceAudit": direct_voice_sentence_audit(final_body),
+                "blindSpokenRehear": blind_spoken_rehear(final_body),
                 "finalStatus": "pass",
-                "revisionHistory": ["검수"],
+                "revisionHistory": ["목이 불편합니다. → 오후마다 목이 뻐근합니다."],
             },
             "writingVoiceReview": writing_voice_review(
                 "광주 한의원 목 통증을 볼 2가지",
@@ -3648,6 +4841,346 @@ class SkillPackageTests(unittest.TestCase):
         self.assertIn("paragraph-cadence-dominance", codes)
         self.assertIn("paragraph-cadence-run", codes)
         self.assertFalse(any(code.startswith("writing-voice:") for code in codes), result)
+
+    def test_plain_draft_suite_routes_humanize_without_writing_voice(self) -> None:
+        profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
+        briefs = json.loads((SKILL_DIR / "assets" / "wipark-content-briefs.json").read_text(encoding="utf-8"))
+        atom_ids = [atom["id"] for atom in briefs["briefs"]["INFO01"]["orderedContentAtoms"]]
+        paragraph = "저희 광주 한의원 금손한의원에서는 고개를 어느 쪽으로 돌릴 때 목이 뻐근한지 묻습니다. 오후에는 목이 뻐근합니다. 저는 고개를 돌릴 때 어깨가 같이 올라가는지 봅니다."
+        final_body = [
+            "모니터를 오래 보고 나면 오후마다 목이 뻐근해지나요?",
+            "고개를 돌릴 때 어깨까지 같이 당기시나요?",
+            "안녕하세요, 금손한의원 박준희 원장입니다.",
+            *[paragraph for _ in range(10)],
+        ]
+        title = "광주 한의원 목 통증을 볼 2가지"
+        case = {
+            "iteration": 1,
+            "briefId": "INFO01",
+            "keyword": "광주 한의원",
+            "title": title,
+            "finalBody": final_body,
+            "atomCoverage": {atom_id: "모니터를 봅니다" for atom_id in atom_ids},
+            "manualReview": {
+                "soundsSpoken": True,
+                "onePassMeaning": True,
+                "sceneIsVisible": True,
+                "noTemplateFlow": True,
+                "clinicSubjectActionPurposeVisible": True,
+                "vagueNounWrappersResolved": True,
+                "directConclusionStrengthPreserved": True,
+                "softAbstractClosingAbsent": True,
+                "readerAddressDirect": True,
+                "connectorsLogicallyEarned": True,
+                "timeViewpointCoherent": True,
+                "noChecklistCadence": True,
+                "directVoiceSentenceAudit": direct_voice_sentence_audit(final_body),
+                "blindSpokenRehear": blind_spoken_rehear(final_body),
+                "finalStatus": "pass",
+                "revisionHistory": ["목이 불편합니다. → 오후마다 목이 뻐근합니다."],
+            },
+            "finalVoiceReviewerSkill": "humanize-korean",
+            "humanizeKoreanReview": humanize_korean_review(title, final_body, final_body),
+        }
+        result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite(
+            {"cases": [case]},
+            profile,
+            briefs,
+            expected_count=1,
+        )
+        codes = {item["code"] for item in result["issues"]}
+        self.assertFalse(any(code.startswith("humanize-korean:") for code in codes), result)
+        self.assertFalse(any(code.startswith("writing-voice:") for code in codes), result)
+        self.assertEqual(result["cases"][0]["finalVoiceReviewerSkill"], "humanize-korean")
+        self.assertIsNone(result["cases"][0]["finalWritingVoiceReview"])
+        self.assertEqual(result["cases"][0]["finalHumanizeReview"]["status"], "pass")
+
+    def test_plain_draft_suite_requires_user_approved_keyword_clinic_frame(self) -> None:
+        profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
+        briefs = json.loads((SKILL_DIR / "assets" / "wipark-content-briefs.json").read_text(encoding="utf-8"))
+        atom_ids = [atom["id"] for atom in briefs["briefs"]["INFO01"]["orderedContentAtoms"]]
+        title = "광주 한의원 교통사고 후 절대 지켜야 할 2가지"
+        approved_body = [
+            "사고 당일에는 괜찮았는데 다음 날 목이 뻐근해졌나요?",
+            "고개를 돌릴 때 한쪽 목이 더 아픈가요?",
+            "안녕하세요, 금손한의원 박준희 원장입니다.",
+            "오후에는 목이 뻐근합니다.",
+            "저희 광주 한의원 금손한의원에서는 사고 몇 시간 뒤 목과 허리 중 어디가 먼저 아팠는지 묻습니다. 통증이 늦게 시작됐다고 사고와 무관하다고 넘기면 안 됩니다.",
+        ]
+        case = {
+            "iteration": 1,
+            "briefId": "INFO01",
+            "keyword": "광주 한의원",
+            "title": title,
+            "finalBody": approved_body,
+            "atomCoverage": {atom_id: "목과 허리 중 어디가 먼저 아팠는지 묻습니다" for atom_id in atom_ids},
+            "manualReview": {
+                "soundsSpoken": True,
+                "onePassMeaning": True,
+                "sceneIsVisible": True,
+                "noTemplateFlow": True,
+                "clinicSubjectActionPurposeVisible": True,
+                "vagueNounWrappersResolved": True,
+                "directConclusionStrengthPreserved": True,
+                "softAbstractClosingAbsent": True,
+                "readerAddressDirect": True,
+                "connectorsLogicallyEarned": True,
+                "timeViewpointCoherent": True,
+                "noChecklistCadence": True,
+                "directVoiceSentenceAudit": direct_voice_sentence_audit(approved_body),
+                "blindSpokenRehear": blind_spoken_rehear(approved_body),
+                "finalStatus": "pass",
+                "revisionHistory": ["사고 뒤 아팠는지 묻습니다. → 사고 몇 시간 뒤 목과 허리 중 어디가 먼저 아팠는지 묻습니다."],
+            },
+            "writingVoiceReview": writing_voice_review(title, approved_body, approved_body),
+        }
+        approved = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite(
+            {"cases": [case]}, profile, briefs, expected_count=1
+        )
+        approved_codes = {item["code"] for item in approved["issues"]}
+        self.assertNotIn("body-keyword-approved-clinic-frame", approved_codes, approved)
+
+        split = json.loads(json.dumps(case, ensure_ascii=False))
+        split["finalBody"][-1] = (
+            "교통사고 뒤 광주 한의원에 오실 때는 어디가 아픈지만 말씀하시면 안 됩니다. "
+            "저희 금손한의원에서는 사고 몇 시간 뒤 목과 허리 중 어디가 먼저 아팠는지 묻습니다."
+        )
+        split["manualReview"]["directVoiceSentenceAudit"] = direct_voice_sentence_audit(split["finalBody"])
+        split["manualReview"]["blindSpokenRehear"] = blind_spoken_rehear(split["finalBody"])
+        split["writingVoiceReview"] = writing_voice_review(title, split["finalBody"], split["finalBody"])
+        split_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite(
+            {"cases": [split]}, profile, briefs, expected_count=1
+        )
+        self.assertIn(
+            "body-keyword-approved-clinic-frame",
+            {item["code"] for item in split_result["issues"]},
+            split_result,
+        )
+
+    def test_plain_draft_suite_requires_exact_direct_voice_sentence_audit(self) -> None:
+        profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
+        briefs = json.loads((SKILL_DIR / "assets" / "wipark-content-briefs.json").read_text(encoding="utf-8"))
+        atom_ids = [atom["id"] for atom in briefs["briefs"]["INFO01"]["orderedContentAtoms"]]
+        paragraph = "저희 광주 한의원 금손한의원에서는 고개를 어느 쪽으로 돌릴 때 목이 뻐근한지 묻습니다. 오후에는 목이 뻐근합니다. 저는 고개를 돌릴 때 어깨가 같이 올라가는지 봅니다."
+        final_body = [
+            "모니터를 오래 보고 나면 오후마다 목이 뻐근해지나요?",
+            "고개를 돌릴 때 어깨까지 같이 당기시나요?",
+            "안녕하세요, 금손한의원 박준희 원장입니다.",
+            *[paragraph for _ in range(10)],
+        ]
+        title = "광주 한의원 목 통증을 볼 2가지"
+        case = {
+            "iteration": 1,
+            "briefId": "INFO01",
+            "keyword": "광주 한의원",
+            "title": title,
+            "finalBody": final_body,
+            "atomCoverage": {atom_id: "모니터를 봅니다" for atom_id in atom_ids},
+            "manualReview": {
+                "soundsSpoken": True,
+                "onePassMeaning": True,
+                "sceneIsVisible": True,
+                "noTemplateFlow": True,
+                "clinicSubjectActionPurposeVisible": True,
+                "vagueNounWrappersResolved": True,
+                "directConclusionStrengthPreserved": True,
+                "softAbstractClosingAbsent": True,
+                "readerAddressDirect": True,
+                "connectorsLogicallyEarned": True,
+                "timeViewpointCoherent": True,
+                "noChecklistCadence": True,
+                "directVoiceSentenceAudit": direct_voice_sentence_audit(final_body),
+                "blindSpokenRehear": blind_spoken_rehear(final_body),
+                "finalStatus": "pass",
+                "revisionHistory": ["목이 불편합니다. → 오후마다 목이 뻐근합니다."],
+            },
+            "writingVoiceReview": writing_voice_review(title, final_body, final_body),
+        }
+        valid = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite({"cases": [case]}, profile, briefs, expected_count=1)
+        valid_codes = {item["code"] for item in valid["issues"]}
+        self.assertFalse(any(code.startswith("direct-voice-sentence-audit") for code in valid_codes), valid)
+        self.assertNotIn("revision-history-not-before-after", valid_codes, valid)
+
+        missing = json.loads(json.dumps(case, ensure_ascii=False))
+        del missing["manualReview"]["directVoiceSentenceAudit"]
+        missing_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite({"cases": [missing]}, profile, briefs)
+        self.assertIn("direct-voice-sentence-audit-missing", {item["code"] for item in missing_result["issues"]})
+
+        stale = json.loads(json.dumps(case, ensure_ascii=False))
+        stale["finalBody"][-1] += " 생활 습관도 묻습니다."
+        stale_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite({"cases": [stale]}, profile, briefs)
+        self.assertIn("direct-voice-sentence-audit-coverage", {item["code"] for item in stale_result["issues"]})
+
+        summary_only = json.loads(json.dumps(case, ensure_ascii=False))
+        summary_only["manualReview"]["revisionHistory"] = ["전체 문장을 직접 검수했습니다."]
+        history_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite({"cases": [summary_only]}, profile, briefs)
+        self.assertIn("revision-history-not-before-after", {item["code"] for item in history_result["issues"]})
+
+    def test_plain_draft_suite_requires_post_validator_blind_spoken_rehear(self) -> None:
+        profile = json.loads((SKILL_DIR / "assets" / "goldhand-official-voice-profile.json").read_text(encoding="utf-8"))
+        briefs = json.loads((SKILL_DIR / "assets" / "wipark-content-briefs.json").read_text(encoding="utf-8"))
+        atom_ids = [atom["id"] for atom in briefs["briefs"]["INFO01"]["orderedContentAtoms"]]
+        paragraph = "저희 광주 한의원 금손한의원에서는 고개를 어느 쪽으로 돌릴 때 목이 뻐근한지 묻습니다. 오후에는 목이 뻐근합니다. 저는 고개를 돌릴 때 어깨가 같이 올라가는지 봅니다."
+        final_body = [
+            "모니터를 오래 보고 나면 오후마다 목이 뻐근해지나요?",
+            "고개를 돌릴 때 어깨까지 같이 당기시나요?",
+            "안녕하세요, 금손한의원 박준희 원장입니다.",
+            paragraph,
+        ]
+        title = "광주 한의원 목 통증을 볼 2가지"
+        case = {
+            "iteration": 1,
+            "briefId": "INFO01",
+            "keyword": "광주 한의원",
+            "title": title,
+            "finalBody": final_body,
+            "atomCoverage": {atom_id: "모니터를 봅니다" for atom_id in atom_ids},
+            "manualReview": {
+                "soundsSpoken": True,
+                "onePassMeaning": True,
+                "sceneIsVisible": True,
+                "noTemplateFlow": True,
+                "clinicSubjectActionPurposeVisible": True,
+                "vagueNounWrappersResolved": True,
+                "directConclusionStrengthPreserved": True,
+                "softAbstractClosingAbsent": True,
+                "readerAddressDirect": True,
+                "connectorsLogicallyEarned": True,
+                "timeViewpointCoherent": True,
+                "noChecklistCadence": True,
+                "directVoiceSentenceAudit": direct_voice_sentence_audit(final_body),
+                "blindSpokenRehear": blind_spoken_rehear(final_body),
+                "finalStatus": "pass",
+                "revisionHistory": ["목이 불편합니다. → 오후마다 목이 뻐근합니다."],
+            },
+            "writingVoiceReview": writing_voice_review(title, final_body, final_body),
+        }
+
+        valid = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite({"cases": [case]}, profile, briefs, expected_count=1)
+        valid_codes = {item["code"] for item in valid["issues"]}
+        self.assertFalse(any(code.startswith("blind-spoken-rehear") for code in valid_codes), valid)
+
+        checklist = json.loads(json.dumps(case, ensure_ascii=False))
+        checklist["finalBody"][-1] = (
+            "오후에는 목이 뻐근합니다. "
+            "저희 광주 한의원 금손한의원에서는 언제부터 목이 아팠는지 묻습니다. "
+            "고개를 어느 쪽으로 돌릴 때 아픈지 말씀해 주세요. "
+            "어깨까지 당기는지도 알려 주세요."
+        )
+        checklist["manualReview"]["directVoiceSentenceAudit"] = direct_voice_sentence_audit(checklist["finalBody"])
+        checklist["manualReview"]["blindSpokenRehear"] = blind_spoken_rehear(checklist["finalBody"])
+        checklist["writingVoiceReview"] = writing_voice_review(
+            title, checklist["finalBody"], checklist["finalBody"]
+        )
+        checklist_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite(
+            {"cases": [checklist]}, profile, briefs, expected_count=1
+        )
+        self.assertIn(
+            "intake-checklist-cadence",
+            {item["code"] for item in checklist_result["issues"]},
+            checklist_result,
+        )
+
+        missing = json.loads(json.dumps(case, ensure_ascii=False))
+        del missing["manualReview"]["blindSpokenRehear"]
+        missing_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite({"cases": [missing]}, profile, briefs)
+        self.assertIn("blind-spoken-rehear-missing", {item["code"] for item in missing_result["issues"]})
+        pre_blind_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite(
+            {"cases": [missing]}, profile, briefs, pre_blind=True
+        )
+        self.assertNotIn("blind-spoken-rehear-missing", {item["code"] for item in pre_blind_result["issues"]})
+
+        no_revision = json.loads(json.dumps(case, ensure_ascii=False))
+        no_revision["manualReview"]["blindSpokenRehear"]["revisions"] = []
+        no_revision["manualReview"]["blindSpokenRehear"]["beforeBody"] = no_revision["finalBody"]
+        no_revision["manualReview"]["blindSpokenRehear"]["firstPass"]["awkwardSentenceCount"] = 0
+        no_revision_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite({"cases": [no_revision]}, profile, briefs)
+        self.assertNotIn(
+            "blind-spoken-rehear-revision-missing",
+            {item["code"] for item in no_revision_result["issues"]},
+        )
+
+        remaining = json.loads(json.dumps(case, ensure_ascii=False))
+        remaining["manualReview"]["blindSpokenRehear"]["secondPass"]["remainingAwkwardSentences"] = [
+            "아직 어색한 문장입니다."
+        ]
+        remaining_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite({"cases": [remaining]}, profile, briefs)
+        self.assertIn("blind-spoken-rehear-second-pass", {item["code"] for item in remaining_result["issues"]})
+
+        missing_meaning = json.loads(json.dumps(case, ensure_ascii=False))
+        del missing_meaning["manualReview"]["blindSpokenRehear"]["sentenceMeaningAudit"]
+        missing_meaning_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite(
+            {"cases": [missing_meaning]}, profile, briefs
+        )
+        self.assertIn(
+            "blind-sentence-meaning-audit-missing",
+            {item["code"] for item in missing_meaning_result["issues"]},
+        )
+
+        missing_utterance_form = json.loads(json.dumps(case, ensure_ascii=False))
+        del missing_utterance_form["manualReview"]["blindSpokenRehear"]["sentenceMeaningAudit"]["sentences"][0][
+            "clinicUtteranceForm"
+        ]
+        missing_utterance_form_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite(
+            {"cases": [missing_utterance_form]}, profile, briefs
+        )
+        self.assertNotIn(
+            "blind-sentence-meaning-audit-entry",
+            {item["code"] for item in missing_utterance_form_result["issues"]},
+        )
+
+        stale_meaning = json.loads(json.dumps(case, ensure_ascii=False))
+        stale_meaning["manualReview"]["blindSpokenRehear"]["sentenceMeaningAudit"]["sentences"][0][
+            "sentence"
+        ] += " 바뀐 문장"
+        stale_meaning_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite(
+            {"cases": [stale_meaning]}, profile, briefs
+        )
+        stale_meaning_codes = {item["code"] for item in stale_meaning_result["issues"]}
+        self.assertIn("blind-sentence-meaning-audit-entry", stale_meaning_codes)
+        self.assertIn("blind-sentence-meaning-audit-coverage", stale_meaning_codes)
+
+        false_check = json.loads(json.dumps(case, ensure_ascii=False))
+        false_check["manualReview"]["blindSpokenRehear"]["sentenceMeaningAudit"]["sentences"][0]["checks"][
+            "subjectPredicateLogical"
+        ] = False
+        false_check_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite(
+            {"cases": [false_check]}, profile, briefs
+        )
+        self.assertIn(
+            "blind-sentence-meaning-audit-entry",
+            {item["code"] for item in false_check_result["issues"]},
+        )
+
+        copied_meaning = json.loads(json.dumps(case, ensure_ascii=False))
+        copied_entries = copied_meaning["manualReview"]["blindSpokenRehear"]["sentenceMeaningAudit"]["sentences"]
+        copied_entries[1]["plainMeaning"] = copied_entries[0]["plainMeaning"]
+        copied_meaning_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite(
+            {"cases": [copied_meaning]}, profile, briefs
+        )
+        self.assertIn(
+            "blind-sentence-meaning-audit-entry",
+            {item["code"] for item in copied_meaning_result["issues"]},
+        )
+
+        missing_challenger = json.loads(json.dumps(case, ensure_ascii=False))
+        del missing_challenger["manualReview"]["blindSpokenRehear"]["sentenceMeaningAudit"]["challengerPass"]
+        missing_challenger_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite(
+            {"cases": [missing_challenger]}, profile, briefs
+        )
+        self.assertIn(
+            "blind-sentence-meaning-audit-challenger",
+            {item["code"] for item in missing_challenger_result["issues"]},
+        )
+
+        stale = json.loads(json.dumps(case, ensure_ascii=False))
+        stale["manualReview"]["blindSpokenRehear"]["revisions"][0]["paragraphIndex"] += 1
+        stale_result = NATURAL_SPEECH_SUITE_VALIDATOR.validate_suite({"cases": [stale]}, profile, briefs)
+        stale_codes = {item["code"] for item in stale_result["issues"]}
+        self.assertTrue(
+            {"blind-spoken-rehear-revision-invalid", "blind-spoken-rehear-revision-coverage"}.issubset(stale_codes),
+            stale_result,
+        )
 
     def test_plain_draft_suite_rejects_cross_draft_eight_word_copy(self) -> None:
         repeated = NATURAL_SPEECH_SUITE_VALIDATOR.repeated_cross_case_phrases(
@@ -3682,6 +5215,23 @@ class SkillPackageTests(unittest.TestCase):
         self.assertEqual(selected["voiceProfileId"], "goldhand-official-voice-v1")
         self.assertEqual(selected["voiceProtocolId"], "natural-speech-rewrite-protocol-v1")
         self.assertEqual(selected["contentAtomIds"], [atom["id"] for atom in selected["orderedContentAtoms"]])
+
+    def test_wipark_selector_can_emit_humanize_finalizer_contract(self) -> None:
+        briefs = json.loads((SKILL_DIR / "assets" / "wipark-content-briefs.json").read_text(encoding="utf-8"))
+        profiles = json.loads((SKILL_DIR / "assets" / "reference-master-profiles.json").read_text(encoding="utf-8"))
+        selected = WIPARK_CONTENT_SELECTOR.select(
+            "광주 한의원",
+            "",
+            briefs,
+            profiles,
+            {"entries": []},
+            count=1,
+            seed="humanize-finalizer-contract",
+            final_voice_reviewer="humanize-korean",
+        )[0]
+        self.assertEqual(selected["finalVoiceReviewerSkill"], "humanize-korean")
+        self.assertEqual(selected["finalVoiceReviewContractId"], "humanize-korean-final-pass-v1")
+        self.assertEqual(selected["finalVoiceReviewReceiptField"], "humanizeKoreanReview")
 
     def test_two_active_tasks_reserve_different_references_for_same_keyword(self) -> None:
         selector = SCRIPTS / "select_wipark_content_reference.py"

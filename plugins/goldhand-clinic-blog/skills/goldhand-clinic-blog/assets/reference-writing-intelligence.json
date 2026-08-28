@@ -34,6 +34,15 @@
       "closing-emotion-and-recap",
       "copy-distance-check"
     ],
+    "closingOutputContract": {
+      "referenceStyleSource": "https://blog.naver.com/wi-parkclinic/224337414108",
+      "requiresTopicSpecificHeading": true,
+      "requiresNativeDividerAfterHeading": true,
+      "requiresTitleAnswerRecap": true,
+      "requiresLowPressureClinicalInvitation": true,
+      "sourceHeadingReuseBlocked": "25년 경험이 전하는 한 가지",
+      "fixedHeadingTemplateBlocked": true
+    },
     "sourceSentenceImitationBlocked": true,
     "sourceFactReplacementRequired": true,
     "maximumConsecutiveSourceWords": 6

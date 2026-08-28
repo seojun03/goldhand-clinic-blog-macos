@@ -16,6 +16,11 @@ DEFAULT_PROFILES = SKILL_DIR / "assets" / "reference-master-profiles.json"
 FAMILY_ID = "two-or-three-reader-concern-hooks-solution-preview-info"
 ALLOWED_TYPES = ("정보전달형",)
 DEFAULTS = {"정보전달형": "INFO01"}
+SENSITIVE_MASTER_IDS = frozenset({"INFO04", "INFO11"})
+TRAUMA_REQUEST_TERMS = ("트라우마", "외상후스트레스", "ptsd")
+PANIC_REQUEST_TERMS = ("공황", "panic")
+INSOMNIA_REQUEST_TERMS = ("불면", "insomnia")
+MENOPAUSE_CONTEXT_TERMS = ("갱년기", "폐경", "완경", "안면홍조", "menopause")
 
 INTENT_RULES: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
     (("질문 2가지", "언제 검사", "다른 기관", "안전 기준", "응급"), ("INFO03",)),
@@ -39,6 +44,30 @@ def normalize(value: str) -> str:
 
 def tokens(value: str) -> set[str]:
     return {token for token in normalize(value).split() if len(token) >= 2}
+
+
+def compact_normalized(value: str) -> str:
+    return re.sub(r"[^0-9a-z가-힣]+", "", unicodedata.normalize("NFKC", value).lower())
+
+
+def has_any_term(query: str, terms: tuple[str, ...]) -> bool:
+    return any(compact_normalized(term) in query for term in terms)
+
+
+def explicit_sensitive_master_ids(title: str, topic: str) -> set[str]:
+    """Open only the sensitive editorial master explicitly named by the user."""
+    query = compact_normalized(f"{title} {topic}")
+    if not query:
+        return set()
+    matched: set[str] = set()
+    if has_any_term(query, TRAUMA_REQUEST_TERMS):
+        matched.add("INFO11")
+    panic_requested = has_any_term(query, PANIC_REQUEST_TERMS)
+    insomnia_requested = has_any_term(query, INSOMNIA_REQUEST_TERMS)
+    menopause_context = has_any_term(query, MENOPAUSE_CONTEXT_TERMS)
+    if panic_requested or (insomnia_requested and not menopause_context):
+        matched.add("INFO04")
+    return matched
 
 
 def score_profile(profile_id: str, profile: dict[str, object], query: str) -> tuple[int, list[str]]:
@@ -93,15 +122,26 @@ def select(
     if article_type != "정보전달형":
         raise ValueError("이 스킬은 독자 고민 2~3개·해결 방향 예고형 정보전달 글만 작성합니다.")
     query = " ".join(value for value in (title, topic) if value).strip()
+    explicit_sensitive_ids = explicit_sensitive_master_ids(title, topic)
     candidates: list[dict[str, object]] = []
     for profile_id, profile in profiles.items():
         if profile.get("type") != article_type:
             continue
         if profile.get("referenceFamilyId") != FAMILY_ID:
             continue
-        if profile.get("autoEligible") is not True and not allow_manual:
+        sensitive_selection_mode = ""
+        if profile_id in SENSITIVE_MASTER_IDS:
+            if profile_id in explicit_sensitive_ids:
+                sensitive_selection_mode = "explicit-request"
+            elif allow_manual:
+                sensitive_selection_mode = "manual-override"
+            else:
+                continue
+        elif profile.get("autoEligible") is not True and not allow_manual:
             continue
         score, matches = score_profile(profile_id, profile, query)
+        if sensitive_selection_mode == "explicit-request":
+            score += 1000
         candidates.append(
             {
                 "id": profile_id,
@@ -111,6 +151,7 @@ def select(
                 "sourceUrl": profile.get("sourceUrl"),
                 "bestFor": profile.get("bestFor"),
                 "autoEligible": profile.get("autoEligible") is True,
+                "sensitiveSelectionMode": sensitive_selection_mode or "not-sensitive",
             }
         )
     if not candidates:

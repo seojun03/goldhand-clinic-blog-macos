@@ -16,10 +16,26 @@
     "INFO11",
     "INFO12"
   ],
+  "automaticMasterIds": [
+    "INFO03",
+    "INFO01",
+    "INFO09",
+    "INFO08",
+    "INFO10",
+    "INFO05",
+    "INFO12",
+    "INFO06",
+    "INFO07"
+  ],
+  "sensitiveTopicMasterIds": [
+    "INFO04",
+    "INFO11"
+  ],
   "sourceFactsBlocked": true,
   "referenceExpressionLearningEnabled": true,
   "sourceSentenceImitationBlocked": true,
-  "topicAndContentAuthority": "wi-parkclinic-reviewed-11-posts",
+  "contentAuthority": "merged-general-information-sources",
+  "editorialStructureAuthority": "single-reviewed-reference-master",
   "editorialReasoningAuthority": "goldhand-reference-writing-intelligence-v1",
   "voiceAuthority": "goldhand-official-voice-v1",
   "voiceProtocolId": "natural-speech-rewrite-protocol-v1",
@@ -603,7 +619,9 @@
         "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
-        "sameReferenceForIdeaAndContentFlow": true,
+        "editorialMasterOnly": true,
+        "contentSourcesMayDiffer": true,
+        "existingGoldhandStructureUnchanged": true,
         "referenceControlsDecoration": false,
         "nativeDesignSystemId": "goldhand-naver-native-v4"
       }
@@ -1231,7 +1249,9 @@
         "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
-        "sameReferenceForIdeaAndContentFlow": true,
+        "editorialMasterOnly": true,
+        "contentSourcesMayDiffer": true,
+        "existingGoldhandStructureUnchanged": true,
         "referenceControlsDecoration": false,
         "nativeDesignSystemId": "goldhand-naver-native-v4"
       }
@@ -1822,7 +1842,9 @@
         "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
-        "sameReferenceForIdeaAndContentFlow": true,
+        "editorialMasterOnly": true,
+        "contentSourcesMayDiffer": true,
+        "existingGoldhandStructureUnchanged": true,
         "referenceControlsDecoration": false,
         "nativeDesignSystemId": "goldhand-naver-native-v4"
       }
@@ -2561,7 +2583,9 @@
         "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "knowledge-gap-then-preview",
         "requiresSolutionPreviewBeforeBody": true,
-        "sameReferenceForIdeaAndContentFlow": true,
+        "editorialMasterOnly": true,
+        "contentSourcesMayDiffer": true,
+        "existingGoldhandStructureUnchanged": true,
         "referenceControlsDecoration": false,
         "nativeDesignSystemId": "goldhand-naver-native-v4"
       }
@@ -2573,7 +2597,7 @@
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224291545650",
       "sourceTitle": "공황장애·불면증 한방 치료, 효과 보는 사람 vs 못 보는 사람",
       "publishedAt": "2026-05-20",
-      "autoEligible": true,
+      "autoEligible": false,
       "selectionTags": [
         "효과 보는 사람",
         "못 보는 사람",
@@ -3198,9 +3222,18 @@
         "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "separate-preview-after-context-media",
         "requiresSolutionPreviewBeforeBody": true,
-        "sameReferenceForIdeaAndContentFlow": true,
+        "editorialMasterOnly": true,
+        "contentSourcesMayDiffer": true,
+        "existingGoldhandStructureUnchanged": true,
         "referenceControlsDecoration": false,
         "nativeDesignSystemId": "goldhand-naver-native-v4"
+      },
+      "sensitiveTopicPolicy": {
+        "category": "mental-health-sensitive",
+        "automaticSelectionBlocked": true,
+        "explicitRequestRequired": true,
+        "explicitRequestRule": "panic-or-insomnia-terms-excluding-menopause",
+        "manualOverrideAllowed": true
       }
     },
     "INFO10": {
@@ -3946,7 +3979,9 @@
         "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "knowledge-gap-then-preview",
         "requiresSolutionPreviewBeforeBody": true,
-        "sameReferenceForIdeaAndContentFlow": true,
+        "editorialMasterOnly": true,
+        "contentSourcesMayDiffer": true,
+        "existingGoldhandStructureUnchanged": true,
         "referenceControlsDecoration": false,
         "nativeDesignSystemId": "goldhand-naver-native-v4"
       }
@@ -4671,7 +4706,9 @@
         "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "same-opening-text",
         "requiresSolutionPreviewBeforeBody": true,
-        "sameReferenceForIdeaAndContentFlow": true,
+        "editorialMasterOnly": true,
+        "contentSourcesMayDiffer": true,
+        "existingGoldhandStructureUnchanged": true,
         "referenceControlsDecoration": false,
         "nativeDesignSystemId": "goldhand-naver-native-v4"
       }
@@ -4683,7 +4720,7 @@
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224221217878",
       "sourceTitle": "광주 트라우마치료, 25년 부부한의사가 알려주는 극복방법 2가지",
       "publishedAt": "2026-03-18",
-      "autoEligible": true,
+      "autoEligible": false,
       "selectionTags": [
         "극복 방법 2가지",
         "오래된 불편",
@@ -5284,9 +5321,18 @@
         "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
-        "sameReferenceForIdeaAndContentFlow": true,
+        "editorialMasterOnly": true,
+        "contentSourcesMayDiffer": true,
+        "existingGoldhandStructureUnchanged": true,
         "referenceControlsDecoration": false,
         "nativeDesignSystemId": "goldhand-naver-native-v4"
+      },
+      "sensitiveTopicPolicy": {
+        "category": "mental-health-sensitive",
+        "automaticSelectionBlocked": true,
+        "explicitRequestRequired": true,
+        "explicitRequestRule": "trauma-terms",
+        "manualOverrideAllowed": true
       }
     },
     "INFO12": {
@@ -5985,7 +6031,9 @@
         "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
-        "sameReferenceForIdeaAndContentFlow": true,
+        "editorialMasterOnly": true,
+        "contentSourcesMayDiffer": true,
+        "existingGoldhandStructureUnchanged": true,
         "referenceControlsDecoration": false,
         "nativeDesignSystemId": "goldhand-naver-native-v4"
       }
@@ -6695,7 +6743,9 @@
         "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
-        "sameReferenceForIdeaAndContentFlow": true,
+        "editorialMasterOnly": true,
+        "contentSourcesMayDiffer": true,
+        "existingGoldhandStructureUnchanged": true,
         "referenceControlsDecoration": false,
         "nativeDesignSystemId": "goldhand-naver-native-v4"
       }
@@ -7321,7 +7371,9 @@
         "openingMode": "two-quotation-components-then-greeting",
         "solutionPreviewMode": "greeting-and-preview",
         "requiresSolutionPreviewBeforeBody": true,
-        "sameReferenceForIdeaAndContentFlow": true,
+        "editorialMasterOnly": true,
+        "contentSourcesMayDiffer": true,
+        "existingGoldhandStructureUnchanged": true,
         "referenceControlsDecoration": false,
         "nativeDesignSystemId": "goldhand-naver-native-v4"
       }

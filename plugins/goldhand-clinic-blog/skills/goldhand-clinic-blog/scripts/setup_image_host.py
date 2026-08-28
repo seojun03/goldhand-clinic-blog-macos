@@ -7,20 +7,36 @@ import argparse
 import json
 import os
 import re
+import signal
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
+import webbrowser
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 CONFIG_ENV = "GOLDHAND_IMAGE_HOST_CONFIG"
 PROJECT_DIR_ENV = "GOLDHAND_IMAGE_HOST_PROJECT_DIR"
 PROJECT_NAME_ENV = "GOLDHAND_IMAGE_HOST_PROJECT_NAME"
+VERCEL_CLI_ENV = "GOLDHAND_VERCEL_CLI"
 DEFAULT_PROJECT_NAME = "goldhand-blog-images"
+LOGIN_ATTEMPTS = 2
+LOGIN_URL_WAIT_SECONDS = 45
+LOGIN_ATTEMPT_TIMEOUT_SECONDS = 630
+MINIMUM_VERCEL_CLI_VERSION = (50, 44, 0)
+SEMVER_RE = re.compile(r"(?<!\d)(\d+)\.(\d+)\.(\d+)(?!\d)")
+HTTPS_URL_RE = re.compile(r"https://[^\s\x07\x1b]+")
+DEVICE_VALUE_RE = re.compile(r"^[A-Za-z0-9._~-]+$")
+LOGIN_SUCCESS = "success"
+LOGIN_RETRYABLE = "retryable"
+LOGIN_FAILED = "failed"
+_VERCEL_CLI_OVERRIDE: str | None = None
 
 
 class SetupError(ValueError):
@@ -57,6 +73,8 @@ def default_project_name() -> str:
 
 
 def resolve_vercel_cli(platform_name: str | None = None) -> str:
+    if _VERCEL_CLI_OVERRIDE:
+        return _VERCEL_CLI_OVERRIDE
     windows = (platform_name or os.name) == "nt"
     candidates = ("vercel.cmd", "vercel.exe", "vercel") if windows else ("vercel",)
     for candidate in candidates:
@@ -90,12 +108,69 @@ def resolve_vercel_cli(platform_name: str | None = None) -> str:
     raise SetupError(f"Vercel CLI를 찾을 수 없습니다: {expected}")
 
 
-def vercel_command(arguments: list[str], platform_name: str | None = None) -> list[str]:
-    resolved = resolve_vercel_cli(platform_name)
+def command_for_vercel_executable(
+    resolved: str,
+    arguments: list[str],
+    platform_name: str | None = None,
+) -> list[str]:
     windows = (platform_name or os.name) == "nt"
     if windows and Path(resolved).suffix.lower() in {".cmd", ".bat"}:
         return ["cmd.exe", "/d", "/s", "/c", resolved, *arguments]
     return [resolved, *arguments]
+
+
+def vercel_command(arguments: list[str], platform_name: str | None = None) -> list[str]:
+    return command_for_vercel_executable(resolve_vercel_cli(platform_name), arguments, platform_name)
+
+
+def vercel_cli_candidates(platform_name: str | None = None) -> list[str]:
+    windows = (platform_name or os.name) == "nt"
+    names = ("vercel.cmd", "vercel.exe", "vercel") if windows else ("vercel",)
+    candidates: list[str] = []
+    explicit = os.environ.get(VERCEL_CLI_ENV, "").strip()
+    if explicit:
+        candidates.append(explicit)
+    if _VERCEL_CLI_OVERRIDE:
+        candidates.append(_VERCEL_CLI_OVERRIDE)
+    for name in names:
+        resolved = shutil.which(name)
+        if resolved:
+            candidates.append(resolved)
+    for directory in os.environ.get("PATH", "").split(os.pathsep):
+        if not directory:
+            continue
+        for name in names:
+            path = Path(directory) / name
+            if path.is_file():
+                candidates.append(str(path))
+    if windows:
+        for root in (
+            os.environ.get("NPM_CONFIG_PREFIX", ""),
+            str(Path(os.environ["APPDATA"]) / "npm") if os.environ.get("APPDATA") else "",
+            str(Path(os.environ["LOCALAPPDATA"]) / "npm") if os.environ.get("LOCALAPPDATA") else "",
+        ):
+            if root:
+                for name in ("vercel.cmd", "vercel.exe"):
+                    path = Path(root) / name
+                    if path.is_file():
+                        candidates.append(str(path))
+    else:
+        for path in (
+            codex_home_dir() / "state" / "goldhand-clinic-blog" / "bin" / "vercel",
+            Path.home() / ".local" / "bin" / "vercel",
+            Path("/opt/homebrew/bin/vercel"),
+            Path("/usr/local/bin/vercel"),
+        ):
+            if path.is_file() and os.access(path, os.X_OK):
+                candidates.append(str(path))
+    seen: set[str] = set()
+    unique: list[str] = []
+    for candidate in candidates:
+        key = os.path.normcase(os.path.abspath(candidate))
+        if key not in seen:
+            seen.add(key)
+            unique.append(candidate)
+    return unique
 
 
 def run_vercel(
@@ -119,18 +194,221 @@ def command_detail(result: subprocess.CompletedProcess[str]) -> str:
     return ((result.stderr or "") + "\n" + (result.stdout or "")).strip()[-800:]
 
 
+def parse_vercel_cli_version(output: str) -> tuple[int, int, int] | None:
+    match = SEMVER_RE.search(output)
+    return tuple(int(part) for part in match.groups()) if match else None
+
+
+def ensure_supported_vercel_cli(project_dir: Path) -> None:
+    global _VERCEL_CLI_OVERRIDE
+    for candidate in vercel_cli_candidates():
+        try:
+            result = subprocess.run(
+                command_for_vercel_executable(candidate, ["--version"]),
+                cwd=project_dir,
+                check=False,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=30,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        version = parse_vercel_cli_version((result.stdout or "") + "\n" + (result.stderr or ""))
+        if result.returncode == 0 and version is not None and version >= MINIMUM_VERCEL_CLI_VERSION:
+            _VERCEL_CLI_OVERRIDE = candidate
+            return
+    minimum = ".".join(str(part) for part in MINIMUM_VERCEL_CLI_VERSION)
+    raise SetupError(f"Vercel CLI {minimum} 이상이 필요합니다. Windows 설치 파일을 다시 실행해 주세요.")
+
+
+def prefilled_vercel_device_url(output: str) -> str | None:
+    """Return only Vercel's complete approval URL from a CLI ``Visit`` line."""
+
+    if "Visit " not in output:
+        return None
+    for match in HTTPS_URL_RE.finditer(output):
+        candidate = match.group(0).rstrip("'\"),.;]}")
+        try:
+            parsed = urllib.parse.urlsplit(candidate)
+            query = urllib.parse.parse_qs(parsed.query, keep_blank_values=True, strict_parsing=True)
+            base_valid = (
+                parsed.scheme == "https"
+                and parsed.hostname == "vercel.com"
+                and parsed.port in (None, 443)
+                and parsed.username is None
+                and parsed.password is None
+                and not parsed.fragment
+            )
+            query_form = (
+                parsed.path == "/oauth/device"
+                and set(query) == {"user_code"}
+                and len(query["user_code"]) == 1
+                and bool(DEVICE_VALUE_RE.fullmatch(query["user_code"][0]))
+            ) or (
+                parsed.path == "/device"
+                and set(query) == {"code"}
+                and len(query["code"]) == 1
+                and bool(DEVICE_VALUE_RE.fullmatch(query["code"][0]))
+            )
+            path_match = re.fullmatch(r"/oauth/device/([A-Za-z0-9._~-]+)", parsed.path)
+            path_form = (
+                path_match is not None
+                and set(query) == {"v"}
+                and len(query["v"]) == 1
+                and bool(DEVICE_VALUE_RE.fullmatch(query["v"][0]))
+            )
+            valid = base_valid and (query_form or path_form)
+        except (TypeError, ValueError):
+            valid = False
+        if valid:
+            return candidate
+    return None
+
+
+def stop_login_process(process: subprocess.Popen[str]) -> None:
+    if process.poll() is not None:
+        return
+    if os.name == "nt":
+        try:
+            subprocess.run(
+                ["taskkill.exe", "/PID", str(process.pid), "/T", "/F"],
+                check=False,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except OSError:
+            pass
+    else:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except (OSError, ProcessLookupError):
+            pass
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        try:
+            process.kill()
+        except OSError:
+            pass
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
+
+
+def run_prefilled_device_login(
+    project_dir: Path,
+    *,
+    browser_opener: Callable[..., bool] | None = None,
+) -> str:
+    """Run one bounded Vercel login and open only its code-prefilled URL."""
+
+    environment = os.environ.copy()
+    environment.update(
+        {
+            # Vercel skips its own opener in CI. We open the exact validated URL
+            # ourselves so a ChatGPT task cannot lose the one-time code.
+            "CI": "1",
+            "NO_COLOR": "1",
+            "TERM": "dumb",
+            "FORCE_HYPERLINK": "0",
+        }
+    )
+    popen_kwargs: dict[str, Any] = {
+        "cwd": project_dir,
+        "env": environment,
+        "stdin": subprocess.DEVNULL,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.STDOUT,
+        "text": True,
+        "encoding": "utf-8",
+        "errors": "replace",
+        "bufsize": 1,
+    }
+    if os.name == "nt":
+        popen_kwargs["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    else:
+        popen_kwargs["start_new_session"] = True
+
+    process = subprocess.Popen(
+        vercel_command(["login", "--no-color", "--non-interactive"]),
+        **popen_kwargs,
+    )
+    url_ready = threading.Event()
+    discovered: dict[str, str] = {}
+    retryable_failure = threading.Event()
+
+    def consume_output() -> None:
+        assert process.stdout is not None
+        try:
+            for line in iter(process.stdout.readline, ""):
+                lowered = line.lower()
+                if "timed out waiting for authentication" in lowered or "expired_token" in lowered:
+                    retryable_failure.set()
+                url = prefilled_vercel_device_url(line)
+                if url and "url" not in discovered:
+                    discovered["url"] = url
+                    url_ready.set()
+        except (OSError, ValueError):
+            pass
+
+    reader = threading.Thread(target=consume_output, name="goldhand-vercel-login-output", daemon=True)
+    reader.start()
+
+    try:
+        deadline = time.monotonic() + LOGIN_URL_WAIT_SECONDS
+        while not url_ready.is_set() and process.poll() is None and time.monotonic() < deadline:
+            url_ready.wait(timeout=0.2)
+
+        verification_url = discovered.pop("url", None)
+        if not verification_url:
+            return LOGIN_FAILED
+
+        opener = browser_opener or webbrowser.open
+        try:
+            opened = bool(opener(verification_url, new=1, autoraise=True))
+        except (OSError, webbrowser.Error):
+            opened = False
+        verification_url = ""
+        if not opened:
+            return LOGIN_FAILED
+
+        try:
+            return_code = process.wait(timeout=LOGIN_ATTEMPT_TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired:
+            return LOGIN_RETRYABLE
+        if return_code == 0:
+            return LOGIN_SUCCESS
+        reader.join(timeout=1)
+        return LOGIN_RETRYABLE if retryable_failure.is_set() else LOGIN_FAILED
+    finally:
+        if process.poll() is None:
+            stop_login_process(process)
+        reader.join(timeout=2)
+        if process.stdout is not None:
+            process.stdout.close()
+
+
 def ensure_authenticated(project_dir: Path) -> None:
     status = run_vercel(["whoami", "--format", "json"], project_dir)
     if status.returncode == 0:
         return
     print("\n처음 한 번만 Vercel 로그인이 필요합니다.")
-    print("브라우저가 열리면 본인 계정으로 로그인하고 연결을 승인해 주세요.\n")
-    login = run_vercel(["login"], project_dir, interactive=True)
-    if login.returncode != 0:
-        raise SetupError("Vercel 로그인이 완료되지 않았습니다. 이 설정 파일을 다시 실행해 주세요.")
-    status = run_vercel(["whoami", "--format", "json"], project_dir)
-    if status.returncode != 0:
-        raise SetupError("Vercel 로그인 상태를 확인할 수 없습니다.")
+    print("코드가 자동 적용된 브라우저 창에서 본인 계정으로 로그인하고 Allow만 눌러 주세요.")
+    print("코드를 직접 찾거나 입력할 필요는 없습니다.\n")
+    for attempt in range(LOGIN_ATTEMPTS):
+        if attempt:
+            print("이전 승인 요청이 만료되어 새 승인 창을 한 번만 더 엽니다.\n")
+        login_result = run_prefilled_device_login(project_dir)
+        status = run_vercel(["whoami", "--format", "json"], project_dir)
+        if status.returncode == 0:
+            return
+        if login_result != LOGIN_RETRYABLE:
+            break
+    raise SetupError("Vercel 승인 요청이 완료되지 않았습니다. 빈 코드 입력 화면은 닫고 다시 시도해 주세요.")
 
 
 def write_host_template(project_dir: Path) -> None:
@@ -296,6 +574,7 @@ def setup_image_host(config_path: Path, project_dir: Path, project_name: str, *,
     config_path = config_path.expanduser().resolve()
     project_dir = project_dir.expanduser().resolve()
     write_host_template(project_dir)
+    ensure_supported_vercel_cli(project_dir)
     ensure_authenticated(project_dir)
 
     existing = None if force else read_valid_config(config_path, project_dir)
@@ -330,7 +609,7 @@ def main() -> int:
         payload = setup_image_host(args.config, args.project_dir, args.project_name, force=args.force)
     except (OSError, UnicodeError, SetupError) as exc:
         print(f"\n[이미지 자동 연결 실패] {exc}", file=sys.stderr)
-        print("브라우저 로그인을 마친 뒤 같은 설정 파일을 다시 실행해 주세요.", file=sys.stderr)
+        print("빈 코드 입력 화면은 닫고 Goldhand Image Setup을 다시 실행해 주세요.", file=sys.stderr)
         return 1
     print("\n이미지 자동 연결이 완료되었습니다.")
     print(f"공개 이미지 주소: {payload['publicBaseUrl']}")

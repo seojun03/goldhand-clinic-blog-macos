@@ -43,6 +43,16 @@ REQUIRED_SNIPPETS = {
     "closing-supplement-disabled": "requiresNativeFinisher:false",
     "native-input-buffer": "INPUT_BUFFER_DATA;",
     "native-copy-component-preservation": "element.matches('.se-component.se-oglink,.se-component.se-placesMap')",
+    "copy-image-readiness": "waitForCopyImages",
+    "native-image-link": 'data-linktype="img"',
+    "native-image-linkdata": "data-linkdata=",
+    "native-image-attribute-escape": "escapeAttribute",
+    "clipboard-data-transfer-copy": "copyWithDataTransfer",
+    "clipboard-html-payload": "setData('text/html',htmlValue)",
+    "clipboard-plain-payload": "setData('text/plain',plainValue)",
+    "clipboard-payload-confirmation": "getData('text/html')===htmlValue",
+    "copy-image-preview": "imageDataLinks:",
+    "copy-caption-preview": "orphanImageCaptions:",
 }
 
 
@@ -346,6 +356,41 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
                     flags=re.I | re.S,
                 )
             )
+            if len(neutral_matches) != 1:
+                add(issues, "error", "reference-closing-count", f"복사용 HTML의 neutral-close는 정확히 1개여야 합니다. 현재 {len(neutral_matches)}개입니다.")
+            else:
+                closing_html = neutral_matches[0].group(0)
+                closing_headings = list(
+                    re.finditer(
+                        r"<(?P<tag>[a-z][\w:-]*)\b(?=[^>]*\bdata-reference-role\s*=\s*['\"]closing-heading['\"])(?=[^>]*\bdata-naver-native-component\s*=\s*['\"]subheading['\"])[^>]*>.*?</(?P=tag)>",
+                        closing_html,
+                        flags=re.I | re.S,
+                    )
+                )
+                closing_dividers = list(
+                    re.finditer(
+                        r"<hr\b(?=[^>]*\bdata-naver-native-component\s*=\s*['\"]divider['\"])[^>]*>",
+                        closing_html,
+                        flags=re.I | re.S,
+                    )
+                )
+                closing_invitations = list(
+                    re.finditer(
+                        r"<(?P<tag>[a-z][\w:-]*)\b(?=[^>]*\bdata-reference-role\s*=\s*['\"]closing-invitation['\"])[^>]*>.*?</(?P=tag)>",
+                        closing_html,
+                        flags=re.I | re.S,
+                    )
+                )
+                if len(closing_headings) != 1:
+                    add(issues, "error", "closing-heading-count", f"복사용 HTML의 글별 마무리 소제목은 정확히 1개여야 합니다. 현재 {len(closing_headings)}개입니다.")
+                if len(closing_dividers) != 1:
+                    add(issues, "error", "closing-divider-count", f"마무리 소제목 뒤 순정 구분선은 정확히 1개여야 합니다. 현재 {len(closing_dividers)}개입니다.")
+                if len(closing_invitations) != 1:
+                    add(issues, "error", "closing-invitation-count", f"복사용 HTML의 부담 없는 진료 안내는 정확히 1개여야 합니다. 현재 {len(closing_invitations)}개입니다.")
+                if len(closing_headings) == len(closing_dividers) == len(closing_invitations) == 1 and not (
+                    closing_headings[0].end() <= closing_dividers[0].start() < closing_dividers[0].end() <= closing_invitations[0].start()
+                ):
+                    add(issues, "error", "closing-component-order", "마무리는 글별 소제목, 순정 구분선, 핵심 회수, 부담 없는 진료 안내 순서여야 합니다.")
             section_heading_matches = explanatory_heading_candidates(article_html)
             clinic_heading_matches = list(
                 re.finditer(
@@ -634,7 +679,19 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
 
     if "data-local-image=" in raw:
         add(issues, "error", "local-image-not-published", "로컬 이미지가 네이버 복사용 HTTPS 주소로 게시되지 않았습니다.")
-    for src in re.findall(r"<img\b[^>]*\bsrc\s*=\s*['\"](.*?)['\"]", raw, flags=re.I | re.S):
+    if "사진 설명을 입력하세요." in raw or re.search(
+        r"<[^>]+\bclass\s*=\s*['\"][^'\"]*\bse-caption\b",
+        raw,
+        flags=re.I | re.S,
+    ):
+        add(
+            issues,
+            "error",
+            "orphan-image-caption",
+            "네이버 붙여넣기에서 사진 대신 남을 수 있는 빈 캡션 자리표시자가 있습니다.",
+        )
+    image_validation_html = article_match.group(0) if article_match else ""
+    for src in re.findall(r"<img\b[^>]*\bsrc\s*=\s*['\"](.*?)['\"]", image_validation_html, flags=re.I | re.S):
         if src.startswith(("/", "file:", "~/")):
             add(issues, "error", "local-path-leak", f"공유할 수 없는 로컬 이미지 경로: {src[:120]}")
         if src.startswith("data:image/"):
@@ -642,7 +699,7 @@ def validate_html(raw: str, *, max_megabytes: float = 30.0) -> dict[str, object]
         elif not src.startswith("https://"):
             add(issues, "error", "invalid-image-source", f"허용되지 않은 이미지 src: {src[:120]}")
 
-    for tag in re.findall(r"<img\b[^>]*\bdata-reference-source-url\s*=\s*['\"].*?['\"][^>]*>", raw, flags=re.I | re.S):
+    for tag in re.findall(r"<img\b[^>]*\bdata-reference-source-url\s*=\s*['\"].*?['\"][^>]*>", image_validation_html, flags=re.I | re.S):
         if not re.search(r"\breferrerpolicy\s*=\s*['\"]no-referrer['\"]", tag, flags=re.I):
             add(issues, "error", "referrer-policy-missing", "공식 이미지에 no-referrer가 없습니다.")
 

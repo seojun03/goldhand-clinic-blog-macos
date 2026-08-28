@@ -30,6 +30,21 @@
     "INFO11",
     "INFO12"
   ],
+  "automaticMasterIds": [
+    "INFO03",
+    "INFO01",
+    "INFO09",
+    "INFO08",
+    "INFO10",
+    "INFO05",
+    "INFO12",
+    "INFO06",
+    "INFO07"
+  ],
+  "sensitiveTopicMasterIds": [
+    "INFO04",
+    "INFO11"
+  ],
   "sourceArticleCount": 130,
   "articleCount": 11,
   "excludedCount": 119,
@@ -42,6 +57,7 @@
       "type": "정보전달형",
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224337414108",
       "autoEligible": true,
+      "sensitiveTopicPolicy": null,
       "bestFor": "환자의 두 가지 핵심 질문에 각각 직접 답하고 다른 검사·기관이 먼저인 경우를 밝힐 때",
       "selectionTags": [
         "질문 2가지",
@@ -56,6 +72,7 @@
       "type": "정보전달형",
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224320052203",
       "autoEligible": true,
+      "sensitiveTopicPolicy": null,
       "bestFor": "치료만 반복해도 변화가 더딘 이유와 생활 조건 두 가지를 설명할 때",
       "selectionTags": [
         "치료받아도 소용없는 특징",
@@ -70,6 +87,7 @@
       "type": "정보전달형",
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224314708696",
       "autoEligible": true,
+      "sensitiveTopicPolicy": null,
       "bestFor": "치료·관리 중단 뒤 생길 수 있는 변화와 이후 유지 조건 두 가지를 설명할 때",
       "selectionTags": [
         "주의사항 2가지",
@@ -84,6 +102,7 @@
       "type": "정보전달형",
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224307070715",
       "autoEligible": true,
+      "sensitiveTopicPolicy": null,
       "bestFor": "같은 관리도 시작 시점과 몸 상태에 따라 달라지는 두 경우를 비교할 때",
       "selectionTags": [
         "시기 2가지",
@@ -97,7 +116,14 @@
       "label": "공황장애·불면증 한방 치료, 효과 보는 사람 vs 못 보는 사람",
       "type": "정보전달형",
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224291545650",
-      "autoEligible": true,
+      "autoEligible": false,
+      "sensitiveTopicPolicy": {
+        "category": "mental-health-sensitive",
+        "automaticSelectionBlocked": true,
+        "explicitRequestRequired": true,
+        "explicitRequestRule": "panic-or-insomnia-terms-excluding-menopause",
+        "manualOverrideAllowed": true
+      },
       "bestFor": "같은 관리에도 반응이 다른 조건을 비교하고 자신에게 맞는지 구분하게 할 때",
       "selectionTags": [
         "효과 보는 사람",
@@ -112,6 +138,7 @@
       "type": "정보전달형",
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224287906098",
       "autoEligible": true,
+      "sensitiveTopicPolicy": null,
       "bestFor": "오래 이어지는 증상의 원인, 흔한 접근의 한계, 고려할 치료 원리를 순서대로 설명할 때",
       "selectionTags": [
         "증상 원인",
@@ -126,6 +153,7 @@
       "type": "정보전달형",
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224280621821",
       "autoEligible": true,
+      "sensitiveTopicPolicy": null,
       "bestFor": "보험·제도·적용 조건처럼 정확한 기준과 예외를 두 갈래로 설명할 때",
       "selectionTags": [
         "건강보험",
@@ -139,7 +167,14 @@
       "label": "광주 트라우마치료, 25년 부부한의사가 알려주는 극복방법 2가지",
       "type": "정보전달형",
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224221217878",
-      "autoEligible": true,
+      "autoEligible": false,
+      "sensitiveTopicPolicy": {
+        "category": "mental-health-sensitive",
+        "automaticSelectionBlocked": true,
+        "explicitRequestRequired": true,
+        "explicitRequestRule": "trauma-terms",
+        "manualOverrideAllowed": true
+      },
       "bestFor": "오래된 불편을 한 면으로만 보지 않고 두 갈래의 회복 기준을 설명할 때",
       "selectionTags": [
         "극복 방법 2가지",
@@ -154,6 +189,7 @@
       "type": "정보전달형",
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224212833691",
       "autoEligible": true,
+      "sensitiveTopicPolicy": null,
       "bestFor": "같은 노력을 해도 결과가 다른 이유와 성공을 좌우하는 여러 조건을 설명할 때",
       "selectionTags": [
         "성공 조건",
@@ -168,6 +204,7 @@
       "type": "정보전달형",
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224205420099",
       "autoEligible": true,
+      "sensitiveTopicPolicy": null,
       "bestFor": "아픈 부위만 보지 않고 움직임과 주변 구조를 함께 살피는 두 원칙을 설명할 때",
       "selectionTags": [
         "회복 원칙",
@@ -182,6 +219,7 @@
       "type": "정보전달형",
       "sourceUrl": "https://blog.naver.com/wi-parkclinic/224134818728",
       "autoEligible": true,
+      "sensitiveTopicPolicy": null,
       "bestFor": "한 증상의 치료 원리를 두세 단계로 나누고 각 단계의 이유를 설명할 때",
       "selectionTags": [
         "치료방법 핵심",
@@ -231,7 +269,9 @@
       "broadKeywordPriority": 8,
       "sourceFactsBlocked": true,
       "sourceSentencesBlocked": true,
-      "sourceMediaBlocked": true
+      "sourceMediaBlocked": true,
+      "autoEligible": true,
+      "sensitiveTopicPolicy": null
     },
     {
       "id": "WP224320052203",
@@ -275,7 +315,9 @@
       "broadKeywordPriority": 11,
       "sourceFactsBlocked": true,
       "sourceSentencesBlocked": true,
-      "sourceMediaBlocked": true
+      "sourceMediaBlocked": true,
+      "autoEligible": true,
+      "sensitiveTopicPolicy": null
     },
     {
       "id": "WP224314708696",
@@ -316,7 +358,9 @@
       "broadKeywordPriority": 4,
       "sourceFactsBlocked": true,
       "sourceSentencesBlocked": true,
-      "sourceMediaBlocked": true
+      "sourceMediaBlocked": true,
+      "autoEligible": true,
+      "sensitiveTopicPolicy": null
     },
     {
       "id": "WP224307070715",
@@ -357,7 +401,9 @@
       "broadKeywordPriority": 6,
       "sourceFactsBlocked": true,
       "sourceSentencesBlocked": true,
-      "sourceMediaBlocked": true
+      "sourceMediaBlocked": true,
+      "autoEligible": true,
+      "sensitiveTopicPolicy": null
     },
     {
       "id": "WP224291545650",
@@ -399,7 +445,15 @@
       "broadKeywordPriority": 5,
       "sourceFactsBlocked": true,
       "sourceSentencesBlocked": true,
-      "sourceMediaBlocked": true
+      "sourceMediaBlocked": true,
+      "autoEligible": false,
+      "sensitiveTopicPolicy": {
+        "category": "mental-health-sensitive",
+        "automaticSelectionBlocked": true,
+        "explicitRequestRequired": true,
+        "explicitRequestRule": "panic-or-insomnia-terms-excluding-menopause",
+        "manualOverrideAllowed": true
+      }
     },
     {
       "id": "WP224287906098",
@@ -442,7 +496,9 @@
       "broadKeywordPriority": 3,
       "sourceFactsBlocked": true,
       "sourceSentencesBlocked": true,
-      "sourceMediaBlocked": true
+      "sourceMediaBlocked": true,
+      "autoEligible": true,
+      "sensitiveTopicPolicy": null
     },
     {
       "id": "WP224280621821",
@@ -483,7 +539,9 @@
       "broadKeywordPriority": 9,
       "sourceFactsBlocked": true,
       "sourceSentencesBlocked": true,
-      "sourceMediaBlocked": true
+      "sourceMediaBlocked": true,
+      "autoEligible": true,
+      "sensitiveTopicPolicy": null
     },
     {
       "id": "WP224221217878",
@@ -523,7 +581,15 @@
       "broadKeywordPriority": 2,
       "sourceFactsBlocked": true,
       "sourceSentencesBlocked": true,
-      "sourceMediaBlocked": true
+      "sourceMediaBlocked": true,
+      "autoEligible": false,
+      "sensitiveTopicPolicy": {
+        "category": "mental-health-sensitive",
+        "automaticSelectionBlocked": true,
+        "explicitRequestRequired": true,
+        "explicitRequestRule": "trauma-terms",
+        "manualOverrideAllowed": true
+      }
     },
     {
       "id": "WP224212833691",
@@ -564,7 +630,9 @@
       "broadKeywordPriority": 1,
       "sourceFactsBlocked": true,
       "sourceSentencesBlocked": true,
-      "sourceMediaBlocked": true
+      "sourceMediaBlocked": true,
+      "autoEligible": true,
+      "sensitiveTopicPolicy": null
     },
     {
       "id": "WP224205420099",
@@ -605,7 +673,9 @@
       "broadKeywordPriority": 10,
       "sourceFactsBlocked": true,
       "sourceSentencesBlocked": true,
-      "sourceMediaBlocked": true
+      "sourceMediaBlocked": true,
+      "autoEligible": true,
+      "sensitiveTopicPolicy": null
     },
     {
       "id": "WP224134818728",
@@ -645,7 +715,9 @@
       "broadKeywordPriority": 7,
       "sourceFactsBlocked": true,
       "sourceSentencesBlocked": true,
-      "sourceMediaBlocked": true
+      "sourceMediaBlocked": true,
+      "autoEligible": true,
+      "sensitiveTopicPolicy": null
     }
   ]
 }

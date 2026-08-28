@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -13,6 +14,9 @@ PLUGIN_NAME = "goldhand-clinic-blog"
 PLUGIN_ROOT = ROOT / "plugins" / PLUGIN_NAME
 MARKETPLACE_NAME = "goldhand-clinic-macos"
 REPOSITORY = "seojun03/goldhand-clinic-blog-macos"
+PUBLIC_VERSION_RE = re.compile(
+    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\+codex\.\d{14}$"
+)
 
 
 def require(condition: bool, message: str) -> None:
@@ -57,7 +61,10 @@ def main() -> int:
 
     manifest = json.loads((PLUGIN_ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
     version = str(manifest.get("version", ""))
-    require(version.startswith("0.1.0+codex."), "plugin version is not release-addressable")
+    require(
+        PUBLIC_VERSION_RE.fullmatch(version) is not None,
+        "plugin version is not release-addressable",
+    )
 
     bootstrap = (ROOT / "INSTALL-MAC.command").read_text(encoding="utf-8")
     installer = (ROOT / "install-from-download-macos.sh").read_text(encoding="utf-8")
@@ -81,7 +88,13 @@ def main() -> int:
     require("GOLDHANDBLOG_SKIP_IMAGE_HOST_SETUP" in installer and "GOLDHANDBLOG_SKIP_IMAGE_HOST_SETUP=1" in updater, "background updates could trigger browser login")
     require("LaunchAgents" in installer and "StartInterval" in installer and "21600" in installer, "six-hour macOS updater registration is missing")
     require("GOLDHANDBLOG_MAC_UPDATE_ARCHIVE" in updater, "local updater regression route is missing")
-    require('run_vercel(["login"]' in setup_python, "browser-approved Vercel login is missing")
+    require(
+        'vercel_command(["login", "--no-color", "--non-interactive"])'
+        in setup_python
+        and "run_prefilled_device_login(project_dir)" in setup_python
+        and "prefilled_vercel_device_url" in setup_python,
+        "browser-approved Vercel login is missing",
+    )
     require('run_vercel(["project", "add"' in setup_python and 'run_vercel(["link"' in setup_python, "automatic Vercel project setup is missing")
     require("--token" not in installer and "VERCEL_TOKEN=" not in installer, "macOS installer must not bundle a Vercel credential")
     require("--token" not in setup_python.lower() and "vercel_token=" not in setup_python.lower(), "image setup must not bundle a Vercel credential")

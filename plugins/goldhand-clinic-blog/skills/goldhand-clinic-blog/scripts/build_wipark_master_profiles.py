@@ -51,6 +51,14 @@ MASTER_CONFIG: dict[str, dict[str, Any]] = {
     "INFO04": {
         "logNo": "224291545650",
         "type": "정보전달형",
+        "autoEligible": False,
+        "sensitiveTopicPolicy": {
+            "category": "mental-health-sensitive",
+            "automaticSelectionBlocked": True,
+            "explicitRequestRequired": True,
+            "explicitRequestRule": "panic-or-insomnia-terms-excluding-menopause",
+            "manualOverrideAllowed": True,
+        },
         "selectionTags": ["효과 보는 사람", "못 보는 사람", "비교", "공통점", "자가 점검"],
         "bestFor": "같은 관리에도 반응이 다른 조건을 비교하고 자신에게 맞는지 구분하게 할 때",
         "hook": "치료 가능성과 중단 후 재발 걱정을 연속 질문으로 제시",
@@ -114,6 +122,14 @@ MASTER_CONFIG: dict[str, dict[str, Any]] = {
     "INFO11": {
         "logNo": "224221217878",
         "type": "정보전달형",
+        "autoEligible": False,
+        "sensitiveTopicPolicy": {
+            "category": "mental-health-sensitive",
+            "automaticSelectionBlocked": True,
+            "explicitRequestRequired": True,
+            "explicitRequestRule": "trauma-terms",
+            "manualOverrideAllowed": True,
+        },
         "selectionTags": ["극복 방법 2가지", "오래된 불편", "몸과 마음", "치료 가능성", "두 질문"],
         "bestFor": "오래된 불편을 한 면으로만 보지 않고 두 갈래의 회복 기준을 설명할 때",
         "hook": "오래 안고 가야 하는지와 기존 관리로도 달라지지 않는다는 질문 두 개를 인용",
@@ -413,10 +429,15 @@ def make_profile(
         "openingMode": family_article["openingMode"],
         "solutionPreviewMode": family_article["solutionPreviewMode"],
         "requiresSolutionPreviewBeforeBody": True,
-        "sameReferenceForIdeaAndContentFlow": True,
+        "editorialMasterOnly": True,
+        "contentSourcesMayDiffer": True,
+        "existingGoldhandStructureUnchanged": True,
         "referenceControlsDecoration": False,
         "nativeDesignSystemId": "goldhand-naver-native-v4",
     }
+    sensitive_topic_policy = config.get("sensitiveTopicPolicy")
+    if isinstance(sensitive_topic_policy, dict):
+        profile["sensitiveTopicPolicy"] = sensitive_topic_policy
     return profile
 
 
@@ -426,20 +447,26 @@ def library_markdown(profiles: dict[str, dict[str, Any]]) -> str:
         "",
         "## 역할",
         "",
-        "이 11편은 주제·독자 고민·핵심 일반 정보뿐 아니라 제목 장치의 심리, 도입 설득, 정보 공개 순서, 전환 방식, 미세 표현 기능, 마무리 감정을 통제한다. 한 글에서는 한 편을 콘텐츠·편집 레퍼런스로 고정한다. 원문 완성 문장과 업체의 경력·수치·치료 주장·사례·사진은 옮기지 않고, 각 기능을 확인된 금손 사실과 박준희 원장의 생활어로 재구성한다. 꾸밈은 `goldhand-naver-native-v4`로 고정한다.",
+        "이 11편은 제목 확정 뒤 사용하는 기존 글 구조용 편집 마스터다. 한 글에서는 한 편만 골라 확정 제목 장치의 심리, 도입 설득, 정보 공개 흐름, 전환 방식, 미세 표현 기능, 마무리 감정을 통제한다. 일반 정보는 별도의 다중 출처 수집 결과가 담당하며 콘텐츠 출처가 늘어나도 기존 금손 구조는 바꾸지 않는다. 원문 완성 문장과 업체 사실은 옮기지 않고 박준희 원장의 생활어로 새로 쓴다. 꾸밈은 `goldhand-naver-native-v4`로 고정한다.",
         "",
-        "주제와 일반 정보 출처는 `wipark-content-briefs.json`, 편집 판단 출처는 `reference-writing-intelligence.json`, 최종 생활어 출처는 `goldhand-official-voice-profile.json`, 금손 사실 출처는 `clinic-facts.md`, 꾸밈 출처는 `goldhand-naver-native-design-system.json`이다. 역할을 서로 바꾸지 않는다.",
+        "일반 정보 출처는 `wipark-content-briefs.json`, `user-general-information-references.json`, 필요한 한국어 네이버 보충 자료다. 편집 판단 출처는 `reference-writing-intelligence.json`, 최종 생활어 출처는 `goldhand-official-voice-profile.json`, 금손 사실 출처는 `clinic-facts.md`, 꾸밈 출처는 `goldhand-naver-native-design-system.json`이다. 역할을 서로 바꾸지 않는다.",
         "",
     ]
     lines.extend(["## 허용 레퍼런스 11편", ""])
     for profile_id, profile in profiles.items():
+        if profile.get("autoEligible") is True:
+            status = "자동·정밀작성 모두 선택 가능"
+        elif profile_id == "INFO04":
+            status = "자동 후보 제외; 사용자가 공황 또는 불면증을 명시한 경우나 해당 ID를 수동 지정한 경우만 선택 가능. 갱년기·폐경·완경 맥락의 불면은 제외"
+        else:
+            status = "자동 후보 제외; 일치하는 민감 주제 명시 요청 또는 해당 ID 수동 지정에서만 선택 가능"
         lines.extend(
             [
                 f"### `{profile_id}` — {profile['sourceTitle']}",
                 "",
                 f"- 원문: <{profile['sourceUrl']}>",
                 f"- 발행일: {profile['publishedAt']}",
-                "- 상태: 자동·정밀작성 모두 선택 가능",
+                f"- 상태: {status}",
                 f"- 질문 위치: {profile['familyContract']['questionPlacement']}",
                 f"- 적합한 글: {profile['bestFor']}",
                 f"- 도입: {profile['writingContract']['hook']}",
@@ -495,10 +522,19 @@ def main() -> int:
             "cutoffInclusive": corpus["cutoffInclusive"],
             "referenceFamilyId": family["familyId"],
             "allowedMasterIds": family["allowedMasterIds"],
+            "automaticMasterIds": [
+                master_id for master_id, profile in profiles.items() if profile.get("autoEligible") is True
+            ],
+            "sensitiveTopicMasterIds": [
+                master_id
+                for master_id, profile in profiles.items()
+                if isinstance(profile.get("sensitiveTopicPolicy"), dict)
+            ],
             "sourceFactsBlocked": True,
             "referenceExpressionLearningEnabled": True,
             "sourceSentenceImitationBlocked": True,
-            "topicAndContentAuthority": "wi-parkclinic-reviewed-11-posts",
+            "contentAuthority": "merged-general-information-sources",
+            "editorialStructureAuthority": "single-reviewed-reference-master",
             "editorialReasoningAuthority": "goldhand-reference-writing-intelligence-v1",
             "voiceAuthority": str(voice_profile["profileId"]),
             "voiceProtocolId": "natural-speech-rewrite-protocol-v1",

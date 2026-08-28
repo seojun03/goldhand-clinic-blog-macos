@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "purpose": "사용자가 추가로 제공한 레퍼런스에서 검토를 마친 일반 건강 정보 원자만 저장한다.",
+  "sourcePolicy": {
+    "generalInformationOnly": true,
+    "sourceClinicFactsBlocked": true,
+    "sourceSentencesBlocked": true,
+    "sourceCasesAndResultsBlocked": true,
+    "goldhandFactsOnlyForClinicInformation": true
+  },
+  "sources": []
+}

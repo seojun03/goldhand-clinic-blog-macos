@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Select a fresh semantic topic plus independent editorial and writing masters."""
+"""Select the user-requested topic plus independent editorial and writing masters."""
 
 from __future__ import annotations
 
@@ -293,9 +293,9 @@ def semantic_signature(item: dict[str, object]) -> dict[str, object]:
         str(item.get("topicIntent") or item.get("intentId") or item.get("ideaType") or ""),
         text_value,
     )
-    # Preserve the library's canonical public ID in output/state. Comparison is
-    # normalized inside semantic_overlap so harmless punctuation/case drift in
-    # legacy history does not weaken the duplicate gate.
+    # Preserve the library's canonical public ID in output/state. The signature
+    # remains useful for metadata and pairwise diversity within one multi-result
+    # call, but recent article history must never block a user-requested topic.
     semantic_id = str(item.get("semanticTopicId", "")).strip()
     if not semantic_id:
         source_url = str(item.get("topicSourceUrl") or item.get("ideaReferenceUrl") or "")
@@ -623,14 +623,6 @@ def choose_topic_candidates(
     *,
     balance_sources: bool = False,
 ) -> list[dict[str, object]]:
-    history = recent_entries(state)
-    recent_profiles = [semantic_signature(item) for item in history]
-    recent_source_urls = {
-        str(item.get("topicSourceUrl") or item.get("ideaReferenceUrl"))
-        for item in history
-        if item.get("topicSourceUrl") or item.get("ideaReferenceUrl")
-    }
-    recent_clusters = {str(profile.get("topicCluster", "")) for profile in recent_profiles if profile.get("topicCluster")}
     query_tokens = tokens(f"{keyword} {topic}")
     broad_clinic_query = "한의원" in keyword and not query_tokens and not topic.strip()
     selected: list[dict[str, object]] = []
@@ -639,34 +631,18 @@ def choose_topic_candidates(
     available_blogs = {str(item.get("topicSourceBlogId", "")) for item in candidates if item.get("topicSourceBlogId")}
     preferred_first_blog = ""
     if balance_sources and available_blogs:
-        recent_blog_counts = {blog_id: 0 for blog_id in available_blogs}
-        for item in history:
-            blog_id = str(item.get("topicSourceBlogId", ""))
-            if not blog_id:
-                source_url = str(item.get("topicSourceUrl") or item.get("ideaReferenceUrl") or "")
-                if "beomeo_sm" in source_url:
-                    blog_id = "beomeo_sm"
-                elif "wi-parkclinic" in source_url:
-                    blog_id = "wi-parkclinic"
-            if blog_id in recent_blog_counts:
-                recent_blog_counts[blog_id] += 1
-        minimum_count = min(recent_blog_counts.values())
-        least_recent_blogs = sorted(blog_id for blog_id, value in recent_blog_counts.items() if value == minimum_count)
-        # Start a new history with the newly approved topic-only source, then
-        # alternate naturally as schema-v3 history accumulates.
-        preferred_first_blog = "beomeo_sm" if "beomeo_sm" in least_recent_blogs else least_recent_blogs[0]
+        preferred_first_blog = "beomeo_sm" if "beomeo_sm" in available_blogs else sorted(available_blogs)[0]
 
     for slot in range(count):
-        blockers = recent_profiles + [semantic_signature(item) for item in selected]
+        blockers = [semantic_signature(item) for item in selected]
         remaining = [
             candidate
             for candidate in candidates
             if str(candidate.get("topicSourceId", "")) not in selected_ids
-            and not (set(string_list(candidate.get("topicSourceUrls"))) & recent_source_urls)
             and not any(semantic_overlap(candidate, blocker) for blocker in blockers)
         ]
         if not remaining:
-            raise ValueError("no-semantic-fresh-topic")
+            raise ValueError("no-topic-candidate")
         candidate = max(
             remaining,
             key=lambda item: (
@@ -690,7 +666,6 @@ def choose_topic_candidates(
                 if balance_sources
                 else False,
                 int(item.get("broadKeywordPriority", 0)) if broad_clinic_query and not balance_sources else 0,
-                str(item.get("topicCluster", "")) not in recent_clusters,
                 stable_number(keyword, topic, seed, str(slot), str(item.get("topicSourceId", ""))),
                 date_score(str(item.get("topicSourcePublishedAt", ""))),
             ),
@@ -851,7 +826,7 @@ def select_ideas(
                 "factPolicy": (
                     "선택한 Wipark 주제 원문 바로 그 한 편의 제목 장치·질문 위치·정보 순서·문장 호흡만 사용합니다. "
                     if str(topic_candidate.get("topicSourceBlogId", "")) == "wi-parkclinic"
-                    else "범어 정규화 주제는 중복 검사에만 쓰고, ready 편집 마스터 또는 본문 감사가 필요한 candidate 한 편 외의 Wipark 글은 레이아웃 호환값일 뿐 말투·구조를 통제하지 않습니다. "
+                    else "범어 정규화 주제는 사용자가 지정한 주제의 설명 범위와 자료 검색에만 쓰고, ready 편집 마스터 또는 본문 감사가 필요한 candidate 한 편 외의 Wipark 글은 레이아웃 호환값일 뿐 말투·구조를 통제하지 않습니다. "
                 )
                 + "꾸밈은 네이버 순정 goldhand-naver-native-v4로 고정합니다. 실제 내용은 금손한의원 사실과 별도로 확인한 권위 자료로 새로 쓰며 원문의 업체·수치·주장·사례·문장·사진은 모두 폐기합니다.",
             }

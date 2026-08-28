@@ -273,6 +273,22 @@
     "titleRequiresNumericAnswerPromise": false,
     "titleMechanismSource": "selected-reference-writing-intelligence",
     "numberedAnswerPromiseRule": "숫자 답을 약속한 제목에서만 실제 번호 답 개수와 일치",
+    "titleRecommendations": {
+      "contractId": "goldhand-title-recommendations-v1",
+      "candidateCount": 5,
+      "keywordMustStartTitle": true,
+      "maximumNonWhitespaceCharacters": 30,
+      "customTitleAllowed": true,
+      "minimumCareerCandidateCount": 1,
+      "minimumNumberedCandidateCount": 3,
+      "numberedAnswerCounts": [
+        1,
+        2,
+        3
+      ],
+      "strongWordingRequired": true,
+      "readerBenefitOrLossRequired": true
+    },
     "readingTime": {
       "requiredForEveryArticle": false,
       "requiredWhenDevice": "specific-number-low-friction-topic-payoff",
@@ -451,6 +467,30 @@
       "data-writing-voice-review": "writing-voice-final-rehear-v1",
       "data-writing-voice-status": "pass"
     }
+  },
+  "finalProseReview": {
+    "requiredOnEveryArticle": true,
+    "defaultReviewer": "writing-voice",
+    "allowedReviewers": {
+      "writing-voice": {
+        "contractId": "writing-voice-final-rehear-v1",
+        "articleAttributes": {
+          "data-writing-voice-review": "writing-voice-final-rehear-v1",
+          "data-writing-voice-status": "pass"
+        }
+      },
+      "humanize-korean": {
+        "contractId": "humanize-korean-final-pass-v1",
+        "articleAttributes": {
+          "data-final-prose-reviewer": "humanize-korean",
+          "data-final-prose-review": "humanize-korean-final-pass-v1",
+          "data-final-prose-status": "pass"
+        }
+      }
+    },
+    "oneReviewerPerArticle": true,
+    "abTestUsesOneSharedPreFinalDraft": true,
+    "humanizeVariantMustExcludeWritingVoice": true
   },
   "fixedClosingLinks": {
     "enabled": false,

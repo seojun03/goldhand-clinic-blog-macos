@@ -359,6 +359,57 @@ def media_by_id(library: dict[str, object]) -> dict[str, dict[str, object]]:
     return result
 
 
+def visible_prose_tokens(article: str) -> list[str]:
+    """Return visible prose tokens without tag attributes or image metadata."""
+
+    value = re.sub(r"<script\b[^>]*>.*?</script>", " ", article, flags=re.I | re.S)
+    value = re.sub(r"<style\b[^>]*>.*?</style>", " ", value, flags=re.I | re.S)
+    value = re.sub(r"<figure\b[^>]*>.*?</figure>", " ", value, flags=re.I | re.S)
+    value = re.sub(r"<[^>]+>", " ", value)
+    return re.findall(r"[0-9A-Za-z가-힣]{2,}", html.unescape(value).lower())
+
+
+def selected_media_context_leaks(
+    article: str,
+    indexed: dict[str, dict[str, object]],
+    *,
+    minimum_run: int = 7,
+) -> list[str]:
+    """Find selected-photo source prose copied into the visible article body."""
+
+    visible = visible_prose_tokens(article)
+    if len(visible) < minimum_run:
+        return []
+    visible_runs = {
+        tuple(visible[index : index + minimum_run])
+        for index in range(len(visible) - minimum_run + 1)
+    }
+    selected_ids = {
+        attribute_value(tag, "data-goldhand-media")
+        for tag in re.findall(r"<img\b[^>]*>", article, flags=re.I | re.S)
+        if attribute_value(tag, "data-goldhand-media")
+    }
+    leaks: list[str] = []
+    for asset_id in sorted(selected_ids):
+        asset = indexed.get(asset_id)
+        if asset is None:
+            continue
+        for field in ("context", "closingTrustContextText"):
+            source_tokens = re.findall(
+                r"[0-9A-Za-z가-힣]{2,}",
+                html.unescape(str(asset.get(field, ""))).lower(),
+            )
+            if len(source_tokens) < minimum_run:
+                continue
+            if any(
+                tuple(source_tokens[index : index + minimum_run]) in visible_runs
+                for index in range(len(source_tokens) - minimum_run + 1)
+            ):
+                leaks.append(asset_id)
+                break
+    return leaks
+
+
 def is_approved_director_patient_photo(asset: dict[str, object]) -> bool:
     descriptor = " ".join(
         str(asset.get(field, ""))
@@ -444,6 +495,11 @@ def validate_person_media_policy(
             failures.append(f"{asset_id}의 파일 해시가 내장 라이브러리와 다릅니다.")
         if attribute_value(tag, "data-reference-source-url") != str(asset.get("url", "")):
             failures.append(f"{asset_id}의 공식 원본 URL이 내장 라이브러리와 다릅니다.")
+    leaks = selected_media_context_leaks(article, indexed)
+    if leaks:
+        failures.append(
+            "선택 사진의 내부 context 문장이 본문에 노출됐습니다: " + ", ".join(leaks)
+        )
     if failures:
         raise ValueError("실제 사진 정책 위반: " + " ".join(failures))
 
@@ -532,10 +588,40 @@ def build_page(
       const button = document.getElementById('copy-for-naver');
       const root = document.getElementById('naver-copy-root');
       const status = document.getElementById('copy-status');
+      const expectedImageCount = root.querySelectorAll('img').length;
+      let copyImagesState = expectedImageCount > 0 ? 'pending' : 'ready';
       function setState(state, message) {{
         button.dataset.state = state; button.textContent = message; status.textContent = message;
         window.setTimeout(() => {{ button.dataset.state = ''; button.textContent = '네이버용 HTML 복사'; }}, 2600);
       }}
+      function waitForCopyImages() {{
+        const images = [...root.querySelectorAll('img')];
+        return Promise.all(images.map((image) => new Promise((resolve, reject) => {{
+          const accept = () => {{
+            if (!image.naturalWidth || !image.naturalHeight) {{ reject(new Error('image-empty')); return; }}
+            if (typeof image.decode === 'function') image.decode().then(resolve).catch(() => resolve());
+            else resolve();
+          }};
+          if (image.complete) {{ accept(); return; }}
+          image.addEventListener('load', accept, {{once:true}});
+          image.addEventListener('error', () => reject(new Error('image-load-failed')), {{once:true}});
+        }}))).then(() => images.length);
+      }}
+      button.disabled = expectedImageCount > 0;
+      if (expectedImageCount > 0) {{
+        button.textContent = `사진 ${{expectedImageCount}}장 준비 중`;
+        status.textContent = `복사할 사진 ${{expectedImageCount}}장을 불러오는 중입니다.`;
+      }}
+      const copyImagesReady = waitForCopyImages();
+      copyImagesReady.then(() => {{
+        copyImagesState = 'ready';
+        button.disabled = false; button.textContent = '네이버용 HTML 복사';
+        status.textContent = `사진 ${{expectedImageCount}}장 준비 완료`;
+      }}).catch(() => {{
+        copyImagesState = 'failed';
+        button.disabled = true; button.dataset.state = 'error';
+        button.textContent = '사진 불러오기 실패'; status.textContent = '사진 주소를 확인한 뒤 HTML을 다시 열어 주세요.';
+      }});
       function stripInternalMetadata(copyRoot) {{
         [copyRoot, ...copyRoot.querySelectorAll('*')].forEach((element) => {{
           [...element.attributes].forEach((attribute) => {{
@@ -553,6 +639,17 @@ def build_page(
         const sourceArticle = root.querySelector('article');
         if (!sourceArticle) throw new Error('article-missing');
         const copyRoot = sourceArticle.cloneNode(true);
+        const sourceImages = [...sourceArticle.querySelectorAll('img')];
+        const copyImages = [...copyRoot.querySelectorAll('img')];
+        if (sourceImages.length !== copyImages.length) throw new Error('image-count-mismatch');
+        copyImages.forEach((image, index) => {{
+          const sourceImage = sourceImages[index];
+          if (!sourceImage.complete || !sourceImage.naturalWidth || !sourceImage.naturalHeight) {{
+            throw new Error('image-not-ready');
+          }}
+          image.setAttribute('data-width', String(sourceImage.naturalWidth));
+          image.setAttribute('data-height', String(sourceImage.naturalHeight));
+        }});
         copyRoot.querySelectorAll('figcaption').forEach((caption) => caption.remove());
         copyRoot.removeAttribute('id'); copyRoot.removeAttribute('class'); copyRoot.removeAttribute('style');
         copyRoot.querySelectorAll('img[data-reference-source-url]').forEach((image) => {{
@@ -576,6 +673,9 @@ def build_page(
       function nextSeId() {{ return `SE-${{crypto.randomUUID()}}`; }}
       function escapeHtml(value) {{
         const node=document.createElement('span'); node.textContent=String(value ?? ''); return node.innerHTML;
+      }}
+      function escapeAttribute(value) {{
+        return escapeHtml(value).replaceAll('"','&quot;').replaceAll("'",'&#39;');
       }}
       function sourceInlineLines(source, base={{}}) {{
         const lines=[[]];
@@ -640,9 +740,22 @@ def build_page(
       }}
       function nativeImageComponent(source) {{
         const image=source.matches('img') ? source : source.querySelector('img'); if (!image) return '';
-        const compId=nextSeId(), captionId=nextSeId(), paragraphId=nextSeId(), runId=nextSeId();
-        const src=escapeHtml(image.currentSrc || image.src), alt=escapeHtml(image.alt || '');
-        return `<div class="se-component se-image se-l-default" id="${{compId}}" data-compid="${{compId}}" data-a11y-title="사진"><button class="se-component-edge-button se-component-edge-button-top __edge-area" type="button" tab-index="-1" data-compid="${{compId}}" data-direction="top"></button><div class="se-component-content se-component-content-fit"><div class="se-drop-indicator" data-unitid="" data-compid="${{compId}}" data-direction="top"><div class="se-section se-section-image se-l-default se-section-align-center"><div id="${{compId}}" class="se-module se-module-image __se-unit"><div class="se-drop-indicator" data-unitid="${{compId}}" data-compid="" data-direction="top">${{String.fromCharCode(60)}}img src="${{src}}" alt="${{alt}}" class="se-image-resource" width="580" referrerpolicy="no-referrer"></div><button type="button" class="se-image-delete-button"><span class="se-blind">사진 삭제</span></button><div class="__se-toolbar-slot __se-cursor-unrelated" style="display:none;"></div></div><div id="${{captionId}}" class="se-module se-module-text __se-unit se-is-empty se-caption"><p id="${{paragraphId}}" class="se-text-paragraph se-text-paragraph-align-center" style="line-height:1.5;"><span id="${{runId}}" class="se-ff-nanumgothic se-fs13 __se-node" style="color:rgb(85, 85, 85);"></span><span class="se-placeholder __se_placeholder se-ff-nanumgothic se-fs13">사진 설명을 입력하세요.</span></p><div class="__se-toolbar-slot __se-cursor-unrelated" style="display:none;"></div></div></div></div></div></div>`;
+        const compId=nextSeId();
+        const rawSrc=image.currentSrc || image.src;
+        const src=escapeAttribute(rawSrc), alt=escapeAttribute(image.alt || '');
+        const width=parseInt(image.getAttribute('data-width') || '',10) || image.naturalWidth || 580;
+        const height=parseInt(image.getAttribute('data-height') || '',10) || image.naturalHeight || Math.round(width * 0.75);
+        let originalSrc=rawSrc;
+        try {{
+          const parsed=new URL(rawSrc);
+          if (/(?:^|\\.)pstatic\\.net$/i.test(parsed.hostname)) parsed.searchParams.delete('type');
+          originalSrc=parsed.toString();
+        }} catch {{}}
+        const linkData=escapeAttribute(JSON.stringify({{
+          id:compId, src:originalSrc, originalWidth:String(width), originalHeight:String(height),
+          linkUse:'false', link:'', fileSize:'0'
+        }}));
+        return `<div class="se-component se-image se-l-default __se-component" id="${{compId}}" data-a11y-title="사진"><div class="se-component-content se-component-content-fit"><div class="se-section se-section-image se-l-default se-section-align-center"><div class="se-module se-module-image se-image-loaded"><a class="se-module-image-link __se_image_link __se_link" data-linktype="img" data-linkdata="${{linkData}}" area-hidden="true"><img src="${{src}}" data-width="${{width}}" data-height="${{height}}" alt="${{alt}}" class="se-image-resource" width="580" referrerpolicy="no-referrer"></a></div></div></div></div>`;
       }}
       function nativeTableComponent(source) {{
         const compId=nextSeId(); const rows=[...source.querySelectorAll('tr')];
@@ -673,38 +786,63 @@ def build_page(
         return [...element.childNodes].map(nativeComponentsFromNode).join('');
       }}
       function prepareNativeNaverHtml(copyRoot) {{ return [...copyRoot.childNodes].map(nativeComponentsFromNode).join(''); }}
-      function copyRenderedSelection(copyRoot) {{
-        copyRoot.style.position='fixed'; copyRoot.style.left='-100000px'; copyRoot.style.top='0'; copyRoot.style.width='580px';
-        document.body.appendChild(copyRoot); const selection=window.getSelection(); const range=document.createRange();
-        range.selectNodeContents(copyRoot); selection.removeAllRanges(); selection.addRange(range);
-        const copied=document.execCommand('copy'); selection.removeAllRanges(); copyRoot.remove(); return copied;
+      function copyWithDataTransfer(htmlValue, plainValue) {{
+        let payloadConfirmed=false;
+        const onCopy=(event) => {{
+          if (!event.clipboardData) return;
+          event.preventDefault();
+          event.clipboardData.clearData();
+          event.clipboardData.setData('text/html',htmlValue);
+          event.clipboardData.setData('text/plain',plainValue);
+          payloadConfirmed=(
+            event.clipboardData.getData('text/html')===htmlValue &&
+            event.clipboardData.getData('text/plain')===plainValue
+          );
+        }};
+        document.addEventListener('copy',onCopy,true);
+        let copied=false;
+        try {{ copied=document.execCommand('copy'); }}
+        catch {{ copied=false; }}
+        finally {{ document.removeEventListener('copy',onCopy,true); }}
+        return copied && payloadConfirmed;
       }}
-      button.addEventListener('click', async () => {{
+      function copySuccessMessage(plainValue) {{
+        return `복사 완료 · 본문 ${{plainValue.length.toLocaleString()}}자 · 사진 ${{expectedImageCount}}장 · {escaped_shortcut}`;
+      }}
+      button.addEventListener('click', () => {{
+        if (copyImagesState !== 'ready') {{
+          setState('error',copyImagesState === 'failed' ? '복사 실패 · 사진을 불러오지 못했습니다' : '복사 대기 · 사진을 준비하고 있습니다');
+          return;
+        }}
         const prepared = prepareNaverCopyRoot();
         const nativeHtml = prepareNativeNaverHtml(prepared);
         const inputBuffer = document.createElement('span');
         inputBuffer.setAttribute('data-input-buffer', `INPUT_BUFFER_DATA;${{encodeURIComponent(navigator.userAgent)}};blog.naver.com`);
+        inputBuffer.setAttribute('style', 'font-size:0;line-height:0;color:transparent;');
+        inputBuffer.textContent = '\\u200B';
         const htmlValue = `<meta charset="utf-8">${{inputBuffer.outerHTML}}${{nativeHtml}}`;
         const plainValue = prepared.innerText.replaceAll('\\u00a0','').replaceAll('\\u2060','').replace(/\\n{{3,}}/g,'\\n\\n').trim();
         if (window.location.protocol === 'file:') {{
-          if (copyRenderedSelection(prepared)) setState('done','복사 완료 · 굵게·밑줄·취소선 확인 후 {escaped_shortcut}');
+          if (copyWithDataTransfer(htmlValue,plainValue)) setState('done',copySuccessMessage(plainValue));
           else setState('error','복사 실패 · 클립보드가 바뀌지 않았습니다');
           return;
         }}
-        try {{
-          if (navigator.clipboard?.write && window.ClipboardItem) {{
-            await navigator.clipboard.write([new ClipboardItem({{'text/html':new Blob([htmlValue],{{type:'text/html'}}),'text/plain':new Blob([plainValue],{{type:'text/plain'}})}})]);
-          }} else if (!copyRenderedSelection(prepared)) throw new Error('rich-copy-unavailable');
-          setState('done','복사 완료 · 굵게·밑줄·취소선 확인 후 {escaped_shortcut}');
-        }} catch (error) {{
-          try {{ if (!copyRenderedSelection(prepareNaverCopyRoot())) throw error; setState('done','복사 완료 · 굵게·밑줄·취소선 확인 후 {escaped_shortcut}'); }}
-          catch {{ setState('error','복사 차단됨 · 브라우저 권한 확인'); }}
+        if (navigator.clipboard?.write && window.ClipboardItem) {{
+          navigator.clipboard.write([new ClipboardItem({{'text/html':new Blob([htmlValue],{{type:'text/html'}}),'text/plain':new Blob([plainValue],{{type:'text/plain'}})}})])
+            .then(() => setState('done',copySuccessMessage(plainValue)))
+            .catch(() => {{
+              if (copyWithDataTransfer(htmlValue,plainValue)) setState('done',copySuccessMessage(plainValue));
+              else setState('error','복사 차단됨 · 클립보드가 바뀌지 않았습니다');
+            }});
+          return;
         }}
+        if (copyWithDataTransfer(htmlValue,plainValue)) setState('done',copySuccessMessage(plainValue));
+        else setState('error','복사 차단됨 · 클립보드가 바뀌지 않았습니다');
       }});
       window.__goldhandCopyPreview = () => {{
         const prepared=prepareNaverCopyRoot();
         const nativeHtml=prepareNativeNaverHtml(prepared); const template=document.createElement('template'); template.innerHTML=nativeHtml;
-        return {{html:nativeHtml, plain:prepared.innerText, gaps:prepared.querySelectorAll('[data-naver-gap="true"]').length, images:template.content.querySelectorAll('.se-image').length, relatedLinks:template.content.querySelectorAll('.se-oglink[data-linktype="oglink"]').length, maps:template.content.querySelectorAll('.se-placesMap').length, nativeModules:template.content.querySelectorAll('script.__se_module_data[data-module-v2]').length, nativeComponents:template.content.querySelectorAll('.se-component').length, inputBuffer:true, requiresNativeFinisher:false}};
+        return {{html:nativeHtml, plain:prepared.innerText, gaps:prepared.querySelectorAll('[data-naver-gap="true"]').length, images:template.content.querySelectorAll('.se-image').length, imageDataLinks:template.content.querySelectorAll('.se-image a[data-linktype="img"][data-linkdata]').length, orphanImageCaptions:template.content.querySelectorAll('.se-image .se-caption').length, relatedLinks:template.content.querySelectorAll('.se-oglink[data-linktype="oglink"]').length, maps:template.content.querySelectorAll('.se-placesMap').length, nativeModules:template.content.querySelectorAll('script.__se_module_data[data-module-v2]').length, nativeComponents:template.content.querySelectorAll('.se-component').length, inputBuffer:true, requiresNativeFinisher:false}};
       }};
     }})();
   </script>

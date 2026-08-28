@@ -37,11 +37,11 @@ def guide_markdown(library: dict[str, object]) -> str:
         "## 네 역할 분리",
         "",
         "1. `beomeo-topic-idea-library.json`: 범어 설명한의원 공개 글 69편에서 정보성 주제와 독자 질문 범위만 고른다.",
-        "2. `topic-idea-library.json`: 사용자가 승인한 위석부부한의원 11편의 정보 주제를 후보로 보태며, 별도로 제목 장치를 고르는 레지스트리다.",
-        "3. `reference-master-profiles.json`: 위석부부한의원 11편 중 선택한 한 편의 제목 장치·질문 위치·문단 구조·논리 배치를 재구성한다.",
+        "2. `topic-idea-library.json`: 제목 확정 뒤, 사용자가 승인한 위석부부한의원 11편의 정보 주제를 본문 참고 후보로 보태는 레지스트리다.",
+        "3. `reference-master-profiles.json`: 제목 확정 뒤 위석부부한의원 11편 중 한 편을 골라 확정 제목 장치의 심리·질문 위치·문단 구조·논리 배치를 재구성한다.",
         "4. `clinic-facts.md`: 제목과 본문에 들어갈 업체·진료·사례·이미지 사실은 금손한의원 자료만 사용한다.",
         "",
-        "주제 출처와 글쓰기 마스터는 서로 독립이다. 범어 설명한의원 원문은 제목 패턴·질문 문구·문단 구조·정보 순서·문장 호흡·꾸밈을 통제할 수 없다. 위석부부한의원 글쓰기 마스터 한 편만 제목 장치·질문 위치·정보 순서·문장 호흡을 통제한다. 꾸밈은 네이버 순정 goldhand-naver-native-v4로 고정하며, 어느 원문이든 업체 이름·지역·연차·환자 수·치료 결과·후기·문장·사진을 금손한의원 글로 옮기지 않는다.",
+        "주제 출처와 글쓰기 마스터는 서로 독립이다. 제목 후보는 이 자산들을 읽기 전에 제목 계약만으로 먼저 제시한다. 제목 확정 뒤 범어 설명한의원 원문은 질문 범위만 제공하며 제목 패턴·질문 문구·문단 구조·정보 순서·문장 호흡·꾸밈을 통제할 수 없다. 위석부부한의원 글쓰기 마스터 한 편만 확정 제목 장치의 심리·질문 위치·정보 순서·문장 호흡을 통제한다. 꾸밈은 네이버 순정 goldhand-naver-native-v4로 고정하며, 어느 원문이든 업체 이름·지역·연차·환자 수·치료 결과·후기·문장·사진을 금손한의원 글로 옮기지 않는다.",
         "",
         "## 수집 범위",
         "",
@@ -62,13 +62,13 @@ def guide_markdown(library: dict[str, object]) -> str:
             "",
             "## 실행 규칙",
             "",
-            "- 자동모드는 `scripts/select_topic_idea.py`가 최근 3개의 의미 주제와 겹치는 후보를 먼저 제외하고, 남은 주제에 맞는 위석부부한의원 글쓰기 마스터를 별도로 고른다.",
-            "- 정밀작성모드는 같은 선택기로 서로 의미가 다른 최대 3개 주제와 각 글쓰기 마스터를 제시한다.",
+            "- 고정 자동 작성은 주제와 메인키워드만으로 제목 5개를 먼저 제시한다. 제목 확정 뒤에는 사용자가 지정한 주제를 그대로 고정하고 최근 글과 같거나 비슷해도 제외하지 않는다. 관련 일반 정보와 글쓰기 마스터는 그 사용자 주제를 설명하기 위해서만 고른다.",
+            "- `INFO04`와 `INFO11`은 자동 후보가 아니다. 활성 콘텐츠 선택기에서 각각 공황 또는 불면증, 트라우마를 명시한 요청에만 연다. 갱년기·폐경·완경 맥락의 불면은 `INFO04`를 열지 않는다.",
             "- 모든 결과는 `정보전달형`이며 업체소개형·사례공유형·스토리텔링형·일상글로 전환하지 않는다.",
             "- 범어 설명한의원 글은 주제 아이디어와 설명할 질문만 제공한다. 제목 문구·제목 패턴·본문 순서·말투·꾸밈·의학 답·사례·이미지는 제공하지 않는다.",
-            "- 선택된 위석부부한의원 한 편을 제목 장치와 글쓰기 흐름 마스터로 사용하고, 꾸밈은 네이버 순정 인용구·구분선·표1을 적용한다.",
+            "- 선택된 위석부부한의원 한 편을 확정 제목 장치의 심리와 글쓰기 흐름 마스터로 사용하고, 꾸밈은 네이버 순정 인용구·구분선·표1을 적용한다.",
             "- 원문 제목의 연차·환자 수·효과 수치·전문 표현은 제목 슬롯으로 보지 않고 폐기한다.",
-            "- 최종 제목은 금손한의원 사실로 다시 설계하고 `validate_title.py`를 통과시킨다.",
+            "- 사용자가 확정한 제목은 문구를 보존한다. 리서치와 마스터 선택 뒤 금손 사실·숫자 답 개수·제목 장치를 `validate_title.py`로 다시 검증하고 실패하면 임의 수정하지 않는다.",
             "- 글을 쓸 때는 선택된 글쓰기 마스터 원문 한 편만 구조 재현용으로 읽는다. 주제 출처 본문은 확인할 개념·질문 범위를 파악할 수 있지만, 그 답은 금손 사실과 필요한 권위 자료에서 새로 구성한다.",
             "",
         ]
@@ -100,6 +100,7 @@ def main() -> int:
                 "type": profile["type"],
                 "sourceUrl": profile["sourceUrl"],
                 "autoEligible": profile["autoEligible"],
+                "sensitiveTopicPolicy": profile.get("sensitiveTopicPolicy"),
                 "bestFor": profile["bestFor"],
                 "selectionTags": profile.get("selectionTags", []),
             }
@@ -115,8 +116,10 @@ def main() -> int:
             if source_id not in family_articles:
                 continue
             family_article = family_articles[source_id]
+            master_id = str(family_article["masterId"])
+            profile = profiles[master_id]
             content_type = "정보전달형"
-            compatible = [str(family_article["masterId"])]
+            compatible = [master_id]
             articles.append(
                 {
                     "id": source["id"],
@@ -144,6 +147,8 @@ def main() -> int:
                     "sourceFactsBlocked": True,
                     "sourceSentencesBlocked": True,
                     "sourceMediaBlocked": True,
+                    "autoEligible": profile["autoEligible"],
+                    "sensitiveTopicPolicy": profile.get("sensitiveTopicPolicy"),
                 }
             )
         library = {
@@ -154,6 +159,14 @@ def main() -> int:
             "referenceFamilyId": family["familyId"],
             "allowedReferenceIds": family["allowedReferenceIds"],
             "allowedMasterIds": family["allowedMasterIds"],
+            "automaticMasterIds": [
+                master_id for master_id, profile in profiles.items() if profile.get("autoEligible") is True
+            ],
+            "sensitiveTopicMasterIds": [
+                master_id
+                for master_id, profile in profiles.items()
+                if isinstance(profile.get("sensitiveTopicPolicy"), dict)
+            ],
             "sourceArticleCount": corpus["includedCount"],
             "articleCount": len(articles),
             "excludedCount": corpus["includedCount"] - len(articles),

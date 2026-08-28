@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "contractId": "goldhand-title-recommendations-v1",
+  "defaultWorkflowStage": "title-first",
+  "referenceMasterRequiredBeforeRecommendations": false,
+  "researchRequiredBeforeRecommendations": false,
+  "researchRequiredAfterSelection": true,
+  "referenceMasterRequiredAfterSelection": true,
+  "numberedPromiseSupportValidationStage": "post-selection-research",
+  "candidateCount": 5,
+  "keywordMustStartTitle": true,
+  "maximumNonWhitespaceCharacters": 30,
+  "careerExpression": "11년차",
+  "numberedAnswerCounts": [
+    1,
+    2,
+    3
+  ],
+  "numericHookRequiredPerCandidate": true,
+  "minimumCareerCandidateCount": 1,
+  "minimumNumberedCandidateCount": 3,
+  "strongExpressions": [
+    "최악의",
+    "절대",
+    "반드시",
+    "치명적인",
+    "위험한",
+    "망치는",
+    "놓치면 손해",
+    "후회하는",
+    "경고하는",
+    "피해야 할"
+  ],
+  "weakExpressionsBlocked": [
+    "나쁜",
+    "안 좋은",
+    "안좋은",
+    "좋지 않은"
+  ],
+  "readerStakeValues": [
+    "benefit",
+    "loss-prevention"
+  ],
+  "readerStakeTerms": {
+    "benefit": [
+      "반드시",
+      "꼭",
+      "지키",
+      "줄이",
+      "예방",
+      "편해",
+      "알아야",
+      "도움",
+      "살리는",
+      "바꾸는"
+    ],
+    "loss-prevention": [
+      "최악",
+      "위험",
+      "망치",
+      "손해",
+      "후회",
+      "경고",
+      "피해야",
+      "악화",
+      "놓치"
+    ]
+  },
+  "strongWordingBoundary": "강한 표현은 독자가 피하거나 알아야 할 습관·행동·신호·실수에 연결하고 치료 결과 보장, 공포 과장, 타 기관 비방에는 연결하지 않는다.",
+  "customTitle": {
+    "allowed": true,
+    "selectionPrompt": "1~5번 중 사용할 제목을 선택하거나, 원하는 제목을 직접 입력해 주세요.",
+    "preserveExactUserWording": true,
+    "silentRewriteAllowed": false,
+    "mustPassCoreTitleValidation": true
+  }
+}

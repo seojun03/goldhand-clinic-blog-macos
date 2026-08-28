@@ -19,6 +19,7 @@ DEFAULT_LIBRARY = SKILL_DIR / "assets" / "media-library.json"
 DEFAULT_EVIDENCE = SKILL_DIR / "references" / "clinic-facts.md"
 DEFAULT_WRITING_INTELLIGENCE = SKILL_DIR / "assets" / "reference-writing-intelligence.json"
 FINAL_WRITING_VOICE_REVIEW_ID = "writing-voice-final-rehear-v1"
+FINAL_HUMANIZE_REVIEW_ID = "humanize-korean-final-pass-v1"
 ALLOWED_TYPES = {"정보전달형"}
 EXCLUDED_ROLES = {"cta", "contact", "map", "source", "caption", "media", "proof"}
 MOBILE_EXEMPT_REFERENCE_ROLES = {
@@ -31,6 +32,7 @@ MOBILE_EXEMPT_REFERENCE_ROLES = {
     "contact",
     "clinic-hours-heading",
     "clinic-hours",
+    "closing-heading",
 }
 EXACT_GREETING = "안녕하세요, 금손한의원 박준희 원장입니다."
 FIXED_CONTACT = (
@@ -90,6 +92,10 @@ SOLUTION_PREVIEW_CUE = re.compile(r"(?:오늘은|이\s*글에서는|이\s*글에
 SOLUTION_PAYOFF_CUE = re.compile(r"(?:구분|기준|판단|확인|이해|순서|놓치|살펴)")
 READING_COMMITMENT_TEXT = re.compile(r"(?:읽|집중|살펴)", re.S)
 HOOK_TOKEN_STOP = {"광주", "한의원", "금손한의원", "어떻게", "무엇", "정말", "경우", "있을까요", "할까요"}
+CLOSING_INVITATION_CUE = re.compile(r"(?:진료|내원|상담|문의|현재\s*상태|함께\s*살펴|함께\s*보)")
+FORBIDDEN_CLOSING_HEADING = re.compile(
+    r"(?:\d+\s*년\s*경험이\s*전하는\s*한\s*가지|^\s*(?:마무리|마지막으로|오늘의\s*결론|한\s*가지)\s*$)"
+)
 STACKED_ABSTRACT_HOOK = re.compile(r"(?:피로|기분|불편|증상).{0,28}(?:이어지|겹치|반복되)나요\?")
 FORBIDDEN_REAL_PHOTO_DESCRIPTOR = re.compile(r"(?:로고|logo|건물\s*외관|건물\s*외부|환제|제품\s*포장|장비|원내\s*공간)", re.I)
 REAL_PHOTO_SLOTS = {"before-credential", "closing-trust"}
@@ -167,6 +173,9 @@ def editorial_source_checks(
     status_values = attr_values(article_tag, "data-editorial-profile-status")
     voice_review_values = attr_values(article_tag, "data-writing-voice-review")
     voice_status_values = attr_values(article_tag, "data-writing-voice-status")
+    final_reviewer_values = attr_values(article_tag, "data-final-prose-reviewer")
+    final_review_values = attr_values(article_tag, "data-final-prose-review")
+    final_status_values = attr_values(article_tag, "data-final-prose-status")
     for attribute, tag_values in (
         ("data-editorial-master-id", master_values),
         ("data-editorial-reference-source", source_values),
@@ -174,6 +183,9 @@ def editorial_source_checks(
         ("data-editorial-profile-status", status_values),
         ("data-writing-voice-review", voice_review_values),
         ("data-writing-voice-status", voice_status_values),
+        ("data-final-prose-reviewer", final_reviewer_values),
+        ("data-final-prose-review", final_review_values),
+        ("data-final-prose-status", final_status_values),
     ):
         if len(attr_values(article, attribute)) != len(tag_values):
             add(
@@ -258,6 +270,9 @@ def editorial_source_checks(
     intelligence_id = ""
     final_voice_review_id = ""
     final_voice_status = ""
+    final_voice_reviewer = ""
+    final_humanize_review_id = ""
+    final_humanize_status = ""
     if source_match and source_match.group("blog_id") == "wi-parkclinic":
         profiles = writing_intelligence.get("profiles", {}) if isinstance(writing_intelligence, dict) else {}
         matching_profiles = [
@@ -319,24 +334,65 @@ def editorial_source_checks(
                 )
             else:
                 closing_mechanism_id = closing_values[0]
-        if voice_review_values != [FINAL_WRITING_VOICE_REVIEW_ID]:
+        writing_route_present = bool(voice_review_values or voice_status_values)
+        humanize_route_present = bool(final_reviewer_values or final_review_values or final_status_values)
+        if writing_route_present and humanize_route_present:
             add(
                 issues,
                 "error",
-                "writing-voice-review-missing",
-                f"최종 글쓰기 검수는 data-writing-voice-review={FINAL_WRITING_VOICE_REVIEW_ID}여야 합니다.",
+                "final-prose-reviewer-conflict",
+                "한 원고에는 writing-voice 또는 humanize-korean 최종 윤문기 하나만 표시해야 합니다.",
             )
+        elif humanize_route_present:
+            if final_reviewer_values != ["humanize-korean"]:
+                add(
+                    issues,
+                    "error",
+                    "humanize-reviewer-missing",
+                    "humanize-korean 원고에는 data-final-prose-reviewer=humanize-korean이 필요합니다.",
+                )
+            else:
+                final_voice_reviewer = final_reviewer_values[0]
+            if final_review_values != [FINAL_HUMANIZE_REVIEW_ID]:
+                add(
+                    issues,
+                    "error",
+                    "humanize-review-missing",
+                    f"humanize-korean 원고에는 data-final-prose-review={FINAL_HUMANIZE_REVIEW_ID}가 필요합니다.",
+                )
+            else:
+                final_humanize_review_id = final_review_values[0]
+                final_voice_review_id = final_review_values[0]
+            if final_status_values != ["pass"]:
+                add(
+                    issues,
+                    "error",
+                    "humanize-status-not-pass",
+                    "humanize-korean 최종 윤문을 통과한 data-final-prose-status=pass가 필요합니다.",
+                )
+            else:
+                final_humanize_status = final_status_values[0]
+                final_voice_status = final_status_values[0]
         else:
-            final_voice_review_id = voice_review_values[0]
-        if voice_status_values != ["pass"]:
-            add(
-                issues,
-                "error",
-                "writing-voice-status-not-pass",
-                "writing-voice 최종 재청취를 통과한 data-writing-voice-status=pass가 필요합니다.",
-            )
-        else:
-            final_voice_status = voice_status_values[0]
+            final_voice_reviewer = "writing-voice"
+            if voice_review_values != [FINAL_WRITING_VOICE_REVIEW_ID]:
+                add(
+                    issues,
+                    "error",
+                    "writing-voice-review-missing",
+                    f"최종 글쓰기 검수는 data-writing-voice-review={FINAL_WRITING_VOICE_REVIEW_ID}여야 합니다.",
+                )
+            else:
+                final_voice_review_id = voice_review_values[0]
+            if voice_status_values != ["pass"]:
+                add(
+                    issues,
+                    "error",
+                    "writing-voice-status-not-pass",
+                    "writing-voice 최종 재청취를 통과한 data-writing-voice-status=pass가 필요합니다.",
+                )
+            else:
+                final_voice_status = voice_status_values[0]
     return {
         "editorialMasterId": master_id,
         "editorialReferenceSource": source_url,
@@ -345,8 +401,13 @@ def editorial_source_checks(
         "referenceWritingIntelligenceId": intelligence_id,
         "titleMechanismId": title_mechanism_id,
         "closingMechanismId": closing_mechanism_id,
-        "finalWritingVoiceReviewId": final_voice_review_id,
-        "finalWritingVoiceStatus": final_voice_status,
+        "finalVoiceReviewerSkill": final_voice_reviewer,
+        "finalVoiceReviewId": final_voice_review_id,
+        "finalVoiceStatus": final_voice_status,
+        "finalWritingVoiceReviewId": final_voice_review_id if final_voice_reviewer == "writing-voice" else "",
+        "finalWritingVoiceStatus": final_voice_status if final_voice_reviewer == "writing-voice" else "",
+        "finalHumanizeReviewId": final_humanize_review_id,
+        "finalHumanizeStatus": final_humanize_status,
     }
 
 
@@ -716,6 +777,59 @@ def load_media_library(path: Path) -> dict[str, dict[str, object]]:
         for asset in assets
         if isinstance(asset, dict) and asset.get("id")
     }
+
+
+def media_context_tokens(value: str) -> list[str]:
+    """Tokenize prose for copied source-context detection."""
+
+    return re.findall(
+        r"[0-9A-Za-z가-힣]{2,}",
+        normalize(html.unescape(value)).lower(),
+    )
+
+
+def selected_media_context_leaks(
+    article: str,
+    media_library: dict[str, dict[str, object]],
+    *,
+    minimum_run: int = 7,
+) -> list[dict[str, str]]:
+    """Return visible prose copied from a selected photo's internal context."""
+
+    if minimum_run < 1:
+        raise ValueError("minimum_run은 1 이상이어야 합니다.")
+    visible_tokens = media_context_tokens(visible_text(article))
+    if len(visible_tokens) < minimum_run:
+        return []
+    visible_runs = {
+        tuple(visible_tokens[index : index + minimum_run])
+        for index in range(len(visible_tokens) - minimum_run + 1)
+    }
+    selected_ids = {
+        asset_id
+        for tag in re.findall(r"<img\b[^>]*>", article, flags=re.I | re.S)
+        for asset_id in attr_values(tag, "data-goldhand-media")
+        if asset_id
+    }
+    leaks: list[dict[str, str]] = []
+    for asset_id in sorted(selected_ids):
+        asset = media_library.get(asset_id)
+        if not isinstance(asset, dict):
+            continue
+        for field in ("context", "closingTrustContextText"):
+            source_tokens = media_context_tokens(str(asset.get(field, "")))
+            for index in range(len(source_tokens) - minimum_run + 1):
+                run = tuple(source_tokens[index : index + minimum_run])
+                if run in visible_runs:
+                    leaks.append(
+                        {
+                            "assetId": asset_id,
+                            "field": field,
+                            "excerpt": " ".join(run),
+                        }
+                    )
+                    break
+    return leaks
 
 
 def previous_completed_entry(
@@ -1562,8 +1676,13 @@ def validate_article(
         "referenceWritingIntelligenceId": "",
         "titleMechanismId": "",
         "closingMechanismId": "",
+        "finalVoiceReviewerSkill": "",
+        "finalVoiceReviewId": "",
+        "finalVoiceStatus": "",
         "finalWritingVoiceReviewId": "",
         "finalWritingVoiceStatus": "",
+        "finalHumanizeReviewId": "",
+        "finalHumanizeStatus": "",
     }
 
     question_matches = reference_role_matches(article, ("reader-question",))
@@ -1781,6 +1900,8 @@ def validate_article(
     issues.extend(credential_placement_issues(article))
 
     closing_payoff = ""
+    closing_heading = ""
+    closing_invitation = ""
     if editorial_close:
         closing_matches = reference_role_matches(article, ("neutral-close",))
         if len(closing_matches) != 1:
@@ -1811,6 +1932,76 @@ def validate_article(
                         "data-closing-payoff의 구체적인 회수 문구가 마무리 문장에 실제로 보여야 합니다.",
                     )
 
+            closing_heading_matches = reference_role_matches(closing_block, ("closing-heading",))
+            if len(closing_heading_matches) != 1:
+                add(
+                    issues,
+                    "error",
+                    "closing-heading-count",
+                    f"마무리에는 제목과 본문에 맞춘 closing-heading이 정확히 1개여야 합니다. 현재 {len(closing_heading_matches)}개입니다.",
+                )
+            else:
+                heading_match = closing_heading_matches[0]
+                heading_block = heading_match.group(0)
+                heading_opening_match = re.match(r"<[a-z][\w:-]*\b[^>]*>", heading_block, re.I | re.S)
+                heading_opening = heading_opening_match.group(0) if heading_opening_match else ""
+                closing_heading = re.sub(r"\s+", " ", visible_text(heading_block)).strip()
+                if attr_values(heading_opening, "data-naver-native-component") != ["subheading"]:
+                    add(issues, "error", "closing-heading-native-contract", "마무리 소제목은 네이버 순정 subheading으로 표시해야 합니다.")
+                heading_chars = len(compact(closing_heading))
+                if heading_chars < 6 or heading_chars > 36:
+                    add(issues, "error", "closing-heading-length", f"마무리 소제목은 공백 제외 6~36자로 씁니다. 현재 {heading_chars}자입니다.")
+                if FORBIDDEN_CLOSING_HEADING.search(closing_heading):
+                    add(issues, "error", "closing-heading-template", "레퍼런스의 경력형 소제목이나 고정된 결론 문구를 마무리 공식처럼 반복하면 안 됩니다.")
+                topic_text = f"{title} {closing_payoff} {visible_text(article[:closing_matches[0].start()])}"
+                if not (meaningful_tokens(closing_heading) & meaningful_tokens(topic_text)):
+                    add(issues, "error", "closing-heading-topic-disconnect", "마무리 소제목이 제목·증상·본문의 직접 답과 연결되지 않습니다.")
+
+            closing_dividers = list(
+                re.finditer(
+                    r"<hr\b(?=[^>]*\bdata-naver-native-component\s*=\s*['\"]divider['\"])[^>]*>",
+                    closing_block,
+                    flags=re.I | re.S,
+                )
+            )
+            if len(closing_dividers) != 1:
+                add(
+                    issues,
+                    "error",
+                    "closing-divider-count",
+                    f"마무리 소제목 바로 뒤에는 네이버 순정 구분선이 정확히 1개여야 합니다. 현재 {len(closing_dividers)}개입니다.",
+                )
+            elif len(closing_heading_matches) == 1:
+                heading_match = closing_heading_matches[0]
+                divider_match = closing_dividers[0]
+                if heading_match.end() > divider_match.start() or not contains_only_preview_gaps(
+                    closing_block[heading_match.end():divider_match.start()]
+                ):
+                    add(issues, "error", "closing-divider-position", "마무리 순정 구분선은 글별 소제목 바로 뒤에 둬야 합니다.")
+
+            closing_invitation_matches = reference_role_matches(closing_block, ("closing-invitation",))
+            if len(closing_invitation_matches) != 1:
+                add(
+                    issues,
+                    "error",
+                    "closing-invitation-count",
+                    f"마무리에는 부담 없는 진료 안내 closing-invitation이 정확히 1개여야 합니다. 현재 {len(closing_invitation_matches)}개입니다.",
+                )
+            else:
+                invitation_match = closing_invitation_matches[0]
+                closing_invitation = re.sub(r"\s+", " ", visible_text(invitation_match.group(0))).strip()
+                if len(compact(closing_invitation)) < 20:
+                    add(issues, "error", "closing-invitation-too-short", "마무리 진료 안내에는 어떤 불편이 계속될 때 무엇을 함께 볼지 구체적으로 적어야 합니다.")
+                if not CLOSING_INVITATION_CUE.search(closing_invitation):
+                    add(issues, "error", "closing-invitation-clinical-cue", "마무리 진료 안내에는 현재 상태·진료·상담·내원처럼 실제 다음 행동이 보여야 합니다.")
+                if closing_dividers and invitation_match.start() <= closing_dividers[0].end():
+                    add(issues, "error", "closing-invitation-position", "부담 없는 진료 안내는 마무리 소제목과 구분선, 핵심 답 회수 뒤에 둬야 합니다.")
+                elif closing_dividers:
+                    recap_region = closing_block[closing_dividers[0].end():invitation_match.start()]
+                    recap_groups = re.findall(r"<p\b(?=[^>]*\bdata-mobile-group\s*=\s*['\"]true['\"])[^>]*>", recap_region, flags=re.I | re.S)
+                    if not recap_groups:
+                        add(issues, "error", "closing-recap-missing", "마무리 소제목 뒤에는 제목의 직접 답과 본문 핵심을 회수하는 일반 산문이 필요합니다.")
+
     h1 = re.findall(r"<h1\b[^>]*>.*?</h1>", article, flags=re.I | re.S)
     if h1:
         add(
@@ -1832,17 +2023,27 @@ def validate_article(
         add(issues, "error", "article-too-long", f"제목+실제 본문 공백 제외 {combined_chars}자; 최대 {max_chars}자입니다.")
 
     title_keyword_count = title.count(keyword) if keyword else 0
+    title_non_whitespace_chars = len(compact(title))
     keyword_paragraphs = [index for index, paragraph in enumerate(prose_paragraphs, start=1) if keyword and keyword in paragraph]
     body_keyword_count = sum(paragraph.count(keyword) for paragraph in prose_paragraphs) if keyword else 0
     if title_keyword_count != 1:
         add(issues, "error", "title-keyword-count", f"제목의 정확 메인키워드가 {title_keyword_count}회입니다.")
+    elif not title.startswith(keyword):
+        add(issues, "error", "title-keyword-prefix", "메인키워드는 제목의 첫 글자부터 시작해야 합니다.")
+    if title_non_whitespace_chars > 30:
+        add(
+            issues,
+            "error",
+            "title-too-long",
+            f"제목이 공백 제외 {title_non_whitespace_chars}자입니다. 30자 이내여야 합니다.",
+        )
     if editorial_close:
-        if body_keyword_count not in {2, 3}:
+        if body_keyword_count not in {1, 2}:
             add(
                 issues,
                 "error",
                 "body-keyword-count",
-                f"editorial-close 일반 본문의 정확 메인키워드가 {body_keyword_count}회입니다. 2~3회가 필요합니다.",
+                f"editorial-close 일반 본문의 정확 메인키워드가 {body_keyword_count}회입니다. 1~2회가 필요합니다.",
             )
     elif body_keyword_count != 5:
         add(issues, "error", "body-keyword-count", f"일반 본문의 정확 메인키워드가 {body_keyword_count}회입니다.")
@@ -1851,7 +2052,7 @@ def validate_article(
         if count > 1:
             add(issues, "error", "keyword-repeated-in-paragraph", f"한 문단에 정확 키워드가 {count}회 있습니다.", index)
     required_keyword_paragraphs = body_keyword_count if editorial_close else 5
-    if body_keyword_count in ({2, 3} if editorial_close else {5}) and len(keyword_paragraphs) < required_keyword_paragraphs:
+    if body_keyword_count in ({1, 2} if editorial_close else {5}) and len(keyword_paragraphs) < required_keyword_paragraphs:
         add(
             issues,
             "error",
@@ -1964,6 +2165,16 @@ def validate_article(
 
     try:
         official_assets = load_media_library(DEFAULT_LIBRARY) if media_library is None else media_library
+        for leak in selected_media_context_leaks(article, official_assets):
+            add(
+                issues,
+                "error",
+                "visible-media-context-leak",
+                (
+                    f"선택 사진 {leak['assetId']}의 내부 {leak['field']} 문장이 "
+                    f"본문에 노출됐습니다: {leak['excerpt']}"
+                ),
+            )
         image_metrics = image_checks(
             article,
             issues,
@@ -2038,6 +2249,8 @@ def validate_article(
             "introPersuasionDeviceId": intro_device_id,
             "readerPayoff": reader_payoff,
             "closingPayoff": closing_payoff,
+            "closingHeading": closing_heading,
+            "closingInvitation": closing_invitation,
             "errors": errors,
             "warnings": warnings,
         },

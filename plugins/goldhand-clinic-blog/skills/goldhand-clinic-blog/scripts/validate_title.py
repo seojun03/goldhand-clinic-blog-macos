@@ -76,16 +76,12 @@ def validate_title(
     keyword_count = title.count(keyword) if keyword else 0
     if keyword_count != 1:
         add(issues, "error", "title-keyword-count", f"정확 메인키워드 {keyword_count}회; 1회가 필요합니다.")
-    elif len(compact(title[: title.find(keyword)])) > 8:
-        add(issues, "warning", "keyword-not-early", "메인키워드를 제목 앞부분으로 옮길 수 있는지 확인하세요.")
+    elif not title.startswith(keyword):
+        add(issues, "error", "title-keyword-prefix", "메인키워드는 제목의 첫 글자부터 시작해야 합니다.")
 
     length = len(compact(title))
-    if length > 50:
-        add(issues, "error", "title-too-long", f"공백 제외 {length}자; 50자를 넘으면 발행할 수 없습니다.")
-    elif length > 40:
-        add(issues, "warning", "title-long", f"공백 제외 {length}자; 40자 이내로 압축을 권장합니다.")
-    elif length < 22:
-        add(issues, "warning", "title-short", f"공백 제외 {length}자; 22~40자를 권장합니다.")
+    if length > 30:
+        add(issues, "error", "title-too-long", f"공백 제외 {length}자; 30자 이내여야 합니다.")
 
     for code, pattern in FORBIDDEN.items():
         match = pattern.search(title)
@@ -201,6 +197,7 @@ def validate_title(
             "editorialClose": editorial_close,
             "nonWhitespaceChars": length,
             "keywordCount": keyword_count,
+            "keywordStartsTitle": bool(keyword and title.startswith(keyword)),
             "answerPromises": promises,
             "referenceMasterId": reference_master_id,
             "titleMechanismId": title_mechanism_id,

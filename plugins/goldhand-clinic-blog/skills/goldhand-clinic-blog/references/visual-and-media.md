@@ -252,6 +252,13 @@
 - 빌드 뒤 복사용 HTML에 생성본 개수만큼 금손 전용 `https://` 이미지 주소가 들어갔는지 확인한다.
 - 청년통신처럼 네이버가 웹에서 읽을 수 있는 HTTPS 원본 URL을 복사한다. `data:image/...;base64`, `file:`, 절대 로컬 경로는 실패다.
 
+### 네이버 사진 복사 계약
+
+- 공개 HTTPS `img src`만으로는 충분하지 않다. 복사 시 각 사진을 네이버 순정 `se-image`로 바꾸고, `se-module-image-loaded` 안에 `a[data-linktype="img"][data-linkdata]`와 `img.se-image-resource`를 중첩한다.
+- `data-linkdata`에는 컴포넌트 고유 ID, HTTPS 원본 주소, 실제 로드한 원본 가로·세로를 넣는다. 복사 버튼은 모든 이미지의 로드와 크기 확인이 끝난 뒤에만 활성화하고 하나라도 실패하면 사진 없는 원고를 복사하지 않는다.
+- `file:`에서 선택 영역으로 복사할 때와 HTTP에서 `ClipboardItem`으로 복사할 때 모두 입력 버퍼와 같은 순정 이미지 HTML을 사용한다. 어느 경로에서도 미리보기용 일반 `<figure>`를 대신 복사하지 않는다.
+- 사진 캡션을 쓰지 않는 글에는 `사진 설명을 입력하세요.`나 빈 `se-caption`을 생성하지 않는다. 복사 미리보기는 `images == imageDataLinks`, `orphanImageCaptions == 0`이어야 한다.
+
 금지:
 
 - 작품 상세 페이지의 `type=o720_mask` 미리보기 또는 목록 썸네일을 게시용 이미지로 사용

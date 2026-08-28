@@ -9,6 +9,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -21,8 +22,22 @@ DEFAULT_PROFILES = SKILL_DIR / "assets" / "reference-master-profiles.json"
 DEFAULT_INTELLIGENCE = SKILL_DIR / "assets" / "reference-writing-intelligence.json"
 VOICE_PROFILE_ID = "goldhand-official-voice-v1"
 VOICE_PROTOCOL = "natural-speech-rewrite-protocol-v1"
-FINAL_VOICE_REVIEW_ID = "writing-voice-final-rehear-v1"
+FINAL_VOICE_REVIEWERS = {
+    "writing-voice": {
+        "contractId": "writing-voice-final-rehear-v1",
+        "receiptField": "writingVoiceReview",
+    },
+    "humanize-korean": {
+        "contractId": "humanize-korean-final-pass-v1",
+        "receiptField": "humanizeKoreanReview",
+    },
+}
 SOURCE_ROLE = "editorial-reasoning-content-flow-and-expression-principles"
+SENSITIVE_MASTER_IDS = frozenset({"INFO04", "INFO11"})
+TRAUMA_REQUEST_TERMS = ("트라우마", "외상후스트레스", "ptsd")
+PANIC_REQUEST_TERMS = ("공황", "panic")
+INSOMNIA_REQUEST_TERMS = ("불면", "insomnia")
+MENOPAUSE_CONTEXT_TERMS = ("갱년기", "폐경", "완경", "안면홍조", "menopause")
 
 
 def content_atoms(brief: dict[str, Any], master_id: str) -> list[dict[str, Any]]:
@@ -89,6 +104,31 @@ def tokens(value: str) -> set[str]:
     }
 
 
+def compact_normalized(value: str) -> str:
+    normalized = unicodedata.normalize("NFKC", value).lower()
+    return re.sub(r"[^0-9a-z가-힣]+", "", normalized)
+
+
+def has_any_term(query: str, terms: tuple[str, ...]) -> bool:
+    return any(compact_normalized(term) in query for term in terms)
+
+
+def explicit_sensitive_master_ids(keyword: str, topic: str) -> set[str]:
+    """Return only sensitive masters explicitly requested by the user's query."""
+    query = compact_normalized(f"{keyword} {topic}")
+    if not query:
+        return set()
+    matched: set[str] = set()
+    if has_any_term(query, TRAUMA_REQUEST_TERMS):
+        matched.add("INFO11")
+    panic_requested = has_any_term(query, PANIC_REQUEST_TERMS)
+    insomnia_requested = has_any_term(query, INSOMNIA_REQUEST_TERMS)
+    menopause_context = has_any_term(query, MENOPAUSE_CONTEXT_TERMS)
+    if panic_requested or (insomnia_requested and not menopause_context):
+        matched.add("INFO04")
+    return matched
+
+
 def recent_master_ids(state: dict[str, Any]) -> set[str]:
     entries = state.get("entries", [])
     if not isinstance(entries, list):
@@ -137,26 +177,47 @@ def select(
     intelligence: dict[str, Any] | None = None,
     excluded_master_ids: set[str] | None = None,
     preferred_master_id: str = "",
+    final_voice_reviewer: str = "writing-voice",
+    allow_sensitive_manual: bool = False,
 ) -> list[dict[str, Any]]:
+    if final_voice_reviewer not in FINAL_VOICE_REVIEWERS:
+        raise ValueError(f"지원하지 않는 최종 윤문기입니다: {final_voice_reviewer}")
+    final_review = FINAL_VOICE_REVIEWERS[final_voice_reviewer]
     intelligence = intelligence or load_intelligence()
     learning_profiles = intelligence.get("profiles", {})
     if not isinstance(learning_profiles, dict):
         raise ValueError("레퍼런스 편집 판단 프로필이 없습니다.")
+    preferred_master_id = preferred_master_id.strip()
+    if allow_sensitive_manual and preferred_master_id not in SENSITIVE_MASTER_IDS:
+        raise ValueError(
+            "민감 주제 수동 선택은 --preferred-master-id INFO04 또는 INFO11과 함께 명시해야 합니다."
+        )
     query_tokens = tokens(f"{keyword} {topic}")
+    explicit_sensitive_ids = explicit_sensitive_master_ids(keyword, topic)
     recent = recent_master_ids(state)
     excluded = excluded_master_ids or set()
-    candidates: list[tuple[int, int, str, dict[str, Any]]] = []
+    candidates: list[tuple[int, int, str, dict[str, Any], str]] = []
     for master_id, brief in briefs.get("briefs", {}).items():
         if preferred_master_id and master_id != preferred_master_id:
             continue
         if (
-            master_id in recent
+            (master_id in recent and master_id not in explicit_sensitive_ids)
             or master_id in excluded
             or master_id not in profiles.get("profiles", {})
             or master_id not in learning_profiles
         ):
             continue
         profile = profiles["profiles"][master_id]
+        sensitive_selection_mode = ""
+        if master_id in SENSITIVE_MASTER_IDS:
+            if allow_sensitive_manual and master_id == preferred_master_id:
+                sensitive_selection_mode = "manual-override"
+            elif master_id in explicit_sensitive_ids:
+                sensitive_selection_mode = "explicit-request"
+            else:
+                continue
+        elif profile.get("autoEligible") is not True:
+            continue
         learning_profile = learning_profiles[master_id]
         haystack = " ".join(
             [
@@ -170,13 +231,22 @@ def select(
         )
         overlap = len(query_tokens & tokens(haystack))
         broad_bonus = 2 if not query_tokens and master_id == "INFO01" else 0
+        explicit_sensitive_bonus = 1000 if sensitive_selection_mode == "explicit-request" else 0
         stable = int(hashlib.sha256(f"{seed}|{keyword}|{topic}|{master_id}".encode()).hexdigest(), 16)
-        candidates.append((overlap + broad_bonus, -stable, master_id, brief))
+        candidates.append(
+            (
+                overlap + broad_bonus + explicit_sensitive_bonus,
+                -stable,
+                master_id,
+                brief,
+                sensitive_selection_mode,
+            )
+        )
     candidates.sort(reverse=True)
 
     selected: list[dict[str, Any]] = []
     global_contract = intelligence.get("globalDecisionContract", {})
-    for _, _, master_id, brief in candidates[: max(0, count)]:
+    for _, _, master_id, brief, sensitive_selection_mode in candidates[: max(0, count)]:
         profile = profiles["profiles"][master_id]
         learning_profile = learning_profiles[master_id]
         atoms = content_atoms(brief, master_id)
@@ -189,6 +259,9 @@ def select(
                 "sourceUrl": brief["sourceUrl"],
                 "sourceBlogId": "wi-parkclinic",
                 "sourceRole": SOURCE_ROLE,
+                "automaticSelectionEligible": profile.get("autoEligible") is True,
+                "sensitiveTopic": master_id in SENSITIVE_MASTER_IDS,
+                "sensitiveSelectionMode": sensitive_selection_mode or "not-sensitive",
                 "topic": brief["topic"],
                 "readerConcerns": brief["readerConcerns"],
                 "orderedContentAtoms": atoms,
@@ -212,8 +285,9 @@ def select(
                 "voiceAuthority": "goldhand7582_ official 74-post voice corpus",
                 "voiceFunction": "naturalize-the-adapted-reference-reasoning-without-erasing-it",
                 "finalVoiceReviewRequired": True,
-                "finalVoiceReviewerSkill": "writing-voice",
-                "finalVoiceReviewContractId": FINAL_VOICE_REVIEW_ID,
+                "finalVoiceReviewerSkill": final_voice_reviewer,
+                "finalVoiceReviewContractId": final_review["contractId"],
+                "finalVoiceReviewReceiptField": final_review["receiptField"],
                 "finalVoiceReviewStage": "after-complete-visible-prose-and-seo-before-production-assembly",
                 "finalVoiceReviewScope": "sentence-expression-only-no-content-or-structure-changes",
                 "designSystemId": "goldhand-naver-native-v4",
@@ -330,6 +404,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--count", type=int, default=1)
     parser.add_argument("--seed", default="")
     parser.add_argument("--preferred-master-id", default="")
+    parser.add_argument(
+        "--allow-sensitive-manual",
+        action="store_true",
+        help="INFO04/INFO11을 명시적으로 수동 선택합니다. 해당 --preferred-master-id와 함께만 사용합니다.",
+    )
+    parser.add_argument(
+        "--final-reviewer",
+        choices=tuple(FINAL_VOICE_REVIEWERS),
+        default="writing-voice",
+        help="완성 산문의 마지막 윤문기. 기본은 writing-voice입니다.",
+    )
     parser.add_argument("--briefs", type=Path, default=DEFAULT_BRIEFS)
     parser.add_argument("--profiles", type=Path, default=DEFAULT_PROFILES)
     parser.add_argument("--intelligence", type=Path, default=DEFAULT_INTELLIGENCE)
@@ -379,6 +464,8 @@ def main() -> int:
                 intelligence=intelligence,
                 excluded_master_ids=active,
                 preferred_master_id=args.preferred_master_id.strip(),
+                final_voice_reviewer=args.final_reviewer,
+                allow_sensitive_manual=args.allow_sensitive_manual,
             )
             run_id = args.run_id.strip() or str(uuid.uuid4())
             results: list[dict[str, Any]] = []
@@ -408,6 +495,8 @@ def main() -> int:
                 seed=args.seed,
                 intelligence=intelligence,
                 preferred_master_id=args.preferred_master_id.strip(),
+                final_voice_reviewer=args.final_reviewer,
+                allow_sensitive_manual=args.allow_sensitive_manual,
             )
     except (OSError, UnicodeError, json.JSONDecodeError, KeyError, ValueError) as exc:
         print(f"레퍼런스 선택 실패: {exc}", file=sys.stderr)
