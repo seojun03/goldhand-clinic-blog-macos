@@ -16,7 +16,7 @@ MARKETPLACE_NAME = "goldhand-clinic-macos"
 REPOSITORY = "seojun03/goldhand-clinic-blog-macos"
 PUBLIC_VERSION_RE = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\+codex\."
-    r"(?:\d{14}|managed\.macos\.\d{14}\.\d+)$"
+    r"(?:\d{14}|managed\.macos\.\d{20}\.\d+)$"
 )
 
 
